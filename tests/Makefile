@@ -3,8 +3,9 @@
 CFLAGS=-I../ -lm
 
 all: streachy-buffer
+	rm ./a.out
 
 streachy-buffer:
-	${CC} ${CFLAGS} rstretchy-buffer/tests.c && ./a.out
+	${CC} ${CFLAGS} stretchy-buffer/tests.c && ./a.out
 
 .PHONY: all random
