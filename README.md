@@ -1,6 +1,6 @@
 # cauldron
 
-![tests](https://github.com/camel-cdr/cauldron/.github/workflows/test.yml/badge.svg)
+![tests](https://github.com/camel-cdr/cauldron/workflows/.github/workflows/test.yml/badge.svg)
 
 A collection of single-file C libraries.
 The goal is for most functions to be standalone and easily copy pastable.
