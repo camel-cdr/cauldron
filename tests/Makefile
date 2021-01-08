@@ -6,6 +6,6 @@ all: streachy-buffer
 	rm ./a.out
 
 streachy-buffer:
-	${CC} ${CFLAGS} stretchy-buffer/tests.c && ./a.out
+	gcc ${CFLAGS} stretchy-buffer/tests.c && ./a.out
 
 .PHONY: all random

@@ -18,38 +18,38 @@
 
 #ifndef STREACHY_BUFFER_H_INCLUDED
 
-#define Sb(T) struct { size_t len, cap; T *at; }
+#define Sb(T) struct { size_t _len, _cap; T *at; }
 
-#define sb_len(a) ((const size_t)(a).len)
-#define sb_cap(a) ((const size_t)(a).cap)
-#define sb_last(a) ((a).at[(a).len - 1])
+#define sb_len(a) ((const size_t)(a)._len)
+#define sb_cap(a) ((const size_t)(a)._cap)
+#define sb_last(a) ((a).at[(a)._len - 1])
 
-#define sb_setlen(a,n) ((a).len = (n), sb_setcap((a), (a).len))
+#define sb_setlen(a,n) ((a)._len = (n), sb_setcap((a), (a)._len))
 #define sb_setcap(a,n) \
-	((a).cap < (n) ? \
-		((a).cap = ((n) > ((a).cap <<= 1) ? (n) : (a).cap), \
-		 (a).at = realloc((a).at, (a).cap * sizeof *(a).at)) : 0)
-#define sb_reserve(a,n) sb_setcap((a), (a).cap + (n))
+	((a)._cap < (n) ? \
+		((a)._cap = ((n) > ((a)._cap <<= 1) ? (n) : (a)._cap), \
+		 (a).at = realloc((a).at, (a)._cap * sizeof *(a).at)) : 0)
+#define sb_reserve(a,n) sb_setcap((a), (a)._cap + (n))
 
 #define sb_init(a) sb_initcap((a), 8)
-#define sb_initcap(a,n) ((a).len = 0, (a).cap = (n) + 8, \
-                         (a).at = malloc((a).cap * sizeof *(a).at))
-#define sb_initlen(a,n) ((a).len = (n), (a).cap = (n) + 8, \
-                         (a).at = malloc((a).cap * sizeof *(a).at))
+#define sb_initcap(a,n) ((a)._len = 0, (a)._cap = (n) + 8, \
+                         (a).at = malloc((a)._cap * sizeof *(a).at))
+#define sb_initlen(a,n) ((a)._len = (n), (a)._cap = (n) + 8, \
+                         (a).at = malloc((a)._cap * sizeof *(a).at))
 
-#define sb_push(a,v) (sb_setlen((a), (a).len + 1), (a).at[(a).len - 1] = (v))
-#define sb_addn(a,n) sb_setlen((a), (a).len + (n))
+#define sb_push(a,v) (sb_setlen((a), (a)._len + 1), (a).at[(a)._len - 1] = (v))
+#define sb_addn(a,n) sb_setlen((a), (a)._len + (n))
 
 #define sb_pop(a) sb_popn((a), 1)
-#define sb_popn(a,n) ((a).len = ((a).len >= (n) ? (a).len - (n) : 0))
+#define sb_popn(a,n) ((a)._len = ((a)._len >= (n) ? (a)._len - (n) : 0))
 
 #define sb_free(a) free((a).at)
-#define sb_shrink(a) ((a).cap = (a).len, \
-                      (a).at = realloc((a).at, (a).cap * sizeof *(a).at))
+#define sb_shrink(a) ((a)._cap = (a)._len, \
+                      (a).at = realloc((a).at, (a)._cap * sizeof *(a).at))
 
 #define sb_rm(a,i) sb_rmn((a), (i), 1)
 #define sb_rmn(a,i,n) memmove((a).at + (i), (a).at + (i) + (n), \
-                               (((a).len -= (n)) - (i)) * sizeof *(a).at)
+                               (((a)._len -= (n)) - (i)) * sizeof *(a).at)
 
 #define sb_ins(a,i,v) (sb_insn((a), (i), 1), (a).at[i] = (v))
 #define sb_insn(a,i,n) \
