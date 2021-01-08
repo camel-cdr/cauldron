@@ -2,12 +2,9 @@
 
 CFLAGS=-I../ -lm
 
-all: tcc streachy-buffer
-
-tcc:
-	which tcc || ( echo "tcc not found, please install tcc" && exit 1 )
+all: streachy-buffer
 
 streachy-buffer:
-	tcc ${CFLAGS} -run stretchy-buffer/tests.c
+	${CC} ${CFLAGS} rstretchy-buffer/tests.c && ./a.out
 
-.PHONY: tcc all random
+.PHONY: all random
