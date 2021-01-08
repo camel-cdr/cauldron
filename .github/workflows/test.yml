@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: Make tests
 
 on:
   push:
@@ -7,13 +7,11 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-
+  tests:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: Install Dependencies
-      run: apt-get update && apt-get install -y --no-install-recommends tcc
+      run: sudo apt-get update && sudo apt-get install -y tcc
     - name: Run Tests
       run: cd tests && make
