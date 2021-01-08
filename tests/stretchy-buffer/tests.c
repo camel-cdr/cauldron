@@ -4,7 +4,6 @@
 #include <string.h>
 #include <math.h>
 
-#define STREACHY_BUFFER_IMPLEMENT
 #include <cauldron/stretchy-buffer.h>
 
 static int trng_write(void *ptr, size_t n);
