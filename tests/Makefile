@@ -1,6 +1,6 @@
 .POSIX:
 
-CFLAGS=-I/home/camel/git/cauldron/ -lm
+CFLAGS=-I../ -lm
 
 all: tcc streachy-buffer
 
