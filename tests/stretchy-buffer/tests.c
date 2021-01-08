@@ -12,38 +12,38 @@ static int trng_write(void *ptr, size_t n);
 int
 main(void)
 {
-	puts("\nstretchy-buffer:");
+	puts("\nTesting stretchy-buffer with:");
 
 	#define CMP(a,b) (a == b)
 	#define RAND(x) (trng_write(&x, sizeof x), x)
 
 	#define T char
-	puts("char");
+	puts("\tchar");
 	#include "xtest.h"
 	#define T short
-	puts("short");
+	puts("\tshort");
 	#include "xtest.h"
 	#define T int
-	puts("int");
+	puts("\tint");
 	#include "xtest.h"
 	#define T long
-	puts("long");
+	puts("\tlong");
 	#include "xtest.h"
 	#define T long long
-	puts("long long");
+	puts("\tlong long");
 	#include "xtest.h"
 
 	#undef RAND
 	#define RAND(x) (trng_write(&x, sizeof x), isfinite(x) ? x : 42)
 
 	#define T float
-	puts("float");
+	puts("\tfloat");
 	#include "xtest.h"
 	#define T double
-	puts("double");
+	puts("\tdouble");
 	#include "xtest.h"
 	#define T double
-	puts("long double");
+	puts("\tlong double");
 	#include "xtest.h"
 
 	#undef RAND
@@ -51,14 +51,14 @@ main(void)
 
 	struct S1 { char c[42]; size_t x, y; };
 	#define T struct S1
-	puts("struct { char c[42]; size_t a, b; };");
+	puts("\tstruct { char c[42]; size_t a, b; };");
 	#undef CMP
 	#define CMP(a,b) (memcmp(a.c, b.c, sizeof a.c) == 0 && a.x == b.x && a.y == b.y)
 	#include "xtest.h"
 
 	struct S2 { union { struct { char x,y,z; } s; int u; } u; float c, d; };
 	#define T struct S2
-	puts("struct S2 { union { struct { char x,y,z; } s; int u; } u; float c, d; };");
+	puts("\tstruct S2 { union { struct { char x,y,z; } s; int u; } u; float c, d; };");
 	#undef CMP
 	#define CMP(a,b) \
 		(a.u.s.x == b.u.s.y && a.u.s.y == b.u.s.y && \
