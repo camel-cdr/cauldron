@@ -1,4 +1,5 @@
-/* arena-allocator.h */
+/* arena-allocator.h
+ * New versions available at https://github.com/camel-cdr/cauldron */
 
 #ifndef ARENA_ALLOCATOR_H_INCLUDED
 

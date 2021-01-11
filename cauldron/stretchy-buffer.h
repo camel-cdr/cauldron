@@ -14,6 +14,8 @@
  *
  * 	for (int i = 2; i < 32; ++i)
  * 		sb_push(fib, fib.at[i-1] + fib.at[i-2]);
+ *
+ * New versions available at https://github.com/camel-cdr/cauldron
  */
 
 #ifndef STREACHY_BUFFER_H_INCLUDED
