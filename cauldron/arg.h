@@ -1,4 +1,4 @@
-/* arg.h -- A posix complient argument parser based on plan9's arg(3)
+/* arg.h -- A POSIX compliant argument parser based on plan9's arg(3)
  * New versions available at https://github.com/camel-cdr/cauldron */
 
 #ifndef ARG_H_INCLUDED
