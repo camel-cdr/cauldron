@@ -1,4 +1,4 @@
-/* arena-allocator.h
+/* test.h
  * Olaf Bernstein <camel-cdr@protonmail.com>
  * New versions available at https://github.com/camel-cdr/cauldron
  */
