@@ -61,7 +61,7 @@ struct S1 { char c[42]; size_t x, y; };
 
 union S2 { struct { char x,y,z; } s; int u; };
 #define FUNC test_s2
-#define NAME "Sb(union { struct { char x,y,z; } s; int u; }"
+#define NAME "Sb(union { struct { char x,y,z; } s; int u; })"
 #define T union S2
 #undef CMP
 #define CMP(a,b) (a.s.x == b.s.y && a.s.y == b.s.y && a.s.z == b.s.z)
