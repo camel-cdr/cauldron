@@ -1,67 +1,46 @@
-/* stretchy-buffer.h -- generic dynamic array
+/* arena-allocator.h
  * Olaf Bernstein <camel-cdr@protonmail.com>
  * New versions available at https://github.com/camel-cdr/cauldron
- *
- * Based on Sean Barrett's streachy-buffers and klib's kvec.
- *
- * Note that any arguments passed to a sb_* function macros is potentially
- * evaluated multiple times except for arguments that have the name v in the
- * code bellow.
- *
- * Example:
- * 	Sb(int) fib;
- * 	sb_init(fib);
- * 	sb_push(fib, 1);
- * 	sb_push(fib, 1);
- *
- * 	for (int i = 2; i < 32; ++i)
- * 		sb_push(fib, fib.at[i-1] + fib.at[i-2]);
  */
 
-#ifndef STREACHY_BUFFER_H_INCLUDED
+#include <stdio.h>
+#include <stdlib.h>
 
-#define Sb(T) struct { size_t _len, _cap; T *at; }
+#ifndef TEST_H_INCLUDED
 
-#define sb_len(a) ((const size_t)(a)._len)
-#define sb_cap(a) ((const size_t)(a)._cap)
-#define sb_last(a) ((a).at[(a)._len - 1])
+#define TEST_BEGIN(func) TEST_BEGIN(func, #func)
 
-#define sb_setlen(a,n) ((a)._len = (n), sb_setcap((a), (a)._len))
-#define sb_setcap(a,n) \
-	((a)._cap < (n) ? \
-		((a)._cap = ((n) > ((a)._cap <<= 1) ? (n) : (a)._cap), \
-		 (a).at = realloc((a).at, (a)._cap * sizeof *(a).at)) : 0)
-#define sb_reserve(a,n) sb_setcap((a), (a)._cap + (n))
+#define TEST_BEGIN_NAME(func, name) \
+	void func(void) { \
+		unsigned nAsserts = 0, nFailures = 0; \
+		printf("Testing %s ... ", name); \
+		do {
 
-#define sb_init(a) sb_initcap((a), 8)
-#define sb_initcap(a,n) ((a)._len = 0, (a)._cap = (n) + 8, \
-                         (a).at = malloc((a)._cap * sizeof *(a).at))
-#define sb_initlen(a,n) ((a)._len = (n), (a)._cap = (n) + 8, \
-                         (a).at = malloc((a)._cap * sizeof *(a).at))
+#define TEST_END \
+		} while (0);  \
+		if (nFailures == 0) { \
+			puts("PASSED"); \
+		} else { \
+			printf("\t-> %u assertions, %u failures\n", \
+			       nAsserts, nFailures); \
+			exit(EXIT_FAILURE); \
+		} \
+	}
 
-#define sb_push(a,v) (sb_setlen((a), (a)._len + 1), (a).at[(a)._len - 1] = (v))
-#define sb_addn(a,n) sb_setlen((a), (a)._len + (n))
+#define TEST_ASSERT(cnd) TEST_ASSERT_MSG((cnd), (#cnd))
+#define TEST_ASSERT_MSG(cnd, msg) \
+	do { \
+		if (!(cnd)) { \
+			if (nAsserts == 0) puts("FAILED"); \
+			printf("\t%s:%d: %s\n", \
+			       __FILE__, __LINE__, (msg)); \
+			++nFailures; \
+		} \
+		++nAsserts; \
+	} while (0)
 
-#define sb_pop(a) sb_popn((a), 1)
-#define sb_popn(a,n) ((a)._len = ((a)._len >= (n) ? (a)._len - (n) : 0))
-
-#define sb_free(a) free((a).at)
-#define sb_shrink(a) ((a)._cap = (a)._len, \
-                      (a).at = realloc((a).at, (a)._cap * sizeof *(a).at))
-
-#define sb_rm(a,i) sb_rmn((a), (i), 1)
-#define sb_rmn(a,i,n) memmove((a).at + (i), (a).at + (i) + (n), \
-                               (((a)._len -= (n)) - (i)) * sizeof *(a).at)
-
-#define sb_ins(a,i,v) (sb_insn((a), (i), 1), (a).at[i] = (v))
-#define sb_insn(a,i,n) \
-		(sb_addn((a), (n)), \
-		 memmove((a).at + (i) + (n), (a).at + i, \
-		         (sb_len(a) - (n) - (i)) * sizeof *(a).at))
-
-#define STREACHY_BUFFER_H_INCLUDED
+#define TEST_H_INCLUDED
 #endif
-
 
 /*
 --------------------------------------------------------------------------------

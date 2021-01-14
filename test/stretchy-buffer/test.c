@@ -1,69 +1,86 @@
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
+#include <cauldron/test.h>
 #include <cauldron/stretchy-buffer.h>
 
 static int trng_write(void *ptr, size_t n);
 
+#define CMP(a,b) (a == b)
+#define RAND(x) (trng_write(&x, sizeof x), x)
+
+#define FUNC test_char
+#define NAME "Sb(char)"
+#define T char
+#include "xtest.h"
+#define FUNC test_short
+#define NAME "Sb(short)"
+#define T short
+#include "xtest.h"
+#define FUNC test_int
+#define NAME "Sb(int)"
+#define T int
+#include "xtest.h"
+#define FUNC test_long
+#define NAME "Sb(long)"
+#define T long
+#include "xtest.h"
+#define FUNC test_llong
+#define NAME "Sb(long long)"
+#define T long long
+#include "xtest.h"
+
+#undef RAND
+#define RAND(x) (trng_write(&x, sizeof x), isfinite(x) ? x : 42)
+
+#define FUNC test_float
+#define NAME "Sb(float)"
+#define T float
+#include "xtest.h"
+#define FUNC test_double
+#define NAME "Sb(double)"
+#define T double
+#include "xtest.h"
+#define FUNC test_ldouble
+#define NAME "Sb(long double)"
+#define T long double
+#include "xtest.h"
+
+#undef RAND
+#define RAND(x) (trng_write(&x, sizeof x), x)
+
+struct S1 { char c[42]; size_t x, y; };
+#define FUNC test_s1
+#define NAME "Sb(struct { char c[42]; size_t a, b; })"
+#define T struct S1
+#undef CMP
+#define CMP(a,b) (memcmp(a.c, b.c, sizeof a.c) == 0 && a.x == b.x && a.y == b.y)
+#include "xtest.h"
+
+union S2 { struct { char x,y,z; } s; int u; };
+#define FUNC test_s2
+#define NAME "Sb(union { struct { char x,y,z; } s; int u; }"
+#define T union S2
+#undef CMP
+#define CMP(a,b) (a.s.x == b.s.y && a.s.y == b.s.y && a.s.z == b.s.z)
+#include "xtest.h"
+
+
 int
 main(void)
 {
-	puts("\nTesting stretchy-buffer with:");
-
-	#define CMP(a,b) (a == b)
-	#define RAND(x) (trng_write(&x, sizeof x), x)
-
-	#define T char
-	puts("\tchar");
-	#include "xtest.h"
-	#define T short
-	puts("\tshort");
-	#include "xtest.h"
-	#define T int
-	puts("\tint");
-	#include "xtest.h"
-	#define T long
-	puts("\tlong");
-	#include "xtest.h"
-	#define T long long
-	puts("\tlong long");
-	#include "xtest.h"
-
-	#undef RAND
-	#define RAND(x) (trng_write(&x, sizeof x), isfinite(x) ? x : 42)
-
-	#define T float
-	puts("\tfloat");
-	#include "xtest.h"
-	#define T double
-	puts("\tdouble");
-	#include "xtest.h"
-	#define T double
-	puts("\tlong double");
-	#include "xtest.h"
-
-	#undef RAND
-	#define RAND(x) (trng_write(&x, sizeof x), x)
-
-	struct S1 { char c[42]; size_t x, y; };
-	#define T struct S1
-	puts("\tstruct { char c[42]; size_t a, b; };");
-	#undef CMP
-	#define CMP(a,b) (memcmp(a.c, b.c, sizeof a.c) == 0 && a.x == b.x && a.y == b.y)
-	#include "xtest.h"
-
-	struct S2 { union { struct { char x,y,z; } s; int u; } u; float c, d; };
-	#define T struct S2
-	puts("\tstruct S2 { union { struct { char x,y,z; } s; int u; } u; float c, d; };");
-	#undef CMP
-	#define CMP(a,b) \
-		(a.u.s.x == b.u.s.y && a.u.s.y == b.u.s.y && \
-		 a.u.s.z == b.u.s.z && a.c == b.c && a.d == b.d)
-	#include "xtest.h"
-
+	test_char();
+	test_short();
+	test_int();
+	test_long();
+	test_llong();
+	test_float();
+	test_double();
+	test_ldouble();
+	test_s1();
+	test_s2();
 	return EXIT_SUCCESS;
 }
 

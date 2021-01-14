@@ -1,5 +1,7 @@
 /* arena-allocator.h
- * New versions available at https://github.com/camel-cdr/cauldron */
+ * Olaf Bernstein <camel-cdr@protonmail.com>
+ * New versions available at https://github.com/camel-cdr/cauldron
+ */
 
 #ifndef ARENA_ALLOCATOR_H_INCLUDED
 
