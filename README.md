@@ -11,6 +11,7 @@ library                                             | description
 **[arena-allocator.h](cauldron/arena-allocator.h)** | drop in arena allocator
 **[arg.h](cauldron/arg.h)**                         | POSIX compliant argument parser based on plan9's arg(3)
 **[stretchy-buffer.h](cauldron/stretchy-buffer.h)** | generic dynamic array
+**[test.h](cauldron/test.h)**                       | minimal unit testing
 
 ## Licensing
 For all files without a integrated license [LICENSE](LICENSE) applies.
