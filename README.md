@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/camel-cdr/cauldron/workflows/Tests/badge.svg)](https://github.com/camel-cdr/cauldron/actions?workflow=Tests)
 
-A collection of single-file C libraries with the goal to be portable and understandable.
+A collection of single-file C libraries with the goal to be portable and modifiable.
 
 ## Libraries
 
