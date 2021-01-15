@@ -7,15 +7,6 @@
  * Note that any arguments passed to a sb_* function macros is potentially
  * evaluated multiple times except for arguments that have the name v in the
  * code bellow.
- *
- * Example:
- * 	Sb(int) fib;
- * 	sb_init(fib);
- * 	sb_push(fib, 1);
- * 	sb_push(fib, 1);
- *
- * 	for (int i = 2; i < 32; ++i)
- * 		sb_push(fib, fib.at[i-1] + fib.at[i-2]);
  */
 
 #ifndef STREACHY_BUFFER_H_INCLUDED
@@ -62,6 +53,31 @@
 #define STREACHY_BUFFER_H_INCLUDED
 #endif
 
+/*
+ * Example:
+ */
+
+#ifdef STREACHY_BUFFER_EXAMPLE
+
+#include <stdlib.h>
+#include <string.h>
+
+int
+main(void)
+{
+	int i;
+	Sb(int) fib;
+	sb_init(fib);
+	sb_push(fib, 1);
+	sb_push(fib, 1);
+
+	for (i = 2; i < 32; ++i)
+		sb_push(fib, fib.at[i-1] + fib.at[i-2]);
+
+	return 0;
+}
+
+#endif /* STREACHY_BUFFER_EXAMPLE */
 
 /*
 --------------------------------------------------------------------------------

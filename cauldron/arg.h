@@ -47,8 +47,12 @@ ARG_LONG_func(char **lp, const char *r)
 #define ARG_H_INCLUDED
 #endif
 
-/* Example */
+/*
+ * Example:
+ */
+
 #ifdef ARG_EXAMPLE
+
 int main(int argc, char **argv)
 {
 	char *argv0 = argv[0];
@@ -94,6 +98,7 @@ int main(int argc, char **argv)
 	while (*argv)
 		puts(*argv++);
 }
+
 #endif /* ARG_EXAMPLE */
 
 /*

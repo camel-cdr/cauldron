@@ -3,9 +3,6 @@
  * New versions available at https://github.com/camel-cdr/cauldron
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #ifndef TEST_H_INCLUDED
 
 #define TEST_BEGIN(func) TEST_BEGIN_NAME(func, #func)
@@ -41,7 +38,14 @@
 #define TEST_H_INCLUDED
 #endif
 
+/*
+ * Example:
+ */
+
 #ifdef TEST_EXAMPLE
+
+#include <stdio.h>
+#include <stdlib.h>
 
 TEST_BEGIN(test_a)
 {
