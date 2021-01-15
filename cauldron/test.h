@@ -1,4 +1,4 @@
-/* test.h
+/* test.h -- minimal unit testing
  * Olaf Bernstein <camel-cdr@protonmail.com>
  * New versions available at https://github.com/camel-cdr/cauldron
  */
@@ -8,7 +8,7 @@
 
 #ifndef TEST_H_INCLUDED
 
-#define TEST_BEGIN(func) TEST_BEGIN(func, #func)
+#define TEST_BEGIN(func) TEST_BEGIN_NAME(func, #func)
 
 #define TEST_BEGIN_NAME(func, name) \
 	void func(void) { \
@@ -31,16 +31,42 @@
 #define TEST_ASSERT_MSG(cnd, msg) \
 	do { \
 		if (!(cnd)) { \
-			if (nAsserts == 0) puts("FAILED"); \
+			if (nFailures++ == 0) puts("FAILED"); \
 			printf("\t%s:%d: %s\n", \
 			       __FILE__, __LINE__, (msg)); \
-			++nFailures; \
 		} \
 		++nAsserts; \
 	} while (0)
 
 #define TEST_H_INCLUDED
 #endif
+
+#ifdef TEST_EXAMPLE
+
+TEST_BEGIN(test_a)
+{
+	TEST_ASSERT(4 == 4);
+#if 0
+	TEST_ASSERT(3.141592 == 2.718281828);
+	TEST_ASSERT(42 == 69);
+#endif
+	TEST_ASSERT(3 == 1+2);
+} TEST_END
+
+TEST_BEGIN_NAME(test_b, "Testing b")
+{
+	TEST_ASSERT("test"[3] == 't');
+} TEST_END
+
+int
+main(void)
+{
+	test_a();
+	test_b();
+	return 0;
+}
+
+#endif /* TEST_EXAMPLE */
 
 /*
 --------------------------------------------------------------------------------
