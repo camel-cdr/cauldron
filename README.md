@@ -13,5 +13,10 @@ library                                             | description
 **[stretchy-buffer.h](cauldron/stretchy-buffer.h)** | generic dynamic array
 **[test.h](cauldron/test.h)**                       | minimal unit testing
 
+## Similar projects
+* [Klib](https://github.com/attractivechaos/klib)
+* [portable-snippets](https://github.com/nemequ/portable-snippets)
+* [stb](https://github.com/nothings/stb)
+
 ## Licensing
 For all files without a integrated license [LICENSE](LICENSE) applies.
