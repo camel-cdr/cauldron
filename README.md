@@ -1,8 +1,9 @@
 # cauldron
 
+A collection of single-file C libraries with the goal to be portable and modifiable.
+
 [![Tests](https://github.com/camel-cdr/cauldron/workflows/Tests/badge.svg)](https://github.com/camel-cdr/cauldron/actions?workflow=Tests)
 
-A collection of single-file C libraries with the goal to be portable and modifiable.
 
 ## Libraries
 
@@ -14,7 +15,7 @@ library                                             | description
 **[test.h](cauldron/test.h)**                       | minimal unit testing
 
 ## Similar projects
-* [Klib](https://github.com/attractivechaos/klib)
+* [klib](https://github.com/attractivechaos/klib)
 * [portable-snippets](https://github.com/nemequ/portable-snippets)
 * [stb](https://github.com/nothings/stb)
 
