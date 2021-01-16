@@ -3,8 +3,8 @@ TEST_BEGIN_NAME(FUNC, NAME)
 	size_t i;
 	T x;
 	Sb(T) a, b;
-	sb_init(a);
-	sb_init(b);
+	sb_initcap(a, 8);
+	sb_initcap(b, 8);
 
 	for (i = 0; i < 32; ++i)
 		sb_push(a, RAND(x));

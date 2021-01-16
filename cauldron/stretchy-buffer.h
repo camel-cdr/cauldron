@@ -24,10 +24,9 @@
 		 (a).at = realloc((a).at, (a)._cap * sizeof *(a).at)) : 0)
 #define sb_reserve(a,n) sb_setcap((a), (a)._cap + (n))
 
-#define sb_init(a) sb_initcap((a), 8)
-#define sb_initcap(a,n) ((a)._len = 0, (a)._cap = (n) + 8, \
+#define sb_initcap(a,n) ((a)._len = 0, (a)._cap = (n), \
                          (a).at = malloc((a)._cap * sizeof *(a).at))
-#define sb_initlen(a,n) ((a)._len = (n), (a)._cap = (n) + 8, \
+#define sb_initlen(a,n) ((a)._len = (n), (a)._cap = (n), \
                          (a).at = malloc((a)._cap * sizeof *(a).at))
 
 #define sb_push(a,v) (sb_setlen((a), (a)._len + 1), (a).at[(a)._len - 1] = (v))
