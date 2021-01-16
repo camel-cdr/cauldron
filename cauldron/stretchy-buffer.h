@@ -2,7 +2,7 @@
  * Olaf Bernstein <camel-cdr@protonmail.com>
  * New versions available at https://github.com/camel-cdr/cauldron
  *
- * Based on Sean Barrett's streachy-buffers and klib's kvec.
+ * Inspired by Sean Barrett's streachy-buffers and klib's kvec.
  *
  * Note that any arguments passed to a sb_* function macros is potentially
  * evaluated multiple times except for arguments that have the name v in the
