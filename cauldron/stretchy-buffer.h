@@ -66,8 +66,7 @@ main(void)
 {
 	/* You could also typedef Sb(int) to be able to pass it to functions */
 	int i;
-	Sb(int) fib;
-	sb_init(fib);
+	Sb(int) fib = { 0 };
 	sb_push(fib, 1);
 	sb_push(fib, 1);
 

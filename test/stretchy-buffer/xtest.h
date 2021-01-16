@@ -2,9 +2,7 @@ TEST_BEGIN_NAME(FUNC, NAME)
 {
 	size_t i;
 	T x;
-	Sb(T) a, b;
-	sb_initcap(a, 8);
-	sb_initcap(b, 8);
+	Sb(T) a = { 0 }, b = { 0 };
 
 	for (i = 0; i < 32; ++i)
 		sb_push(a, RAND(x));
@@ -95,6 +93,7 @@ TEST_BEGIN_NAME(FUNC, NAME)
 
 	for (i = 0; i < 32; ++i)
 		TEST_ASSERT(CMP(&a.at[i], &b.at[i]) == 0);
+
 
 	sb_free(a);
 	sb_free(b);
