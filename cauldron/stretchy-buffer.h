@@ -23,9 +23,9 @@
                          (a).at = malloc((a)._cap * sizeof *(a).at))
 
 #define sb_cpy(dest, src) \
-		(((dest)._len = (src)._len), ((dest)._len = (src)._len), \
-		 ((dest).at = malloc((dest)._cap * sizeof *(dest).at)), \
-		 (memcpy((dest).at, (src).at, (dest)._cap * sizeof *(dest).at)))
+		((dest)._len = (src)._len, (dest)._cap = (src)._cap, \
+		 (dest).at = malloc((dest)._cap * sizeof *(dest).at), \
+		 memcpy((dest).at, (src).at, (dest)._cap * sizeof *(dest).at))
 
 #define sb_setlen(a,n) ((a)._len = (n), sb_setcap((a), (a)._len))
 #define sb_setcap(a,n) ((a)._cap < (n) ? \
@@ -49,6 +49,14 @@
 #define sb_rm(a,i) sb_rmn((a), (i), 1)
 #define sb_rmn(a,i,n) memmove((a).at + (i), (a).at + (i) + (n), \
                                (((a)._len -= (n)) - (i)) * sizeof *(a).at)
+
+/* faster rm, that doesn't preserve order */
+/* n + i < sb_len && n >= 0 && i > 0*/
+#define sb_drop(a,i) ((a).at[i] = (a).at[(a)._len -= 1])
+#define sb_dropn(a,i,n) memmove((a).at + (i), \
+                                       (a).at + ((a)._len -= (n)) - 1, \
+                                       (n) * sizeof *(a).at)
+
 /* 0 <= i <= sb_len */
 #define sb_ins(a,i,v) (sb_insn((a), (i), 1), (a).at[i] = (v))
 #define sb_insn(a,i,n) \

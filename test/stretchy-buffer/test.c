@@ -9,7 +9,7 @@
 
 static int trng_write(void *ptr, size_t n);
 
-#define CMP(a,b) (a == b)
+#define EQ(a,b) (a == b)
 #define RAND(x) (trng_write(&x, sizeof x), x)
 
 #define FUNC test_char
@@ -56,16 +56,16 @@ struct S1 { char c[42]; size_t x, y; };
 #define FUNC test_s1
 #define NAME "Sb(struct { char c[42]; size_t a, b; })"
 #define T struct S1
-#undef CMP
-#define CMP(a,b) (memcmp(&a.c, &b.c, sizeof a.c) == 0 && a.x == b.x && a.y == b.y)
+#undef EQ
+#define EQ(a,b) (memcmp(&a.c, &b.c, sizeof a.c) == 0 && a.x == b.x && a.y == b.y)
 #include "xtest.h"
 
 union S2 { struct { char x,y,z; } s; int u; };
 #define FUNC test_s2
 #define NAME "Sb(union { struct { char x,y,z; } s; int u; })"
 #define T union S2
-#undef CMP
-#define CMP(a,b) (a.s.x == b.s.x && a.s.y == b.s.y && a.s.z == b.s.z)
+#undef EQ
+#define EQ(a,b) (a.s.x == b.s.x && a.s.y == b.s.y && a.s.z == b.s.z)
 #include "xtest.h"
 
 
