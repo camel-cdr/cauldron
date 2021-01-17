@@ -132,12 +132,12 @@ TEST_BEGIN_NAME(FUNC, NAME)
 	sb_rm(a, 0);
 	TEST_ASSERT(sb_len(a) == 0);
 
-	sb_dropn(b, 5, 5);
+	sb_rmn_unstable(b, 5, 5);
 	TEST_ASSERT(sb_len(b) == 5);
 	sb_free(a);
 
 	sb_cpy(a, b);
-	sb_drop(b, 3);
+	sb_rm_unstable(b, 3);
 	TEST_ASSERT(sb_len(b) == 4);
 	TEST_ASSERT(EQ(a.at[0], b.at[0]));
 	TEST_ASSERT(EQ(a.at[1], b.at[1]));

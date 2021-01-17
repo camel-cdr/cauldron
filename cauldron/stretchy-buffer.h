@@ -52,8 +52,8 @@
 
 /* faster rm, that doesn't preserve order */
 /* n + i < sb_len && n >= 0 && i > 0*/
-#define sb_drop(a,i) ((a).at[i] = (a).at[(a)._len -= 1])
-#define sb_dropn(a,i,n) memmove((a).at + (i), \
+#define sb_rm_unstable(a,i) ((a).at[i] = (a).at[(a)._len -= 1])
+#define sb_rmn_unstable(a,i,n) memmove((a).at + (i), \
                                        (a).at + ((a)._len -= (n)) - 1, \
                                        (n) * sizeof *(a).at)
 
