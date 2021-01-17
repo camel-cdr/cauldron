@@ -1,11 +1,11 @@
 .POSIX:
 
-CFLAGS=-I../ -lm
+CFLAGS=-I../ -lm -Wall -Wextra
 
 all: streachy-buffer
 	rm -f ./a.out
 
 streachy-buffer:
-	gcc ${CFLAGS} stretchy-buffer/test.c && ./a.out
+	${CC} ${CFLAGS} stretchy-buffer/test.c && ./a.out
 
 .PHONY: all random

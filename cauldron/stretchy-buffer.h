@@ -2,61 +2,69 @@
  * Olaf Bernstein <camel-cdr@protonmail.com>
  * New versions available at https://github.com/camel-cdr/cauldron
  *
- * Inspired by Sean Barrett's streachy-buffers and klib's kvec.
+ * Inspired by Sean Barrett's stretchy-buffers and klib's kvec.
  *
  * Note that any arguments passed to a sb_* function macros is potentially
  * evaluated multiple times except for arguments that have the name v in the
  * code bellow.
  */
 
-#ifndef STREACHY_BUFFER_H_INCLUDED
+#ifndef STRETCHY_BUFFER_H_INCLUDED
 
+/* can be zero initialized */
 #define Sb(T) struct { size_t _len, _cap; T *at; }
 
 #define sb_len(a) ((const size_t)(a)._len)
 #define sb_cap(a) ((const size_t)(a)._cap)
-#define sb_last(a) ((a).at[(a)._len - 1])
-
-#define sb_setlen(a,n) ((a)._len = (n), sb_setcap((a), (a)._len))
-#define sb_setcap(a,n) \
-	((a)._cap < (n) ? \
-		((a)._cap = ((n) > ((a)._cap <<= 1) ? (n) : (a)._cap), \
-		 (a).at = realloc((a).at, (a)._cap * sizeof *(a).at)) : 0)
-#define sb_reserve(a,n) sb_setcap((a), (a)._cap + (n))
 
 #define sb_initcap(a,n) ((a)._len = 0, (a)._cap = (n), \
                          (a).at = malloc((a)._cap * sizeof *(a).at))
 #define sb_initlen(a,n) ((a)._len = (n), (a)._cap = (n), \
                          (a).at = malloc((a)._cap * sizeof *(a).at))
 
+#define sb_cpy(dest, src) \
+		(((dest)._len = (src)._len), ((dest)._len = (src)._len), \
+		 ((dest).at = malloc((dest)._cap * sizeof *(dest).at)), \
+		 (memcpy((dest).at, (src).at, (dest)._cap * sizeof *(dest).at)))
+
+#define sb_setlen(a,n) ((a)._len = (n), sb_setcap((a), (a)._len))
+#define sb_setcap(a,n) ((a)._cap < (n) ? \
+		 ((a)._cap <<= 1, (((n) > (a)._cap) ? (a)._cap = (n) : 0), \
+		 (a).at = realloc((a).at, (a)._cap * sizeof *(a).at)) : 0)
+#define sb_reserve(a,n) sb_setcap((a), (a)._cap + (n))
+
 #define sb_push(a,v) (sb_setlen((a), (a)._len + 1), (a).at[(a)._len - 1] = (v))
 #define sb_addn(a,n) sb_setlen((a), (a)._len + (n))
 
-#define sb_pop(a) sb_popn((a), 1)
-#define sb_popn(a,n) ((a)._len = ((a)._len >= (n) ? (a)._len - (n) : 0))
-
-#define sb_free(a) free((a).at)
+#define sb_free(a) (free((a).at), \
+                    (a).at = 0, (a)._len = (a)._cap = 0)
 #define sb_shrink(a) ((a)._cap = (a)._len, \
                       (a).at = realloc((a).at, (a)._cap * sizeof *(a).at))
 
+/* sb_len >= n */
+#define sb_pop(a) sb_popn((a), 1)
+#define sb_popn(a,n) ((a)._len -= (n))
+
+/* sb_len <= n + i && n >= 0 && i > 0*/
 #define sb_rm(a,i) sb_rmn((a), (i), 1)
 #define sb_rmn(a,i,n) memmove((a).at + (i), (a).at + (i) + (n), \
                                (((a)._len -= (n)) - (i)) * sizeof *(a).at)
-
+/* 0 <= i <= sb_len */
 #define sb_ins(a,i,v) (sb_insn((a), (i), 1), (a).at[i] = (v))
 #define sb_insn(a,i,n) \
 		(sb_addn((a), (n)), \
 		 memmove((a).at + (i) + (n), (a).at + i, \
 		         (sb_len(a) - (n) - (i)) * sizeof *(a).at))
 
-#define STREACHY_BUFFER_H_INCLUDED
+
+#define STRETCHY_BUFFER_H_INCLUDED
 #endif
 
 /*
  * Example:
  */
 
-#ifdef STREACHY_BUFFER_EXAMPLE
+#ifdef STRETCHY_BUFFER_EXAMPLE
 
 #include <stdlib.h>
 #include <string.h>
@@ -76,7 +84,7 @@ main(void)
 	return 0;
 }
 
-#endif /* STREACHY_BUFFER_EXAMPLE */
+#endif /* STRETCHY_BUFFER_EXAMPLE */
 
 /*
 --------------------------------------------------------------------------------

@@ -15,11 +15,11 @@ TEST_BEGIN_NAME(FUNC, NAME)
 	TEST_ASSERT(sb_len(b) == 32);
 
 	for (i = 0; i < sb_len(a); ++i)
-		TEST_ASSERT(CMP(&a.at[i], &b.at[i]) == 0);
+		TEST_ASSERT(CMP(a.at[i], b.at[i]));
 
 	x = RAND(x);
 	sb_push(a, x);
-	TEST_ASSERT(CMP(&sb_last(a), &x) == 0);
+	TEST_ASSERT(CMP(a.at[sb_len(a) - 1], x));
 	TEST_ASSERT(sb_len(a) == 33);
 	sb_pop(a);
 	TEST_ASSERT(sb_len(a) == 32);
@@ -39,13 +39,13 @@ TEST_BEGIN_NAME(FUNC, NAME)
 	TEST_ASSERT(sb_len(b) == 10);
 
 	for (i = 0; i < sb_len(b); ++i)
-		TEST_ASSERT(CMP(&b.at[i], &a.at[i+32]) == 0);
+		TEST_ASSERT(CMP(b.at[i], a.at[i+32]));
 
 	sb_rmn(a, 0, 32);
 	TEST_ASSERT(sb_len(a) == 10);
 
 	for (i = 0; i < sb_len(a); ++i)
-		TEST_ASSERT(CMP(&a.at[i], &b.at[i]) == 0);
+		TEST_ASSERT(CMP(a.at[i], b.at[i]));
 
 	sb_setcap(a, 420);
 	TEST_ASSERT(sb_cap(a) >= 420);
@@ -73,7 +73,7 @@ TEST_BEGIN_NAME(FUNC, NAME)
 
 	TEST_ASSERT(sb_len(b) == 42);
 	for (i = 0; i < 10; ++i)
-		TEST_ASSERT(CMP(&a.at[i], &b.at[i]) == 0);
+		TEST_ASSERT(CMP(a.at[i], b.at[i]));
 
 
 	sb_free(a);
@@ -92,11 +92,49 @@ TEST_BEGIN_NAME(FUNC, NAME)
 	TEST_ASSERT(sb_len(a) == 32);
 
 	for (i = 0; i < 32; ++i)
-		TEST_ASSERT(CMP(&a.at[i], &b.at[i]) == 0);
+		TEST_ASSERT(CMP(a.at[i], b.at[i]));
 
+	sb_free(a);
+
+	sb_addn(a, 10);
+
+	for (i = 0; i < 10; ++i)
+		a.at[i] = RAND(x);
+	sb_cpy(b, a);
+
+	TEST_ASSERT(sb_len(a) == 10);
+	for (i = 0; i < 10; ++i)
+		TEST_ASSERT(CMP(a.at[i], b.at[i]));
+
+	sb_rm(a, 9);
+	sb_rm(a, 0);
+	TEST_ASSERT(sb_len(a) == 8);
+	for (i = 0; i < 8; ++i)
+		TEST_ASSERT(CMP(a.at[i], b.at[i + 1]));
+
+	sb_popn(a, 8);
+	TEST_ASSERT(sb_len(a) == 0);
+
+	sb_ins(a, 0, b.at[2]);
+	sb_ins(a, 0, b.at[0]);
+	sb_ins(a, 1, b.at[1]);
+	sb_ins(a, 3, b.at[3]);
+	TEST_ASSERT(sb_len(a) == 4);
+	for (i = 0; i < 4; ++i)
+		TEST_ASSERT(CMP(a.at[i], b.at[i]));
+
+	sb_rmn(a, 2, 2);
+	TEST_ASSERT(sb_len(a) == 2);
+	for (i = 0; i < 2; ++i)
+		TEST_ASSERT(CMP(a.at[i], b.at[i]));
+
+	sb_rm(a, 0);
+	sb_rm(a, 0);
+	TEST_ASSERT(sb_len(a) == 0);
 
 	sb_free(a);
 	sb_free(b);
+
 } TEST_END
 #undef T
 #undef NAME

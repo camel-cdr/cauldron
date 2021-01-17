@@ -56,7 +56,7 @@ struct S1 { char c[42]; size_t x, y; };
 #define NAME "Sb(struct { char c[42]; size_t a, b; })"
 #define T struct S1
 #undef CMP
-#define CMP(a,b) (memcmp(a.c, b.c, sizeof a.c) == 0 && a.x == b.x && a.y == b.y)
+#define CMP(a,b) (memcmp(&a.c, &b.c, sizeof a.c) == 0 && a.x == b.x && a.y == b.y)
 #include "xtest.h"
 
 union S2 { struct { char x,y,z; } s; int u; };
@@ -64,7 +64,7 @@ union S2 { struct { char x,y,z; } s; int u; };
 #define NAME "Sb(union { struct { char x,y,z; } s; int u; })"
 #define T union S2
 #undef CMP
-#define CMP(a,b) (a.s.x == b.s.y && a.s.y == b.s.y && a.s.z == b.s.z)
+#define CMP(a,b) (a.s.x == b.s.x && a.s.y == b.s.y && a.s.z == b.s.z)
 #include "xtest.h"
 
 
