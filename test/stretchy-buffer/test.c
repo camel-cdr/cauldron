@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -106,7 +107,6 @@ trng_write(void *ptr, size_t n)
 	return 1;
 }
 #elif defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
-#define _GNU_SOURCE
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
