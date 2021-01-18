@@ -74,3 +74,4 @@ main(void)
 	print.precision = 10;
 	print.s("b = ").vec3(b).s("\n");
 }
+

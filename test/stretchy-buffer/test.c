@@ -135,3 +135,4 @@ trng_write(void *ptr, size_t n)
 #else
 #error "platform not supported"
 #endif
+
