@@ -65,13 +65,19 @@ main(void)
 	print_init();
 	print_init_custom();
 
-	Vec2 a = { 1.0f/3.0f, -69.69f };
-	Vec3 b = { 3.141592f, 2.718281828f, 420.69f };
-	int x = 42;
+	{
+		float a = 3.141592, b = 2.718281828;
+		print.s("a + b = ").f(a).s(" + ").f(b).s(" = ").f(a+b).s("\n");
+	}
 
-	print.s("x = ").d(x).s("\n");
-	print.s("a = ").vec2(a).s("\n");
-	print.precision = 10;
-	print.s("b = ").vec3(b).s("\n");
+	{
+		Vec2 a = { 1.0f/3.0f, -69.69f };
+		Vec3 b = { 3.141592f, 2.718281828f, 420.69f };
+		int x = 42;
+
+		print.s("x = ").d(x).s("\n");
+		print.s("a = ").vec2(a).s("\n");
+		print.s("b = ").vec3(b).s("\n");
+	}
 }
 
