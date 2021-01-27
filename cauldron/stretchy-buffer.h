@@ -19,7 +19,7 @@
 
 #define sb_initcap(a,n) ((a)._len = 0, (a)._cap = (n), \
                          (a).at = malloc((a)._cap * sizeof *(a).at))
-#define sb_initlen(a,n) ((a)._len = (n), (a)._cap = (n), \
+#define sb_initlen(a,n) ((a)._len = (a)._cap = (n), \
                          (a).at = malloc((a)._cap * sizeof *(a).at))
 
 #define sb_cpy(dest, src) \
@@ -36,8 +36,7 @@
 #define sb_push(a,v) (sb_setlen((a), (a)._len + 1), (a).at[(a)._len - 1] = (v))
 #define sb_addn(a,n) sb_setlen((a), (a)._len + (n))
 
-#define sb_free(a) (free((a).at), \
-                    (a).at = 0, (a)._len = (a)._cap = 0)
+#define sb_free(a) (free((a).at), (a).at = 0, (a)._len = (a)._cap = 0)
 #define sb_shrink(a) ((a)._cap = (a)._len, \
                       (a).at = realloc((a).at, (a)._cap * sizeof *(a).at))
 
@@ -59,11 +58,9 @@
 
 /* 0 <= i <= sb_len */
 #define sb_ins(a,i,v) (sb_insn((a), (i), 1), (a).at[i] = (v))
-#define sb_insn(a,i,n) \
-		(sb_addn((a), (n)), \
-		 memmove((a).at + (i) + (n), (a).at + i, \
-		         (sb_len(a) - (n) - (i)) * sizeof *(a).at))
-
+#define sb_insn(a,i,n) (sb_addn((a), (n)), \
+                        memmove((a).at + (i) + (n), (a).at + i, \
+                        (sb_len(a) - (n) - (i)) * sizeof *(a).at))
 
 #define STRETCHY_BUFFER_H_INCLUDED
 #endif
