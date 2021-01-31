@@ -7,13 +7,14 @@
  *
  * 1. Introduction
  *     1.1 Library structure
+ *     1.2 API overview
  * 2. True random number generators
  * 3. Pseudorandom number generator
  *     3.1 Permuted Congruential Generators (PCGs)
  *     3.2 Romu PRNGs
  *     3.3 Xorshift PRNGs
  *     3.4 Middle Square Weyl Sequence PRNGs
- * 4. CRYPTOGRAPHICALLY SECURE PRNGs
+ * 4. Cryptographically secure PRNGs
  *     5.1 ChaCha stream cypher
  * 5. Random distributions
  *     5.1 Uniform integer distribution
@@ -22,7 +23,6 @@
  *         5.3.1 Ratio method
  *         5.3.2 Ziggurat method
  * 6. Shuffling
- * Appendix A: A On-the-fly PRNG
  * References
  * Licensing
  *     Alternative A - MIT License
@@ -43,6 +43,85 @@
  *       If you have trouble reading them just try using online tex engines
  *       like http://atomurl.net/math/.
  *     - Everything that isn't portable is guarded by ..._AVAILABLE macros.
+ *
+ * 1.2 API overview ------------------------------------------------------------
+ *
+ * True random number generator:
+ *     void trng_close(void);
+ *     int trng_write(void *ptr, size_t n);
+ *     int trng_write_notallzero(void *ptr, size_t n);
+ *
+ * Pseudorandom number generators:
+ *     Every PRNGs implements a common generic interface for initialization
+ *     and number generation,
+ *         void NAME_randomize(void *rng); // randomly initializes rng
+ *         uintXX_t NAME(void *rng); // returns next random number
+ *     a generator specific one for explicit initialization (seeding)
+ *         void NAME_init(TYPE *rng, [...]); // initialize rng with custom data
+ *     and optionally a jump function.
+ *         void NAME_jump(TYPE *rng, [...]); // skip multiple calls to the rng
+ *
+ *     The generators NAME is prefixed with the classification e.g.:
+ *         void prng32_pcg_randomize(void *rng);
+ *         uint32_t prng32_pcg(void *rng);
+ *         void prng32_pcg_init(PRNG32 *rng, uint64_t seed, uint64_t stream);
+ *         void prng32_pcg_jump(PRNG32 *rng, uint64_t by);
+ *
+ *     Supported are:
+ *       prng64_NAME       | Jump Support   prng64_NAME        | Jump Support
+ *       --------------------------------   ---------------------------------
+ *       pcg               | arbitrary      pcg                | arbitrary
+ *       romu_trio         | ---            romu_duo_jr        | ---
+ *       romu_quad         | ---            romu_duo           | ---
+ *       xoroshiro64(s/ss) | fixed          romu_trio          | ---
+ *       xoshiro128(s/ss)  | fixed          romu_quad          | ---
+ *                                          xoroshiro128(p/ss) | fixed
+ *       csprng32_NAME | Jump Support       xoshiro128(p/ss)   | fixed
+ *       ----------------------------
+ *       chacha        | ---
+ *
+ * Random distributions:
+ *
+ *     // random integer inside [0,r)
+ *     uint32_t dist_uniform_u32(uint32_t r, uint32_t (*)(void*), void *);
+ *     uint64_t dist_uniform_u64(uint64_t r, uint64_t (*)(void*), void *);
+ *
+ *     // random floating-point from a rng output
+ *     float dist_uniformf(uint_least32_t x);
+ *     double dist_uniform(uint_least64_t x);
+ *
+ *     // random floating-point in range [a,b] including all representable
+ *     // values
+ *     float dist_uniformf_dense(float a,b, uint64_t (*)(void*), void *);
+ *     double dist_uniform_dense(double a,b, uint64_t (*)(void*), void *);
+ *
+ *     // returns a random sample from the standard normal distribution
+ *     float dist_normalf(uint32_t (*)(void*), void *);
+ *     double dist_normal(uint32_t (*)(void*), void *);
+ *
+ *     // a faster dist_normal(f) implementation using a lookup table
+ *     void dist_normalf_zig_init(DistNormalfZig *);
+ *     void dist_normal_zig_init(DistNormalZig *);
+ *     float dist_normalf_zig(DistNormalfZig*, uint32_t (*)(void*), void*);
+ *     double dist_normal_zig(DistNormalZig*, uint64_t (*)(void*), void*);
+ *
+ * Shuffling:
+ *
+ *     // Shuffle an array with 'nel' elements of size 'size'
+ *     void shuf_arr(void *base, uint64_t nel, uint64_t size,
+ *                   uint64_t (*)(void*), void *);
+ *
+ *     Iterator that randomly traverses each element of an array exactly once:
+ *
+ *     // faster but with not that random
+ *         void shuf_weyl_init(ShufWeyl *, size_t mod, size_t seed[2]);
+ *         void shuf_weyl_randomize(ShufWeyl *, size_t mod);
+ *         size_t shuf_weyl(ShufWeyl *rng);
+ *
+ *         // a bit slower but more random
+ *         void shuf_lcg_init(ShufLcg *, size_t mod, size_t seed[3]);
+ *         void shuf_lcg_randomize(ShufLcg *, size_t mod);
+ *         size_t shuf_lcg(ShufLcg *rng);
  */
 
 #if !defined(RANDOM_H_INCLUDED)
