@@ -2195,19 +2195,18 @@ shuf_lcg(ShufLcg *rng)
  *
  * <10> Bernard Widynski (2020):
  *      "Middle Square Weyl Sequence RNG"
- *      URL: https://arxiv.org/abs/1704.00358
+ *      URL: "https://arxiv.org/abs/1704.00358"
  *
  * <11> Daniel Lemire (2018):
  *      "Fast Random Integer Generation in an Interval"
- *      URL: https://arxiv.org/abs/1805.10941
+ *      URL: "https://arxiv.org/abs/1805.10941"
  *
  * <12> Wikipedia (January 2021): "IEEE 754"
- *      URL: https://en.wikipedia.org/wiki/IEEE_754
+ *      URL: "https://en.wikipedia.org/wiki/IEEE_754"
  *
  * <13> Frédéric Goualard (2020):
- *      "Generating Random Floating-Point Numbers byDividing Integers:
- *       a Case Study"
- *      URL: https://hal.archives-ouvertes.fr/hal-02427338/file/fpnglib_iccs.pdf
+ *      "Generating Random Floating-Point Numbers byDividing Integers: a Case Study"
+ *      DOI: "https://doi.org/10.1007/978-3-030-50417-5_2"
  *
  * <14> AllenB. Downey (2007):
  *      "Generating Pseudo-random Floating-Point Values"
@@ -2226,15 +2225,12 @@ shuf_lcg(ShufLcg *rng)
  *      University of Oxford: 77.
  *
  * <18> A. J. Kindermann, J. F. Monahan (1976):
- *      "Computer Generation of Random Variables Using the Ratio of Uniform
- *       Deviates"
- *      URL: http://static.stevereads.com/papers_to_read/computer_generation_
- *           of_random_variables_using_the_ratio_of_uniform_deviates.pdf
+ *      "Computer Generation of Random Variables Using the Ratio of Uniform Deviates"
+ *      DOI: https://doi.org/10.1145/355744.355750
  *
  * <19> Joseph L. Leva (1991):
  *      "A Fast Normal Random Number Generator"
- *      URL: http://citeseerx.ist.psu.edu/viewdoc/download?
- *           doi=10.1.1.544.5806&rep=rep1&type=pdf
+ *      DOI: 10.1.1.544.5806
  *
  * <20> Marsaglia, George (1964):
  *      "Generating a variable for the trail of the normal distribution"
