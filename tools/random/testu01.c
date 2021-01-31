@@ -1,70 +1,71 @@
-/* test.h -- minimal unit testing
- * Olaf Bernstein <camel-cdr@protonmail.com>
- * New versions available at https://github.com/camel-cdr/cauldron
- */
-
-#ifndef TEST_H_INCLUDED
-
-static unsigned test__nasserts, test__nfailures;
-
-#define TEST_BEGIN(name) \
-	test__nasserts = test__nfailures = 0; \
-	printf("Testing %s ... ", name);
-
-#define TEST_END() \
-	if (test__nfailures == 0) { \
-		puts("PASSED"); \
-	} else { \
-		printf("\t-> %u assertions, %u failures\n", \
-			test__nasserts, test__nfailures); \
-		exit(EXIT_FAILURE); \
-	}
-
-#define TEST_ASSERT(cnd) TEST_ASSERT_MSG((cnd), (#cnd))
-#define TEST_ASSERT_MSG(cnd, msg) \
-	do { \
-		if (!(cnd)) { \
-			if (test__nfailures++ == 0) puts("FAILED"); \
-			printf("\t%s:%d:\n", __FILE__, __LINE__); \
-			printf msg; \
-			putchar('\n'); \
-		} \
-		++test__nasserts; \
-	} while (0)
-
-#define TEST_H_INCLUDED
-#endif
-
-/*
- * Example:
- */
-
-#ifdef TEST_EXAMPLE
-
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
+#include <TestU01.h>
 
-int
-main(void)
+struct Battery {
+	void (*f)(unif01_Gen *gen);
+	char *name, *desc;
+} batteries[] = {
+	{ bbattery_SmallCrush, "SmallCrush", "takes ~1m" },
+	{ bbattery_Crush,      "Crush",      "takes ~1h" },
+	{ bbattery_BigCrush,   "BigCrush",   "takes ~8h" },
+};
+
+void usage(char *argv0)
 {
-	TEST_BEGIN("Testing a");
-	TEST_ASSERT(4 == 4);
-#if 0
-	TEST_ASSERT(3.141592 == 2.718281828);
-	TEST_ASSERT(42 == 69);
-#endif
-	TEST_ASSERT(3 == 1+2);
-	TEST_END();
-
-	TEST_BEGIN("Testing b");
-	TEST_ASSERT("test"[3] == 't');
-	TEST_END();
-
-	return 0;
+	size_t i;
+	printf("usage: %s BATTERY\n", argv0);
+	puts("Reads data stream from standart input.");
+	puts("Batteries:");
+	for (i = 0; i < sizeof batteries / sizeof *batteries; ++i)
+		printf("\t'%s': %s\n", batteries[i].name, batteries[i].desc);
+	puts("Execution time tested on an AMD Athlon 64 4000+ Processor");
+	puts("with a clock speed of 2400 MHz running Linux.");
 }
 
-#endif /* TEST_EXAMPLE */
+uint32_t next(void)
+{
+	uint32_t res;
+	fread(&res, sizeof res, 1, stdin);
+	return res;
+}
+
+int main(int argc, char **argv)
+{
+	char **it = argv + 1;
+
+	if (!*it || argc <= 1) {
+		usage(argv[0]);
+		return EXIT_FAILURE;
+	}
+
+	freopen(0, "rb", stdin);
+
+	unif01_Gen* gen = unif01_CreateExternGenBits("stdin", next);
+
+	do {
+		size_t i;
+		for (i = 0; i < sizeof batteries / sizeof *batteries; ++i) {
+			if (strcmp(*it, batteries[i].name) == 0) {
+				batteries[i].f(gen);
+				fflush(stdout);
+				break;
+			}
+		}
+		if (i == sizeof batteries / sizeof *batteries) {
+			fprintf(stderr, "%s error: Unknown test battery '%s'\n\n",
+					argv[0], *it);
+			usage(argv[0]);
+			return EXIT_FAILURE;
+		}
+	} while (*++it);
+
+	unif01_DeleteExternGenBits(gen);
+	return EXIT_SUCCESS;
+}
 
 /*
 --------------------------------------------------------------------------------
@@ -108,4 +109,3 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org/>
 --------------------------------------------------------------------------------
 */
-

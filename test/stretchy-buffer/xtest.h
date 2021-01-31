@@ -1,8 +1,11 @@
-TEST_BEGIN_NAME(FUNC, NAME)
+void
+FUNC(void)
 {
 	size_t i;
 	T x;
 	Sb(T) a = { 0 }, b = { 0 };
+
+	TEST_BEGIN(NAME);
 
 	for (i = 0; i < 32; ++i)
 		sb_push(a, RAND(x));
@@ -147,8 +150,8 @@ TEST_BEGIN_NAME(FUNC, NAME)
 
 	sb_free(a);
 	sb_free(b);
-
-} TEST_END
+	TEST_END();
+}
 #undef T
 #undef NAME
 #undef FUNC

@@ -1,70 +1,121 @@
-/* test.h -- minimal unit testing
- * Olaf Bernstein <camel-cdr@protonmail.com>
- * New versions available at https://github.com/camel-cdr/cauldron
- */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#ifndef TEST_H_INCLUDED
+#include <cauldron/random.h>
 
-static unsigned test__nasserts, test__nfailures;
-
-#define TEST_BEGIN(name) \
-	test__nasserts = test__nfailures = 0; \
-	printf("Testing %s ... ", name);
-
-#define TEST_END() \
-	if (test__nfailures == 0) { \
-		puts("PASSED"); \
-	} else { \
-		printf("\t-> %u assertions, %u failures\n", \
-			test__nasserts, test__nfailures); \
-		exit(EXIT_FAILURE); \
-	}
-
-#define TEST_ASSERT(cnd) TEST_ASSERT_MSG((cnd), (#cnd))
-#define TEST_ASSERT_MSG(cnd, msg) \
-	do { \
-		if (!(cnd)) { \
-			if (test__nfailures++ == 0) puts("FAILED"); \
-			printf("\t%s:%d:\n", __FILE__, __LINE__); \
-			printf msg; \
-			putchar('\n'); \
-		} \
-		++test__nasserts; \
-	} while (0)
-
-#define TEST_H_INCLUDED
-#endif
+#include "msws.h"
 
 /*
  * Example:
+ * ./rng <name> | ./testu01 SmallCrush
+ * ./rng <name> | ./RNG_test stdin
  */
 
-#ifdef TEST_EXAMPLE
+#define BUFSIZE (1024*1024)
+void *buffer;
+void *bufferend;
 
-#include <stdio.h>
-#include <stdlib.h>
+#define RANDOM_X32(type, func, rand) \
+	MAKE_RNG(func, type, rand, 32)
+#define RANDOM_X64(type, func, rand) \
+	MAKE_RNG(func, type, rand, 64)
+
+#define MAKE_RNG(func, type, rand, n) \
+	static void \
+	run_##func(void) \
+	{ \
+		type rng; \
+		rand(&rng); \
+		while (1) { \
+			uint##n##_t *p = buffer; \
+			while ((void*)p < bufferend) \
+				*p++ = func(&rng); \
+			fwrite(buffer, 1, BUFSIZE, stdout); \
+		} \
+	}
+
+#include <cauldron/random-xmacros.h>
+
+#undef MAKE_RNG
+
+#define MAKE_RNG(func, type, n) \
+	static void \
+	run_##func(void) \
+	{ \
+		type rng; \
+		trng_write(&rng, sizeof rng); \
+		while (1) { \
+			uint##n##_t *p = buffer; \
+			while ((void*)p < bufferend) \
+				*p++ = func(&rng); \
+			fwrite(buffer, 1, BUFSIZE, stdout); \
+		} \
+	}
+
+MAKE_RNG(msws32_64bit, MsWs32_64bit, 32);
+MAKE_RNG(msws64_128bit, MsWs64_128bit, 64);
+MAKE_RNG(msws64_2x64bit, MsWs64_2x64bit, 64);
+
+#undef MAKE_RNG
 
 
-int
-main(void)
+static void
+run_trng_write(void)
 {
-	TEST_BEGIN("Testing a");
-	TEST_ASSERT(4 == 4);
-#if 0
-	TEST_ASSERT(3.141592 == 2.718281828);
-	TEST_ASSERT(42 == 69);
-#endif
-	TEST_ASSERT(3 == 1+2);
-	TEST_END();
-
-	TEST_BEGIN("Testing b");
-	TEST_ASSERT("test"[3] == 't');
-	TEST_END();
-
-	return 0;
+	while (1) {
+		trng_write(buffer, BUFSIZE);
+		fwrite(buffer, 1, BUFSIZE, stdout);
+	}
 }
 
-#endif /* TEST_EXAMPLE */
+
+static struct {
+	char *name;
+	void (*rng)(void);
+} rngs[] = {
+#define MAKE_RNG(func, type, rand, n) \
+	{ #func, run_##func },
+#include <cauldron/random-xmacros.h>
+#undef MAKE_RNG
+	{ "msws32_64bit", run_msws32_64bit },
+	{ "msws64_128bit", run_msws64_128bit },
+	{ "msws64_2x64bit", run_msws64_2x64bit },
+	{ "trng_write", run_trng_write },
+};
+
+static void list(void)
+{
+	size_t i;
+	for (i = 0; i < sizeof rngs / sizeof *rngs; ++i)
+		puts(rngs[i].name);
+}
+
+int
+main(int argc, char **argv)
+{
+	size_t i;
+	char *name = argv[1];
+
+	(void)argc;
+
+	buffer = malloc(BUFSIZE);
+	bufferend = (void*)((char*)buffer + BUFSIZE);
+
+	if (!name) {
+		list();
+		return EXIT_FAILURE;
+	}
+
+	for (i = 0; i < sizeof rngs / sizeof *rngs; ++ i) {
+		if (strcmp(name, rngs[i].name) == 0) {
+			rngs[i].rng();
+			return EXIT_SUCCESS;
+		}
+	}
+	list();
+	return EXIT_FAILURE;
+}
 
 /*
 --------------------------------------------------------------------------------
@@ -108,4 +159,3 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org/>
 --------------------------------------------------------------------------------
 */
-

@@ -4,10 +4,9 @@
 #include <string.h>
 #include <math.h>
 
-#include <cauldron/test.h>
+#include <cauldron/random.h>
 #include <cauldron/stretchy-buffer.h>
-
-static int trng_write(void *ptr, size_t n);
+#include <cauldron/test.h>
 
 #define EQ(a,b) (a == b)
 #define RAND(x) (trng_write(&x, sizeof x), x)
@@ -84,55 +83,4 @@ main(void)
 	test_s2();
 	return EXIT_SUCCESS;
 }
-
-#ifdef _WIN32
-#include <windows.h>
-#include <ntsecapi.h>
-int
-trng_write(void *ptr, size_t n)
-{
-	unsigned char *p;
-	for (p = ptr; n > ULONG_MAX; n -= ULONG_MAX, p += ULONG_MAX)
-		if (!RtlGenRandom(p, n))
-			return 0;
-	RtlGenRandom(p, n);
-	return 1;
-}
-#elif defined(__OpenBSD__) || defined(__CloudABI__) || defined(__wasi__)
-#include <stdlib.h>
-int
-trng_write(void *ptr, size_t n)
-{
-	arc4random_buf(ptr, n);
-	return 1;
-}
-#elif defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
-int
-trng_write(void *ptr, size_t n)
-{
-	static int urandomFd = -1;
-	unsigned char *p;
-	ssize_t r;
-
-	for (p = ptr, r = 0; n > 0; n -= (size_t)r, p += r) {
-		#ifdef SYS_getrandom
-		if ((r = syscall(SYS_getrandom, p, n, 0)) > 0)
-			continue;
-		#endif
-		if (urandomFd < 0)
-			if ((urandomFd = open("/dev/urandom", O_RDONLY)) < 0)
-				return 0;
-		if ((r = read(urandomFd, p, n)) < 0)
-			return 0;
-	}
-	return 1;
-}
-#else
-#error "platform not supported"
-#endif
 

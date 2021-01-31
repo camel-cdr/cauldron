@@ -1,70 +1,47 @@
-/* test.h -- minimal unit testing
- * Olaf Bernstein <camel-cdr@protonmail.com>
- * New versions available at https://github.com/camel-cdr/cauldron
- */
-
-#ifndef TEST_H_INCLUDED
-
-static unsigned test__nasserts, test__nfailures;
-
-#define TEST_BEGIN(name) \
-	test__nasserts = test__nfailures = 0; \
-	printf("Testing %s ... ", name);
-
-#define TEST_END() \
-	if (test__nfailures == 0) { \
-		puts("PASSED"); \
-	} else { \
-		printf("\t-> %u assertions, %u failures\n", \
-			test__nasserts, test__nfailures); \
-		exit(EXIT_FAILURE); \
-	}
-
-#define TEST_ASSERT(cnd) TEST_ASSERT_MSG((cnd), (#cnd))
-#define TEST_ASSERT_MSG(cnd, msg) \
-	do { \
-		if (!(cnd)) { \
-			if (test__nfailures++ == 0) puts("FAILED"); \
-			printf("\t%s:%d:\n", __FILE__, __LINE__); \
-			printf msg; \
-			putchar('\n'); \
-		} \
-		++test__nasserts; \
-	} while (0)
-
-#define TEST_H_INCLUDED
-#endif
-
-/*
- * Example:
- */
-
-#ifdef TEST_EXAMPLE
-
+#include <float.h>
+#include <math.h>
 #include <stdio.h>
-#include <stdlib.h>
 
+#define M_SQRTPI_OVER_SQRT2 1.253314137315500251207882642405522627L
+#define M_1_OVER_SQRT2 0.707106781186547524400844362104849039L
+
+#define ziggurat_f(x) expl(-0.5 * x * x)
+#define ziggurat_f_inv(y) sqrtl(-2 * logl(y))
+#define ziggurat_f_int_x_to_inf(x) \
+	-(M_SQRTPI_OVER_SQRT2 * (erf(x * M_1_OVER_SQRT2) - 1))
 
 int
 main(void)
 {
-	TEST_BEGIN("Testing a");
-	TEST_ASSERT(4 == 4);
-#if 0
-	TEST_ASSERT(3.141592 == 2.718281828);
-	TEST_ASSERT(42 == 69);
-#endif
-	TEST_ASSERT(3 == 1+2);
-	TEST_END();
+	unsigned count = 0;
+	printf("#define ZIGGURAT_COUNT ");
+	scanf("%u", &count);
 
-	TEST_BEGIN("Testing b");
-	TEST_ASSERT("test"[3] == 't');
-	TEST_END();
+	long double min = 0, max = 10, pmin, pmax;
+	long double area, R;
+	do {
+		int tobig = 0;
 
-	return 0;
+		pmin = min;
+		pmax = max;
+
+		R = 0.5 * (min + max);
+		long double x = R;
+		area = R * ziggurat_f(R) + ziggurat_f_int_x_to_inf(R);
+		for (unsigned i = 1; i < count && !tobig; i++) {
+			x = area / x + ziggurat_f(x);
+			if (x > 1) tobig = 1;
+			else       x = ziggurat_f_inv(x);
+		}
+		if (tobig)
+			min = R;
+		else
+			max = R;
+	} while (pmin < R && R < pmax);
+
+	printf("#define ZIGGURAT_R     %.*Lg\n", DECIMAL_DIG, R);
+	printf("#define ZIGGURAT_AREA  %.*Lg\n", DECIMAL_DIG, area);
 }
-
-#endif /* TEST_EXAMPLE */
 
 /*
 --------------------------------------------------------------------------------
@@ -108,4 +85,3 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org/>
 --------------------------------------------------------------------------------
 */
-
