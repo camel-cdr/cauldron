@@ -51,6 +51,11 @@
  *     int trng_write(void *ptr, size_t n);
  *     int trng_write_notallzero(void *ptr, size_t n);
  *
+ *     // compatibility functions to allow TRNG to interface with the
+ *     // distributions
+ *     uint32_t trng_u32(void *);
+ *     uint64_t trng_u64(void *);
+ *
  * Pseudorandom number generators:
  *     Every PRNGs implements a common generic interface for initialization
  *     and number generation,
@@ -86,7 +91,7 @@
  *     uint32_t dist_uniform_u32(uint32_t r, uint32_t (*)(void*), void *);
  *     uint64_t dist_uniform_u64(uint64_t r, uint64_t (*)(void*), void *);
  *
- *     // random floating-point from a rng output
+ *     // random floating-point from the output of an RNG output
  *     float dist_uniformf(uint_least32_t x);
  *     double dist_uniform(uint_least64_t x);
  *
@@ -95,7 +100,7 @@
  *     float dist_uniformf_dense(float a,b, uint64_t (*)(void*), void *);
  *     double dist_uniform_dense(double a,b, uint64_t (*)(void*), void *);
  *
- *     // returns a random sample from the standard normal distribution
+ *     // random sample from the standard normal distribution
  *     float dist_normalf(uint32_t (*)(void*), void *);
  *     double dist_normal(uint32_t (*)(void*), void *);
  *
@@ -113,7 +118,7 @@
  *
  *     Iterator that randomly traverses each element of an array exactly once:
  *
- *     // faster but with not that random
+ *         // faster but with not that random
  *         void shuf_weyl_init(ShufWeyl *, size_t mod, size_t seed[2]);
  *         void shuf_weyl_randomize(ShufWeyl *, size_t mod);
  *         size_t shuf_weyl(ShufWeyl *rng);
@@ -266,6 +271,30 @@ trng_write_notallzero(void *ptr, size_t n)
 	}
 	return 0;
 }
+
+/* trng_u32/64 are used to be api compatible with the PRNGs */
+
+#if UINT32_MAX
+static uint32_t
+trng_u32(void *ptr)
+{
+	uint32_t x;
+	(void)ptr;
+	trng_write(&x, sizeof x);
+	return x;
+}
+#endif /* UINT32_MAX */
+
+#if UINT64_MAX
+static uint64_t
+trng_u64(void *ptr)
+{
+	uint64_t x;
+	(void)ptr;
+	trng_write(&x, sizeof x);
+	return x;
+}
+#endif /* UINT64_MAX */
 
 /*
  * 3. Pseudorandom number generator ============================================
