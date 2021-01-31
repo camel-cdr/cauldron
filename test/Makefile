@@ -1,6 +1,6 @@
 .POSIX:
 
-CC=gcc
+CC=clang
 CFLAGS=-I../ -lm -Wall -Wextra -Wno-unused
 
 all: streachy-buffer random
