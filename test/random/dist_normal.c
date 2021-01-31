@@ -102,7 +102,7 @@ sample_size(double t, double v, double d)
 /* test for the mean M of a gaussion distribution with known variance V.
  * The hypothesis is that the values are in [m-dm, m+dm]. */
 static void
-test_mean(double m, double dm, double v, char *msg, double (*f)(void))
+test_mean(double m, double dm, double v, double (*f)(void))
 {
 	double s, t, d;
 	unsigned n, steps;
@@ -128,7 +128,7 @@ test_mean(double m, double dm, double v, char *msg, double (*f)(void))
 
 /* Test for the parameter P of a binomial distribution. */
 static void
-test_variance(double p, double dp, char *msg, unsigned (*f)(void))
+test_variance(double p, double dp, unsigned (*f)(void))
 {
 	double e, s, x, t;
 	unsigned n, k, steps;
@@ -189,11 +189,11 @@ static void
 test_norm(double (*norm)(void))
 {
 	distNormal = norm;
-	test_mean(0, 0.03, 1, "mean of N(0,2)", test_norm1);
-	test_variance(0.2397500611, 0.005, "variance of N(0,2)", test_norm2);
-	test_variance(0.0169474268, 0.001, "tails of N(0,2)", test_norm3);
-	test_mean(0, 0.05, 4, "mean of pair differences", test_norm4);
-	test_variance(0.3085375387, 0.01, "variance of pair differences", test_norm5);
+	test_mean(0, 0.03, 1, test_norm1);
+	test_variance(0.2397500611, 0.005, test_norm2);
+	test_variance(0.0169474268, 0.001, test_norm3);
+	test_mean(0, 0.05, 4, test_norm4);
+	test_variance(0.3085375387, 0.01,test_norm5);
 }
 
 
