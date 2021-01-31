@@ -301,15 +301,15 @@ trng_write_notallzero(void *ptr, size_t n)
  *
  * LCGs are one of the oldest and best-known PRNGs and have the format:
  *     state := (a * state + c) \mod m
- * The following conditions must be satisfied by a and c, to obtain the maximal
- * period length m:
- *     - c is coprime to m
- *     - a-1 is divisible by all prime factors of m
- *     - a-1 is divisible by 4 if m is divisible by 4
+ * The following conditions must be satisfied by 'a' and 'c', to obtain the
+ * maximal period length 'm':
+ *     - 'c' is coprime to 'm'
+ *     - a-1 is divisible by all prime factors of 'm'
+ *     - a-1 is divisible by 4 if 'm' is divisible by 4
  * If we use the two to the power of bits in our state variable as the modulo,
  * unsigned integer overflow will automatically apply the effect of modulo and
  * lets us omit the expensive instruction. Now it's trivial to find suitable
- * values for c because every smaller odd number is coprime to a power-of-two.
+ * values for 'c' because every smaller odd number is coprime to a power-of-two.
  * We'll use this to implement different streams for our PCG generators.
  *
  * Values for 'a', with good statistical properties, can be determined using the
@@ -974,6 +974,10 @@ prng64_xoshiro256_jump(PRNG64Xoshiro256 *rng, const uint64_t jump[4])
  * internal type twice as large as the output type.
  * Though it's fast enough that you could just combine two consecutive outputs
  * or distinct generators to subvert this limitation.
+ *
+ * Period: Full size of x
+ * BigCrush: Passes
+ * PractRand: Passes (TODO)
  */
 
 /*
@@ -1309,7 +1313,7 @@ dist_uniform(uint_least64_t x)
  *
  * This property is obtained by randomizing the mantissa uniformly and
  * randomizing the exponent, with the probability 2^{-x} for every possible
- * exponent x.
+ * exponent 'x'.
  * This can be achieved programmatically by generating random bits and
  * decrementing the maximal exponent until one of the generated bits is set,
  * thus halving the probability of the next decrement every time,
@@ -1397,8 +1401,8 @@ dist_uniform(uint_least64_t x)
 /* Otherwise, we'll use a lookup table and a De Bruijn sequence to calculate
  * the number of trailing zeros. <15>
  *
- * Given an initial random number n, we calculate m = n & -n,
- * this will only set the last set bit in n inside m.
+ * Given an initial random number 'n', we calculate m = n & -n,
+ * this will only set the last set bit in 'n' inside 'm'.
  * Now we have a distinct value for every possible number of trailing zeros and
  * a perfect hash function can be constructed that maps every potential value of
  * m to the number of trailing zeros.
@@ -1416,7 +1420,7 @@ dist_uniform(uint_least64_t x)
  *                                       010  = 2
  *                                        100 = 4
  *
- * m is a power-of-two, as only one bit is set, hence a multiplication with the
+ * 'm' is a power-of-two, as only one bit is set, hence a multiplication with the
  * De Bruijn constant shifts it by its power.
  * Thus we get a distinct De Bruijn subsequence for every possible power and the
  * index can now be determined via a lookup table. */
@@ -1833,10 +1837,10 @@ dist_normal(uint64_t (*rand64)(void*), void *rng)
  *
  * To calculate the coordinates of the boxes given N boxes,
  * we need to find the corresponding constant R=x_1,
- * from which we can compute the area V and the rest of the coordinates:
+ * from which we can compute the area 'V' and the rest of the coordinates:
  *   V = R * f(R) - sqrt(pi) * (sqrt(2) * erf(R/sqrt(2)) - sqrt(2)) / 2
  *                        x_n = f^-1(V / x_{n-1} + f(x_{n-1}))
- * The calculation of R is a bit more tricky, we need to solve the expression
+ * The calculation of 'R' is a bit more tricky, we need to solve the expression
  * above for x_N=0, which can be done by arithmetically narrowing down on value
  * for R (code under tools/random/ziggurat-constants.c).
  *
@@ -2099,7 +2103,7 @@ shuf_weyl(ShufWeyl *rng)
 /* We can also use LCGs (see 3.1 for an in-depth explanation) for better quality
  * shuffling.
  * We'll only work with power-of-two moduli because the computation of a is
- * very expensive and requires the prime factorization of m.
+ * very expensive and requires the prime factorization of 'm'.
  * This means that we'll need to reject numbers that aren't inside the range.
  *
  * The LCG approach can generate
@@ -2190,40 +2194,55 @@ shuf_lcg(ShufLcg *rng)
  *           anl-rn-arb-stride.pdf"
  *
  * <10> Bernard Widynski (2020):
- *     "Middle Square Weyl Sequence RNG"
- *     URL: https://arxiv.org/abs/1704.00358
+ *      "Middle Square Weyl Sequence RNG"
+ *      URL: https://arxiv.org/abs/1704.00358
  *
  * <11> Daniel Lemire (2018):
- *     "Fast Random Integer Generation in an Interval"
- *     URL: https://arxiv.org/abs/1805.10941
+ *      "Fast Random Integer Generation in an Interval"
+ *      URL: https://arxiv.org/abs/1805.10941
  *
- * <12> https://en.wikipedia.org/wiki/IEEE_754
+ * <12> Wikipedia (January 2021): "IEEE 754"
+ *      URL: https://en.wikipedia.org/wiki/IEEE_754
  *
- * <13> https://hal.archives-ouvertes.fr/hal-02427338/file/fpnglib_iccs.pdf
+ * <13> Frédéric Goualard (2020):
+ *      "Generating Random Floating-Point Numbers byDividing Integers:
+ *       a Case Study"
+ *      URL: https://hal.archives-ouvertes.fr/hal-02427338/file/fpnglib_iccs.pdf
  *
- * <14> http://allendowney.com/research/rand/downey07randfloat.pdf
+ * <14> AllenB. Downey (2007):
+ *      "Generating Pseudo-random Floating-Point Values"
+ *      URL: http://allendowney.com/research/rand/downey07randfloat.pdf
  *
- * <15> http://supertech.csail.mit.edu/papers/debruijn.pdf
+ * <15> Charles E. Leiserson, Harald Prokop, Keith H. Randall (1998):
+ *      "Usign de Bruijn Sequences to Index a 1 in a Computer Word"
+ *      URL: http://supertech.csail.mit.edu/papers/debruijn.pdf
  *
  * <16> Marsaglia, George, and Wai Wan Tsang (2000):
- *     "The ziggurat method for generating random variables."
- *     Journal of statistical software 5.8: 1-7.
+ *      "The ziggurat method for generating random variables."
+ *      Journal of statistical software 5.8: 1-7.
  *
  * <17> Doornik, Jurgen A (2005):
- *     "An improved ziggurat method to generate normal random samples."
- *     University of Oxford: 77.
+ *      "An improved ziggurat method to generate normal random samples."
+ *      University of Oxford: 77.
  *
- * <18> http://static.stevereads.com/papers_to_read/computer_generation_of_random_variables_using_the_ratio_of_uniform_deviates.pdf
+ * <18> A. J. Kindermann, J. F. Monahan (1976):
+ *      "Computer Generation of Random Variables Using the Ratio of Uniform
+ *       Deviates"
+ *      URL: http://static.stevereads.com/papers_to_read/computer_generation_
+ *           of_random_variables_using_the_ratio_of_uniform_deviates.pdf
  *
- * <19> http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.544.5806&rep=rep1&type=pdf
- *
- *
+ * <19> Joseph L. Leva (1991):
+ *      "A Fast Normal Random Number Generator"
+ *      URL: http://citeseerx.ist.psu.edu/viewdoc/download?
+ *           doi=10.1.1.544.5806&rep=rep1&type=pdf
  *
  * <20> Marsaglia, George (1964):
- *     "Generating a variable for the trail of the normal distribution"
- *     Technometrics, 6, 101-102
+ *      "Generating a variable for the trail of the normal distribution"
+ *      Technometrics, 6, 101-102
  *
- * <21> https://en.wikipedia.org/wiki/Coprime_integers#Generating_all_coprime_pairs
+ * <21> Wikipedia (January 2021): "Coprime integers"
+ *      URL: https://en.wikipedia.org/wiki/Coprime_integers
+*            #Generating_all_coprime_pairs
  *
  * Other resources:
  *     - https://espadrine.github.io/blog/posts/a-primer-on-randomness.html
