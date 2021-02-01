@@ -9,7 +9,7 @@ int
 main(void)
 {
 #define TEST(type, randomize, func, jump, args, n) do { \
-		TEST_BEGIN(#jump); \
+	TEST_BEGIN(#jump); { \
 		size_t i; \
 		type a, b; \
 		randomize(&a); \
@@ -20,7 +20,7 @@ main(void)
 		for (i = 0; i < 10; ++i) \
 			TEST_ASSERT(func(&a) == func(&b)); \
 		TEST_END(); \
-	} while (0)
+	} } while (0)
 
 	size_t n = 123;
 #if PRNG32_PCG_AVAILABLE
@@ -32,7 +32,7 @@ main(void)
 #if PRNG64_XORSHIFT_AVAILABLE
 	TEST(PRNG64Xoroshiro128, prng64_xoroshiro128_randomize,
 	     prng64_xoroshiro128ss, prng64_xoroshiro128_jump,
-	     (&a, prng64_xoroshiro128Jump2Pow[8]), 1ull << 8);
+	     (&a, prng64_xoroshiro128Jump2Pow[8]), UINT64_C(1) << 8);
 #endif
 	/* The other xorshift prngs jump to far to test */
 

@@ -27,10 +27,6 @@
 #define NAME "Sb(long)"
 #define T long
 #include "xtest.h"
-#define FUNC test_llong
-#define NAME "Sb(long long)"
-#define T long long
-#include "xtest.h"
 
 #undef RAND
 #define RAND(x) (trng_write(&x, sizeof x), isfinite(x) ? x : 42)
@@ -75,7 +71,6 @@ main(void)
 	test_short();
 	test_int();
 	test_long();
-	test_llong();
 	test_float();
 	test_double();
 	test_ldouble();

@@ -20,14 +20,14 @@ comp_size_t(const void *lhs, const void *rhs)
 size_t
 validate_shuffle(size_t *arr, size_t *sorted, size_t size)
 {
+	size_t i, cnt;
 	/* we'd expect to get on average 1 element with the same position */
-	size_t cnt = 0;
-	for (size_t i = 0; i < size; ++i)
+	for (i = cnt = 0; i < size; ++i)
 		cnt += (arr[i] == sorted[i]);
 
 	/* make sure no element is lost */
 	qsort(arr, size, sizeof *arr, comp_size_t);
-	for (size_t i = 0; i < size; ++i) {
+	for (i = 0; i < size; ++i) {
 		TEST_ASSERT(arr[i] == sorted[i]);
 	}
 	return cnt;
@@ -56,8 +56,8 @@ main(void)
 
 	TEST_BEGIN("shuf_weyl")
 	for (cnt = i = 0; i < N; ++i) {
-		size = dist_uniform_u64(MAX_SIZE-2, prng64_romu_quad, &prng64)+2;
 		ShufWeyl weyl;
+		size = dist_uniform_u64(MAX_SIZE-2, prng64_romu_quad, &prng64)+2;
 		shuf_weyl_randomize(&weyl, size);
 
 		for (i = 0; i < size; ++i) {
@@ -73,8 +73,8 @@ main(void)
 
 	TEST_BEGIN("shuf_lcg")
 	for (cnt = i = 0; i < N; ++i) {
-		size = dist_uniform_u64(MAX_SIZE-2, prng64_romu_quad, &prng64)+2;
 		ShufLcg lcg;
+		size = dist_uniform_u64(MAX_SIZE-2, prng64_romu_quad, &prng64)+2;
 		shuf_lcg_randomize(&lcg, size);
 
 		for (i = 0; i < size; ++i) {

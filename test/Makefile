@@ -1,7 +1,7 @@
 .POSIX:
 
 CC=clang
-CFLAGS=-I../ -lm -Wall -Wextra -Wno-unused
+CFLAGS=-I../ -lm -Wall -Wextra -Wno-unused -std=c89 -pedantic -Dinline=""
 
 all: streachy-buffer random
 	rm -f ./a.out
