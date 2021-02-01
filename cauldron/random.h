@@ -182,7 +182,6 @@ trng_write(void *ptr, size_t n)
 	for (p = ptr; n > ULONG_MAX; n -= ULONG_MAX, p += ULONG_MAX)
 		if (!RtlGenRandom(p, ULONG_MAX))
 			return 0;
-		n -= ULONG_MAX;
 	}
 #endif
 	if (!RtlGenRandom(p, n))
