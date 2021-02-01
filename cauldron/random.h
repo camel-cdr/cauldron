@@ -2141,11 +2141,12 @@ static void
 shuf_arr(void *base, uint64_t nel, uint64_t size,
          uint64_t (*rand64)(void*), void *rng)
 {
+	unsigned char *b = base;
 	while (nel > 1) {
 		uint64_t s = size;
-		unsigned char *r = base + size *
+		unsigned char *r = b + size *
 		                   dist_uniform_u64(nel, rand64, rng);
-		unsigned char *l = base + size * (--nel);
+		unsigned char *l = b + size * (--nel);
 
 		/* swap */
 		for (; s; s--, ++l, ++r) {
@@ -2207,7 +2208,7 @@ shuf_weyl_randomize(ShufWeyl *rng, size_t mod)
 	shuf_weyl_init(rng, mod, seed);
 }
 
-static size_t
+static inline size_t
 shuf_weyl(ShufWeyl *rng)
 {
 	return (rng->x = (rng->x + rng->c) % rng->mod);
@@ -2251,7 +2252,7 @@ shuf_lcg_randomize(ShufLcg *rng, size_t mod)
 	shuf_lcg_init(rng, mod, seed);
 }
 
-static size_t
+static inline size_t
 shuf_lcg(ShufLcg *rng)
 {
 	do {
