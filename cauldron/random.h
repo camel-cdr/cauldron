@@ -1965,15 +1965,20 @@ dist_normal(uint64_t (*rand64)(void*), void *rng)
  * saves more time in the long run.
  */
 
-#define DIST_NORMAL_ZIG_COUNT 128 /* must be a power-of-two */
-#define DIST_NORMAL_ZIG_R     3.4426198558966522559L
-#define DIST_NORMAL_ZIG_AREA  0.00991256303533646112916L
-
 #define DIST_NORMALF_ZIG_AVAILABLE (UINT32_MAX && (32 - FLT_MANT_DIG) >= 7)
 #if DIST_NORMALF_ZIG_AVAILABLE
 
+#ifndef DIST_NORMALF_ZIG_COUNT
+#define DIST_NORMALF_ZIG_COUNT 128 /* must be a power-of-two */
+#define DIST_NORMALF_ZIG_R     3.4426198558966522559L
+#define DIST_NORMALF_ZIG_AREA  0.00991256303533646112916L
+#elif (DIST_NORMALF_ZIG_COUNT & (DIST_NORMALF_ZIG_COUNT - 1)) == 0 || \
+      DIST_NORMALF_ZIG_COUNT <= 128
+#error "DIST_NORMALF_ZIG_COUNT must be a power of two less than or equal to 128"
+#endif
+
 typedef struct {
-	float x[DIST_NORMAL_ZIG_COUNT + 1];
+	float x[DIST_NORMALF_ZIG_COUNT + 1];
 	size_t count;
 } DistNormalfZig;
 
@@ -1981,18 +1986,18 @@ static void
 dist_normalf_zig_init(DistNormalfZig *zig)
 {
 	size_t i;
-	float f = expf(-0.5f * DIST_NORMAL_ZIG_R * DIST_NORMAL_ZIG_R);
-	zig->x[0] = (float)DIST_NORMAL_ZIG_AREA / f;
-	zig->x[1] = DIST_NORMAL_ZIG_R;
+	float f = expf(-0.5f * DIST_NORMALF_ZIG_R * DIST_NORMALF_ZIG_R);
+	zig->x[0] = (float)DIST_NORMALF_ZIG_AREA / f;
+	zig->x[1] = DIST_NORMALF_ZIG_R;
 
-	for (i = 2; i < DIST_NORMAL_ZIG_COUNT; ++i) {
-		float xx = -2 * log((float)DIST_NORMAL_ZIG_AREA /
+	for (i = 2; i < DIST_NORMALF_ZIG_COUNT; ++i) {
+		float xx = -2 * log((float)DIST_NORMALF_ZIG_AREA /
 		                     zig->x[i - 1] + f);
 		zig->x[i] = sqrt(xx);
 		f = expf(-0.5f * xx);
 	}
 
-	zig->x[DIST_NORMAL_ZIG_COUNT] = 0;
+	zig->x[DIST_NORMALF_ZIG_COUNT] = 0;
 }
 
 static float
@@ -2009,7 +2014,7 @@ dist_normalf_zig(const DistNormalfZig *zig,
 	while (1) {
 		float x, y, f0, f1;
 		const uint32_t u32 = rand32(rng);
-		const uint32_t idx = (u32 >> 1) & (DIST_NORMAL_ZIG_COUNT - 1);
+		const uint32_t idx = (u32 >> 1) & (DIST_NORMALF_ZIG_COUNT - 1);
 		const float uf32 = DIST_NORMALF_ZIG_2FLT(u32) * zig->x[idx];
 
 		/* Take a random box (box[idx])
@@ -2025,13 +2030,13 @@ dist_normalf_zig(const DistNormalfZig *zig,
 		if (idx == 0) {
 			do {
 				x = logf(DIST_NORMALF_ZIG_2FLT(rand32(rng)))
-				        * (float)(1 / DIST_NORMAL_ZIG_R);
+				        * (float)(1 / DIST_NORMALF_ZIG_R);
 				y = logf(DIST_NORMALF_ZIG_2FLT(rand32(rng)));
 			} while (-(y + y) < x * x);
 			if (u32 & 1)
-				return x - (float)DIST_NORMAL_ZIG_R;
+				return x - (float)DIST_NORMALF_ZIG_R;
 			else
-				return (float)DIST_NORMAL_ZIG_R - x;
+				return (float)DIST_NORMALF_ZIG_R - x;
 		}
 
 		/* Take a random x-coordinate U in between x[idx] and x[idx+1]
@@ -2050,6 +2055,15 @@ dist_normalf_zig(const DistNormalfZig *zig,
 
 #define DIST_NORMAL_ZIG_AVAILABLE (UINT64_MAX && (64 - DBL_MANT_DIG) >= 7)
 #if DIST_NORMAL_ZIG_AVAILABLE
+
+#ifndef DIST_NORMAL_ZIG_COUNT
+#define DIST_NORMAL_ZIG_COUNT 256
+#define DIST_NORMAL_ZIG_R     3.65415288536100716461
+#define DIST_NORMAL_ZIG_AREA  0.00492867323397465524494
+#elif (DIST_NORMAL_ZIG_COUNT & (DIST_NORMAL_ZIG_COUNT - 1)) == 0 || \
+      DIST_NORMAL_ZIG_COUNT <= 1024
+#error "DIST_NORMAL_ZIG_COUNT must be a power of two less than or equal to 1024"
+#endif
 
 typedef struct {
 	double x[DIST_NORMAL_ZIG_COUNT + 1];
