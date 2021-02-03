@@ -2010,15 +2010,14 @@ dist_normalf_zig(const DistNormalfZig *zig,
 		float x, y, f0, f1;
 		const uint32_t u32 = rand32(rng);
 		const uint32_t idx = (u32 >> 1) & (DIST_NORMAL_ZIG_COUNT - 1);
-		const float uf32 = ((u32 & 1) * 2.0 - 1.0) * /* random sign */
-		                    DIST_NORMALF_ZIG_2FLT(u32) * zig->x[idx];
+		const float uf32 = DIST_NORMALF_ZIG_2FLT(u32) * zig->x[idx];
 
 		/* Take a random box (box[idx])
 		 * and get the value of a random x-coordinate inside it.
 		 * If it's also inside box[idx + 1] we already know to accept
 		 * this value. */
-		if (fabsf(uf32) < zig->x[idx + 1])
-			return uf32;
+		if (uf32 < zig->x[idx + 1])
+			return uf32 * ((u32 & 1) * 2.0 - 1.0);
 
 		/* If our random box is at the bottom, we can't use the lookup
 		 * table and need to generate a variable for the trail of the
@@ -2029,7 +2028,7 @@ dist_normalf_zig(const DistNormalfZig *zig,
 				        * (float)(1 / DIST_NORMAL_ZIG_R);
 				y = logf(DIST_NORMALF_ZIG_2FLT(rand32(rng)));
 			} while (-(y + y) < x * x);
-			if (uf32 < 0)
+			if (u32 & 1)
 				return x - (float)DIST_NORMAL_ZIG_R;
 			else
 				return (float)DIST_NORMAL_ZIG_R - x;
@@ -2042,7 +2041,7 @@ dist_normalf_zig(const DistNormalfZig *zig,
 		f0 = expf(-0.5f * (zig->x[idx]     * zig->x[idx]     - y));
 		f1 = expf(-0.5f * (zig->x[idx + 1] * zig->x[idx + 1] - y));
 		if (f1 + DIST_NORMALF_ZIG_2FLT(rand32(rng)) * (f0 - f1) < 1)
-			return uf32;
+			return uf32 * ((u32 & 1) * 2.0 - 1.0);
 	}
 	#undef DIST_NORMALF_ZIG_2FLT
 }
@@ -2090,15 +2089,14 @@ dist_normal_zig(const DistNormalZig *zig,
 		double x, y, f0, f1;
 		const uint64_t u64 = rand64(rng);
 		const uint64_t idx = (u64 >> 1) & (DIST_NORMAL_ZIG_COUNT - 1);
-		const double uf64 = ((u64 & 1) * 2.0 - 1.0) * /* random sign */
-		                    DIST_NORMAL_ZIG_2DBL(u64) * zig->x[idx];
+		const double uf64 = DIST_NORMAL_ZIG_2DBL(u64) * zig->x[idx];
 
 		/* Take a random box (box[idx])
 		 * and get the value of a random x-coordinate inside it.
 		 * If it's also inside box[idx + 1] we already know to accept
 		 * this value. */
-		if (fabs(uf64) < zig->x[idx + 1])
-			return uf64;
+		if (uf64 < zig->x[idx + 1])
+			return uf64 * ((u64 & 1) * 2.0 - 1.0);
 
 		/* If our random box is at the bottom, we can't use the lookup
 		 * table and need to generate a variable for the trail of the
@@ -2109,7 +2107,7 @@ dist_normal_zig(const DistNormalZig *zig,
 				        * (double)(1 / DIST_NORMAL_ZIG_R);
 				y = log(DIST_NORMAL_ZIG_2DBL(rand64(rng)));
 			} while (-(y + y) < x * x);
-			if (uf64 < 0)
+			if (u64 & 1)
 				return x - (double)DIST_NORMAL_ZIG_R;
 			else
 				return (double)DIST_NORMAL_ZIG_R - x;
@@ -2122,7 +2120,7 @@ dist_normal_zig(const DistNormalZig *zig,
 		f0 = exp(-0.5 * (zig->x[idx]     * zig->x[idx]     - y));
 		f1 = exp(-0.5 * (zig->x[idx + 1] * zig->x[idx + 1] - y));
 		if (f1 + DIST_NORMAL_ZIG_2DBL(rand64(rng)) * (f0 - f1) < 1.0)
-			return uf64;
+			return uf64 * ((u64 & 1) * 2.0 - 1.0);
 	}
 	#undef DIST_NORMAL_ZIG_2DBL
 }
