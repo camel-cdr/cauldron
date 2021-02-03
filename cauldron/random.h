@@ -1972,8 +1972,7 @@ dist_normal(uint64_t (*rand64)(void*), void *rng)
 #define DIST_NORMALF_ZIG_COUNT 128
 #define DIST_NORMALF_ZIG_R     3.4426198558966522559L
 #define DIST_NORMALF_ZIG_AREA  0.00991256303533646112916L
-#elif (DIST_NORMALF_ZIG_COUNT & (DIST_NORMALF_ZIG_COUNT - 1)) == 0 || \
-      DIST_NORMALF_ZIG_COUNT > 128
+#elif DIST_NORMALF_ZIG_COUNT > 128
 #error "DIST_NORMALF_ZIG_COUNT must be a power of two less than or equal to 128"
 #endif
 
@@ -2060,8 +2059,7 @@ dist_normalf_zig(const DistNormalfZig *zig,
 #define DIST_NORMAL_ZIG_COUNT 256
 #define DIST_NORMAL_ZIG_R     3.65415288536100716461
 #define DIST_NORMAL_ZIG_AREA  0.00492867323397465524494
-#elif (DIST_NORMAL_ZIG_COUNT & (DIST_NORMAL_ZIG_COUNT - 1)) == 0 || \
-      DIST_NORMAL_ZIG_COUNT > 1024
+#elif DIST_NORMAL_ZIG_COUNT > 1024
 #error "DIST_NORMAL_ZIG_COUNT must be a power of two less than or equal to 1024"
 #endif
 
