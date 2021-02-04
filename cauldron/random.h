@@ -2012,6 +2012,7 @@ dist_normalf_zig(const DistNormalfZig *zig,
 
 	while (1) {
 		float x, y, f0, f1;
+		union { uint32_t u; float f; } u;
 		const uint32_t u32 = rand32(rng);
 		const uint32_t idx = (u32 >> 1) & (DIST_NORMALF_ZIG_COUNT - 1);
 		const float uf32 = DIST_NORMALF_ZIG_2FLT(u32) * zig->x[idx];
@@ -2021,7 +2022,7 @@ dist_normalf_zig(const DistNormalfZig *zig,
 		 * If it's also inside box[idx + 1] we already know to accept
 		 * this value. */
 		if (uf32 < zig->x[idx + 1])
-			return uf32 * ((u32 & 1) * 2.0 - 1.0);
+			return u.f = uf32, u.u |= (u32 & 1) << 31, u.f;
 
 		/* If our random box is at the bottom, we can't use the lookup
 		 * table and need to generate a variable for the trail of the
@@ -2045,7 +2046,7 @@ dist_normalf_zig(const DistNormalfZig *zig,
 		f0 = expf(-0.5f * (zig->x[idx]     * zig->x[idx]     - y));
 		f1 = expf(-0.5f * (zig->x[idx + 1] * zig->x[idx + 1] - y));
 		if (f1 + DIST_NORMALF_ZIG_2FLT(rand32(rng)) * (f0 - f1) < 1)
-			return uf32 * ((u32 & 1) * 2.0 - 1.0);
+			return u.f = uf32, u.u |= (u32 & 1) << 31, u.f;
 	}
 	#undef DIST_NORMALF_ZIG_2FLT
 }
@@ -2099,6 +2100,7 @@ dist_normal_zig(const DistNormalZig *zig,
 
 	while (1) {
 		double x, y, f0, f1;
+		union { uint64_t u; double f; } u;
 		const uint64_t u64 = rand64(rng);
 		const uint64_t idx = (u64 >> 1) & (DIST_NORMAL_ZIG_COUNT - 1);
 		const double uf64 = DIST_NORMAL_ZIG_2DBL(u64) * zig->x[idx];
@@ -2108,7 +2110,7 @@ dist_normal_zig(const DistNormalZig *zig,
 		 * If it's also inside box[idx + 1] we already know to accept
 		 * this value. */
 		if (uf64 < zig->x[idx + 1])
-			return uf64 * ((u64 & 1) * 2.0 - 1.0);
+			return u.f = uf64, u.u |= (u64 & 1) << 63, u.f;
 
 		/* If our random box is at the bottom, we can't use the lookup
 		 * table and need to generate a variable for the trail of the
@@ -2132,7 +2134,7 @@ dist_normal_zig(const DistNormalZig *zig,
 		f0 = exp(-0.5 * (zig->x[idx]     * zig->x[idx]     - y));
 		f1 = exp(-0.5 * (zig->x[idx + 1] * zig->x[idx + 1] - y));
 		if (f1 + DIST_NORMAL_ZIG_2DBL(rand64(rng)) * (f0 - f1) < 1.0)
-			return uf64 * ((u64 & 1) * 2.0 - 1.0);
+			return u.f = uf64, u.u |= (u64 & 1) << 63, u.f;
 	}
 	#undef DIST_NORMAL_ZIG_2DBL
 }

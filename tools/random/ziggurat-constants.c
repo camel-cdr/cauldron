@@ -8,7 +8,7 @@
 #define ziggurat_f(x) expl(-0.5 * x * x)
 #define ziggurat_f_inv(y) sqrtl(-2 * logl(y))
 #define ziggurat_f_int_x_to_inf(x) \
-	-(M_SQRTPI_OVER_SQRT2 * (erf(x * M_1_OVER_SQRT2) - 1))
+	-(M_SQRTPI_OVER_SQRT2 * (erfl(x * M_1_OVER_SQRT2) - 1))
 
 int
 main(void)
