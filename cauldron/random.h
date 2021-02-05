@@ -2029,9 +2029,9 @@ dist_normalf_zig(const DistNormalfZig *zig,
 		 * normal distribution, as described in <20>: */
 		if (idx == 0) {
 			do {
-				x = logf(DIST_NORMALF_ZIG_2FLT(rand32(rng)))
-				        * (float)(1 / DIST_NORMALF_ZIG_R);
-				y = logf(DIST_NORMALF_ZIG_2FLT(rand32(rng)));
+				x = logf(1-DIST_NORMALF_ZIG_2FLT(rand32(rng))) *
+				    -1.0f / DIST_NORMALF_ZIG_R;
+				y = -logf(1-DIST_NORMALF_ZIG_2FLT(rand32(rng)));
 			} while (-(y + y) < x * x);
 			if (u32 & 1)
 				return x - (float)DIST_NORMALF_ZIG_R;
@@ -2096,7 +2096,7 @@ dist_normal_zig(const DistNormalZig *zig,
 	 * random index in the range [0;127] from just one call to the RNG. */
 	#define DIST_NORMAL_ZIG_2DBL(x) \
 		((x >> (64 - DBL_MANT_DIG)) * \
-		 (1.0f / (UINT64_C(1) << DBL_MANT_DIG)))
+		 (1.0 / (UINT64_C(1) << DBL_MANT_DIG)))
 
 	while (1) {
 		double x, y, f0, f1;
@@ -2117,9 +2117,9 @@ dist_normal_zig(const DistNormalZig *zig,
 		 * normal distribution, as described in <20>: */
 		if (idx == 0) {
 			do {
-				x = log(DIST_NORMAL_ZIG_2DBL(rand64(rng)))
-				        * (double)(1 / DIST_NORMAL_ZIG_R);
-				y = log(DIST_NORMAL_ZIG_2DBL(rand64(rng)));
+				x = log(1 - DIST_NORMAL_ZIG_2DBL(rand64(rng))) *
+				    -1.0 / DIST_NORMAL_ZIG_R;
+				y = -log(1 - DIST_NORMAL_ZIG_2DBL(rand64(rng)));
 			} while (-(y + y) < x * x);
 			if (u64 & 1)
 				return x - (double)DIST_NORMAL_ZIG_R;
