@@ -2030,8 +2030,8 @@ dist_normalf_zig(const DistNormalfZig *zig,
 		if (idx == 0) {
 			do {
 				x = logf(1-DIST_NORMALF_ZIG_2FLT(rand32(rng))) *
-				    -1.0f / DIST_NORMALF_ZIG_R;
-				y = -logf(1-DIST_NORMALF_ZIG_2FLT(rand32(rng)));
+				    1.0f / DIST_NORMALF_ZIG_R;
+				y = logf(1-DIST_NORMALF_ZIG_2FLT(rand32(rng)));
 			} while (-(y + y) < x * x);
 			if (u32 & 1)
 				return x - (float)DIST_NORMALF_ZIG_R;
@@ -2118,8 +2118,8 @@ dist_normal_zig(const DistNormalZig *zig,
 		if (idx == 0) {
 			do {
 				x = log(1 - DIST_NORMAL_ZIG_2DBL(rand64(rng))) *
-				    -1.0 / DIST_NORMAL_ZIG_R;
-				y = -log(1 - DIST_NORMAL_ZIG_2DBL(rand64(rng)));
+				    1.0 / DIST_NORMAL_ZIG_R;
+				y = log(1 - DIST_NORMAL_ZIG_2DBL(rand64(rng)));
 			} while (-(y + y) < x * x);
 			if (u64 & 1)
 				return x - (double)DIST_NORMAL_ZIG_R;
