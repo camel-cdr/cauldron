@@ -2004,8 +2004,9 @@ dist_normalf_zig(const DistNormalfZig *zig,
 		uint32_t (*rand32)(void*), void *rng)
 {
 	/* We don't want to rely on the implementation of dist_uniformf,
-	 * to ignore at least the lower 7 bits, which are needed to extract a
-	 * random index in the range [0;127] from just one call to the RNG. */
+	 * to ignore the lower bits, which are needed to extract a random index
+	 * in the range [0;DIST_NORMALF_ZIG_COUNT-1] from just one call to the
+	 * RNG. */
 	#define DIST_NORMALF_ZIG_2FLT(x) \
 		((x >> (32 - FLT_MANT_DIG)) * \
 		 (1.0f / (UINT32_C(1) << FLT_MANT_DIG)))
@@ -2092,8 +2093,9 @@ dist_normal_zig(const DistNormalZig *zig,
 		uint64_t (*rand64)(void*), void *rng)
 {
 	/* We don't want to rely on the implementation of dist_uniform,
-	 * to ignore at least the lower 7 bits, which are needed to extract a
-	 * random index in the range [0;127] from just one call to the RNG. */
+	 * to ignore the lower bits, which are needed to extract a random index
+	 * in the range [0;DIST_NORMAL_ZIG_COUNT-1] from just one call to the
+	 * RNG. */
 	#define DIST_NORMAL_ZIG_2DBL(x) \
 		((x >> (64 - DBL_MANT_DIG)) * \
 		 (1.0 / (UINT64_C(1) << DBL_MANT_DIG)))
