@@ -2303,7 +2303,7 @@ shuf_lcg(ShufLcg *rng)
  *
  * <6> Charles Bouillaguet, Florette Martinez, Julia Sauvage (2020):
  *     "Predicting the PCG Pseudo-Random NumberGenerator In Practice."
- *     URL: "https://hal.archives-ouvertes.fr/hal-02700791"
+ *     DOI: "https://doi.org/10.13154/tosc.v2020.i3.175-196"
  *
  * <7> Mark A. Overton (2020):
  *     "Romu: Fast Nonlinear Pseudo-Random Number Generators
