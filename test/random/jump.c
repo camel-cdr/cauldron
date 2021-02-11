@@ -19,8 +19,7 @@ main(void)
 			func(&b); \
 		for (i = 0; i < 10; ++i) \
 			TEST_ASSERT(func(&a) == func(&b)); \
-		TEST_END(); \
-	} } while (0)
+	} TEST_END(); } while (0)
 
 	size_t n = 123;
 #if PRNG32_PCG_AVAILABLE

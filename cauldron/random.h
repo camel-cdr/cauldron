@@ -133,11 +133,11 @@
 
 #define _GNU_SOURCE
 #include <assert.h>
-#include <stddef.h>
-#include <stdint.h>
 #include <float.h>
 #include <limits.h>
 #include <math.h>
+#include <stddef.h>
+#include <stdint.h>
 
 /*
  * 2. True random number generators ============================================

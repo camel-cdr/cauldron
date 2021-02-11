@@ -94,7 +94,7 @@ static unsigned
 sample_size(double t, double v, double d)
 {
 	double x = t * sqrt(v) / d;
-	TEST_ASSERT(x * x <= SIZE_MAX);
+	TEST_ASSERT(x * x <= (double)SIZE_MAX);
 	return x * x + 0.5;
 }
 
