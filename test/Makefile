@@ -3,15 +3,14 @@
 CC=clang
 CFLAGS=-I../ -lm -Wall -Wextra -Wno-unused -std=c89 -pedantic -Dinline=""
 
-all: streachy-buffer random
+all: random-target streachy-buffer-target
 	rm -f ./a.out
 
-streachy-buffer:
-	${CC} ${CFLAGS} stretchy-buffer/test.c && ./a.out
-
-random:
+random-target:
 	${CC} ${CFLAGS} random/shuf.c && ./a.out
 	${CC} ${CFLAGS} random/jump.c && ./a.out
 	${CC} ${CFLAGS} random/dist_normal.c && ./a.out
 
-.PHONY: all random
+streachy-buffer-target:
+	${CC} ${CFLAGS} stretchy-buffer/test.c && ./a.out
+
