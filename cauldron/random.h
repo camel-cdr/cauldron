@@ -39,10 +39,12 @@
  * 1.1 Library structure -------------------------------------------------------
  *
  * Before we get into the code, let's quickly glance over the library structure:
- *     - We use tex math notation for mathematical expressions.
+ *     - We use tex math notation for more complex mathematical expressions.
  *       If you have trouble reading them just try using online tex engines
  *       like http://atomurl.net/math/.
  *     - Everything that isn't portable is guarded by ..._AVAILABLE macros.
+ *     - The code from each chapter should be independent and could be
+ *       copy-pasted into any other project.
  *
  * 1.2 API overview ------------------------------------------------------------
  *
@@ -336,7 +338,7 @@ trng_u64(void *ptr)
  *
  * The period must be big enough to generate no overlapping sequences.
  * For n sequences of length L given a generator of period P, we can approximate
- * the probability with the formula p \leq \frac{L(n^2)}{P}. <2>
+ * the probability with the formula p <= L*(n^2)/P. <2>
  * For most purposes, you want a period of at least 2^{64} and for parallel
  * applications, anything in the ballpark of 2^{128} should be sufficient.
  *
@@ -439,9 +441,9 @@ trng_u64(void *ptr)
  * simplifies to
  *     state := (a^n * state + c * (\sum_{i=0}^{n-1} a^i)) \mod m.
  * Further simpifying, using the formula
- *     \sum_{i=0}^{n-1} a^i = \frac{a^n - 1}{a - 1},
+ *     \sum_{i=0}^{n-1} a^i = (a^n - 1)/(a - 1),
  * yields the final simplification
- *     state := a^n * state + c * \frac{a^n - 1}{a - 1} \mod m.
+ *     state := (a^n * state + c * (a^n - 1)/(a - 1)) \mod m.
  *
  * Vanilla LCGs perform quite poorly at small state sizes, but rapidly improve
  * with bigger state sizes. The problem with power-of-2 LCGs is that the
@@ -490,9 +492,9 @@ prng32_pcg_jump(PRNG32Pcg *rng, uint64_t by)
 	uint64_t curmult = PRNG32_PCG_MULT, curplus = rng->stream;
 	uint64_t actmult = 1,               actplus = 0;
 	/* We derived the formula
-	 *     state := a^n * seed + c * \frac{a^n - 1}{a - 1} \mod m
+	 *     state := (a^n * seed + c * (a^n - 1)/(a - 1)) \mod m
 	 * above, but we can't compute this without arbitrary precision
-	 * arithmetic. Fortunately, there is an O(log i) jump ahead algorithm
+	 * arithmetic. Fortunately, there is an O(log(i)) jump ahead algorithm
 	 * from Forrest B. Brown <9>, which we've implemented here. */
 	 while (by > 0) {
 		if (by & 1) {
@@ -608,7 +610,7 @@ prng64_pcg_jump(PRNG64Pcg *rng, __uint128_t by)
  * of overlapping sequences. Fortunately, this was also addressed in the Romu
  * paper. For n sequences of length 2^L given s bits of state in the generator,
  * we can approximate the probability with the formula
- *     p \leq 2^{6.5+l-s}(s-l+1)(n-1)n.
+ *     p <= 2^{6.5+l-s}(s-l+1)(n-1)n.
  *
  * Recommendations:
  *     - duo_jr/duo for all-out speed
@@ -1417,10 +1419,10 @@ dist_uniform(uint_least64_t x)
  * Another solution is to generate every representable floating-point number
  * with a probability proportional to the covered real number range. <14>
  * So obtaining a number in a floating-point subrange [s1,s2] of the output
- * range [r1,r2] has the probability of \frac{s2-s1}{r2-r1}.
+ * range [r1,r2] has the probability of (s2-s1)/(r2-r1).
  *
  *     r1=5                   r2=25
- *        |||||||||||||||||||||     -->  \frac{15-10}{25-5} = 0.25
+ *        |||||||||||||||||||||     -->  (15-10)/(25-5) = 0.25
  *             |    |
  *         s1=10    s2=15
  *
@@ -1445,7 +1447,7 @@ dist_uniform(uint_least64_t x)
  * Then random floats between 0 and 1 were generated using dist_uniformf and
  * dist_uniformf_dense and rejected if they weren't inside [r1,r2].
  * From those that get through, we count the probability of them also being
- * inside [s1,s2] and plott \frac{P(expected)-P(empirical)}{P(expected)},
+ * inside [s1,s2] and plott (P(expected)-P(empirical))/P(expected),
  * with the expected probability calculated as described above.
  * The rejection process is necessary to expose the defects in dist_uniformf,
  * as they only show up in the smaller subranges.
@@ -1475,7 +1477,7 @@ dist_uniform(uint_least64_t x)
  * further in the negative direction.
  * The spike at 1 can be explained by dist_uniform not being able to generate
  * any float that lies in the range [s1,s2] when s2-s1 is too small, hence:
- *     \frac{P(exp)-P(emp)}{P(exp)} = \frac{P(exp) - 0}{P(exp)} = 1
+ *     (P(exp)-P(emp))/P(exp) = (P(exp)-0)/P(exp) = 1
  * The bigger deviation in the negative x-axis happens because some
  * probabilities are too likely when mapping integers to floating-points
  * directly:
@@ -1850,13 +1852,13 @@ dist_uniform_dense(
  *
  * The ration method uses the fact that the ratio of a pair of random variables
  * (u,v) uniformaly distributed over
- *     C_f = \{(u,v): 0 \leq u \leq \sqrt{f(v/u)}\}
+ *     C_f = \{(u,v): 0 <= u <= \sqrt{f(v/u)}\}
  * yields a random variable X=(v/u) with the density f. <18>
  *
- * If we apply this to the normal distribution f(x) = \exp(-\frac{v^2}{2})
- * then u \leq \sqrt{\exp(-\frac{(v/u)^2}{2})} = \exp(\frac{-v^2}{4u^2})
- * and v_{1,2} \leq \pm 2u\sqrt{-\log u} or in a more easily computable format
- * v^2 \leq -4u^2\ln u.
+ * If we apply this to the normal distribution f(x) = \exp(-(v^2)/2})
+ * then u <= \sqrt{\exp(-((v/u)^2)/2)} = \exp(-(v^2)/(4u^2))
+ * and v_{1,2} <= +/- 2u\sqrt{-\log(u)} or in a more easily computable format
+ * v^2 <= -4u^2\ln(u).
  *
  * To obtain (u,v) uniformaly over C_f, we'll use a acception-rejection method,
  * similar to the one used in dist_UNIFORM_INT. We generate (u,v) uniformly in
@@ -1928,12 +1930,12 @@ dist_normal(uint64_t (*rand64)(void*), void *rng)
  * 5.3.2 Ziggurat method .......................................................
  *
  * The ziggurat method works by partitioning the normal distribution density
- *                          f(x) = \exp(-\frac{x^2}{2})
+ *                          f(x) = \exp(-(x^2)/2)
  * into horizontal blocks of equal area, where all boxes are rectangular
  * shaped, except for the bottom one, which is trailing of to infinity. <16>
  *
  *                    +-------------------------------------+
- *                    |     \exp(\frac{-x^2}{2}) ******     |
+ *                    |              \exp(-(x^2)/2) ******  |
  *                y_3 +****-------                          |
  *                    |    ***   |                          |
  *                    |      **  |                          |
@@ -1951,7 +1953,7 @@ dist_normal(uint64_t (*rand64)(void*), void *rng)
  * To calculate the coordinates of the boxes given N boxes,
  * we need to find the corresponding constant R=x_1,
  * from which we can compute the area 'V' and the rest of the coordinates:
- *   V = R * f(R) - sqrt(pi) * (sqrt(2) * erf(R/sqrt(2)) - sqrt(2)) / 2
+ *   V = R * f(R) - \sqrt(\pi) * (\sqrt(2) * \erf(R/\sqrt(2)) - \sqrt(2)) / 2
  *                        x_n = f^-1(V / x_{n-1} + f(x_{n-1}))
  * The calculation of 'R' is a bit more tricky, we need to solve the expression
  * above for x_N=0, which can be done by arithmetically narrowing down on value
@@ -2183,7 +2185,7 @@ shuf_arr(void *base, uint64_t nel, uint64_t size,
  * The quality of random numbers generated by a Weyl sequence on it's own is
  * rather low. Furthermore, it must be considered that this can only generate a
  * small subset
- *     \frac{6}{\pi^2} \cdot m \approx 0.6 m
+ *     6/(\pi^2) * m \approx 0.6 * m
  * of all m! possible permutations. <21>
  * Still some applications might be willing to take this tradeoff for
  * performance. */
@@ -2235,7 +2237,7 @@ shuf_weyl(ShufWeyl *rng)
  * This means that we'll need to reject numbers that aren't inside the range.
  *
  * The LCG approach can generate
- *    m/2 \cdot m/4 = m^2/8
+ *    m/2 * m/4 = m^2/8
  * of all possible m! permutations. */
 
 typedef struct { size_t x, a, c, mod, mask; } ShufLcg;
