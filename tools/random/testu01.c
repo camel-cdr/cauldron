@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	freopen(0, "rb", stdin);
+	(void)freopen(0, "rb", stdin);
 
 	unif01_Gen* gen = unif01_CreateExternGenBits("stdin", next);
 

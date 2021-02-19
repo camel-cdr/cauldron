@@ -259,6 +259,8 @@ trng_write(void *ptr, size_t n)
 #define TRNG_AVAILABLE 0
 #endif
 
+#if TRNG_AVAILABLE
+
 /* We implement trng_write_notallzero because many PRNGs must be initialized
  * with at least one bit set. */
 
@@ -302,6 +304,8 @@ trng_u64(void *ptr)
 	return x;
 }
 #endif /* UINT64_MAX */
+
+#endif /* TRNG_AVAILABLE */
 
 /*
  * 3. Pseudorandom number generator ============================================
@@ -2015,7 +2019,7 @@ dist_normalf_zig(const DistNormalfZig *zig,
 
 	while (1) {
 		float x, y, f0, f1;
-		union { uint32_t u; float f; } u;
+		union { uint32_t u; float f; } u = { 0 };
 		const uint32_t u32 = rand32(rng);
 		const uint32_t idx = (u32 >> 1) & (DIST_NORMALF_ZIG_COUNT - 1);
 		const float uf32 = DIST_NORMALF_ZIG_2FLT(u32) * zig->x[idx];
@@ -2104,7 +2108,7 @@ dist_normal_zig(const DistNormalZig *zig,
 
 	while (1) {
 		double x, y, f0, f1;
-		union { uint64_t u; double f; } u;
+		union { uint64_t u; double f; } u = { 0 };
 		const uint64_t u64 = rand64(rng);
 		const uint64_t idx = (u64 >> 1) & (DIST_NORMAL_ZIG_COUNT - 1);
 		const double uf64 = DIST_NORMAL_ZIG_2DBL(u64) * zig->x[idx];

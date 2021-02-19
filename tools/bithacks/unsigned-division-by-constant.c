@@ -31,6 +31,7 @@ main(void)
 	q = c1 / div;
 	r = c1 - q * div;
 
+	c = 0;
 	do {
 		c = (++p == nbits) ? 1 : 2 * c;
 		if (r + 1 >= div - r) {
@@ -49,10 +50,10 @@ main(void)
 	++q;
 
 	if (a) {
-		printf("(uint%u_t)((x * UINT%d_C(%llu) + UINT%d_C(%llu)) >> %u)\n",
+		printf("(uint%u_t)((x * UINT%u_C(%llu) + UINT%u_C(%llu)) >> %u)\n",
 			nbits, nbits * 2, q, nbits * 2, q, p);
 	} else {
-		printf("(uint%u_t)((x * UINT%d_C(%llu)) >> %u)\n",
+		printf("(uint%u_t)((x * UINT%u_C(%llu)) >> %u)\n",
 			nbits, nbits * 2, q, p);
 	}
 

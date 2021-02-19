@@ -9,12 +9,12 @@
 #include <stdio.h>
 
 static int
-ARG_LONG_func(char **lp, const char *r)
+ARG_LONG_func(char **argv0, const char *name)
 {
-	char *l = *lp;
-	for (; *l == *r && *l; l++, r++);
-	if (*l == *r || (*l == '=' && !*r)) {
-		*lp = l;
+	char *argIt = *argv0;
+	for (; *argIt == *name && *argIt; argIt++, name++);
+	if (*argIt == *name || (*argIt == '=' && !*name)) {
+		*argv0 = argIt;
 		return 1;
 	}
 	return 0;

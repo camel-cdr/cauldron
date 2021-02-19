@@ -68,7 +68,7 @@ main(int argc, char **argv)
 
 	argv0 = argv[0];
 
-	freopen(0, "rb", stdin);
+	(void)freopen(0, "rb", stdin);
 
 
 	ARG_BEGIN {

@@ -14,3 +14,9 @@ random-target:
 streachy-buffer-target:
 	${CC} ${CFLAGS} stretchy-buffer/test.c && ./a.out
 
+check:
+	cppcheck \
+		-I../ -Dinline="" --std=c89 \
+		--enable=all --suppress=missingInlcude \
+		random/*.c stretchy-buffer/*.c
+

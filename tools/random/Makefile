@@ -1,6 +1,6 @@
 .POSIX:
 CC = c99
-CFLAGS+=-I../../ -I/home/camel/git/cauldron
+CFLAGS+=-I../../
 
 BIN = dist rng bench ziggurat-constants
 
@@ -29,6 +29,12 @@ rng: rng.c
 
 bench: bench.c
 	$(CC) $(CFLAGS) -Ofast -o $@ -lm bench.c
+
+check:
+	cppcheck \
+		-I../../ -Dinline="" --std=c89 \
+		--enable=all --suppress=missingInlcude \
+		bench.c dist.c dist_uniform_exact.c rng.c ziggurat-constants.c
 
 clean:
 	rm -f $(BIN) testu01 PractRand
