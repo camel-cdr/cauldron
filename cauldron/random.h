@@ -1984,7 +1984,6 @@ dist_normal(uint64_t (*rand64)(void*), void *rng)
 
 typedef struct {
 	float x[DIST_NORMALF_ZIG_COUNT + 1];
-	size_t count;
 } DistNormalfZig;
 
 static void
@@ -1996,10 +1995,10 @@ dist_normalf_zig_init(DistNormalfZig *zig)
 	zig->x[1] = DIST_NORMALF_ZIG_R;
 
 	for (i = 2; i < DIST_NORMALF_ZIG_COUNT; ++i) {
-		float xx = -2 * log((float)DIST_NORMALF_ZIG_AREA /
+		float xx = logf((float)DIST_NORMALF_ZIG_AREA /
 		                     zig->x[i - 1] + f);
-		zig->x[i] = sqrt(xx);
-		f = expf(-0.5f * xx);
+		zig->x[i] = sqrtf(-2 * xx);
+		f = expf(xx);
 	}
 
 	zig->x[DIST_NORMALF_ZIG_COUNT] = 0;
@@ -2073,7 +2072,6 @@ dist_normalf_zig(const DistNormalfZig *zig,
 
 typedef struct {
 	double x[DIST_NORMAL_ZIG_COUNT + 1];
-	size_t count;
 } DistNormalZig;
 
 static void
@@ -2085,10 +2083,10 @@ dist_normal_zig_init(DistNormalZig *zig)
 	zig->x[1] = DIST_NORMAL_ZIG_R;
 
 	for (i = 2; i < DIST_NORMAL_ZIG_COUNT; ++i) {
-		double xx = -2 * log((double)DIST_NORMAL_ZIG_AREA /
+		double xx = log((double)DIST_NORMAL_ZIG_AREA /
 		                     zig->x[i - 1] + f);
-		zig->x[i] = sqrt(xx);
-		f = exp(-0.5 * xx);
+		zig->x[i] = sqrt(-2 * xx);
+		f = exp(xx);
 	}
 
 	zig->x[DIST_NORMAL_ZIG_COUNT] = 0;
