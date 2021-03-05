@@ -1,5 +1,6 @@
 /* arena-allocator.h
  * Olaf Bernstein <camel-cdr@protonmail.com>
+ * Distributed under the MIT license, see license at the end of the file.
  * New versions available at https://github.com/camel-cdr/cauldron
  */
 
