@@ -1,7 +1,8 @@
 .POSIX:
 
 CC=clang
-CFLAGS=-I../ -lm -Wall -Wextra -Wno-unused -std=c89 -pedantic -Dinline=""
+CFLAGS=-I../ -lm -Wall -Wextra -Wno-unused -std=c89 -pedantic -Dinline="" \
+       -ggdb3 -fsanitize=undefined -fsanitize=address
 
 all: random-target streachy-buffer-target
 	rm -f ./a.out

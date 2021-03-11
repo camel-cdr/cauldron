@@ -103,6 +103,7 @@ FUNC(void)
 
 	for (i = 0; i < 10; ++i)
 		a.at[i] = RAND(x);
+	sb_free(b);
 	sb_cpy(b, a);
 
 	TEST_ASSERT(sb_len(a) == 10);

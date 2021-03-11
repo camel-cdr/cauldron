@@ -88,5 +88,8 @@ main(void)
 	TEST_ASSERT((float)cnt / N - 1.0 < ALPHA);
 	TEST_END();
 
+	free(sorted);
+	free(arr);
+
 	return EXIT_SUCCESS;
 }

@@ -41,27 +41,30 @@
 #define sb_shrink(a) ((a)._cap = (a)._len, \
                       (a).at = realloc((a).at, (a)._cap * sizeof *(a).at))
 
-/* n <= sb_len */
-#define sb_pop(a) sb_popn((a), 1)
-#define sb_popn(a,n) ((a)._len -= (n))
+/* n <= sb_len  && n > 0*/
+#define sb_popn(a,n) (assert(n <= (a)._len && n > 0), (a)._len -= (n))
+#define sb_pop(a) (sb_popn((a), 1))
 
-/* n + i < sb_len && n >= 0 && i > 0*/
+/* n + i <= sb_len && i >= 0 && n > 0 */
+#define sb_rmn(a,i,n) (assert(n + i <= (a)._len && i >= 0 && n > 0), \
+                       memmove((a).at + (i), (a).at + (i) + (n), \
+                               (((a)._len -= (n)) - (i)) * sizeof *(a).at))
 #define sb_rm(a,i) sb_rmn((a), (i), 1)
-#define sb_rmn(a,i,n) memmove((a).at + (i), (a).at + (i) + (n), \
-                               (((a)._len -= (n)) - (i)) * sizeof *(a).at)
 
 /* faster rm, that doesn't preserve order */
-/* n + i < sb_len && n >= 0 && i > 0*/
+/* n + i <= sb_len && i >= 0 && n > 0*/
+#define sb_rmn_unstable(a,i,n) (assert(n + i <= (a)._len && i >= 0 && n > 0), \
+                                memmove((a).at + (i), \
+                                        (a).at + ((a)._len -= (n)) - 1, \
+                                        (n) * sizeof *(a).at))
 #define sb_rm_unstable(a,i) ((a).at[i] = (a).at[(a)._len -= 1])
-#define sb_rmn_unstable(a,i,n) memmove((a).at + (i), \
-                                       (a).at + ((a)._len -= (n)) - 1, \
-                                       (n) * sizeof *(a).at)
 
 /* 0 <= i <= sb_len */
+#define sb_insn(a,i,n) (assert(i >= i && i <= (a)._len), \
+                        (sb_addn((a), (n)), \
+                         memmove((a).at + (i) + (n), (a).at + i, \
+                         ((a)._len - (n) - (i)) * sizeof *(a).at)))
 #define sb_ins(a,i,v) (sb_insn((a), (i), 1), (a).at[i] = (v))
-#define sb_insn(a,i,n) (sb_addn((a), (n)), \
-                        memmove((a).at + (i) + (n), (a).at + i, \
-                        (sb_len(a) - (n) - (i)) * sizeof *(a).at))
 
 #define STRETCHY_BUFFER_H_INCLUDED
 #endif
