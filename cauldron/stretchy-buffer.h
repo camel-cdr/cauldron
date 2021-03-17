@@ -30,16 +30,16 @@
 
 #define sb_setlen(a,n) ((a)._len = (n), sb_setcap((a), (a)._len))
 #define sb_setcap(a,n) ((a)._cap < (n) ? \
-		 ((a)._cap <<= 1, (((n) > (a)._cap) ? (a)._cap = (n) : 0), \
-		 (a).at = realloc((a).at, (a)._cap * sizeof *(a).at)) : 0)
+		((a)._cap <<= 1, (((n) > (a)._cap) ? (a)._cap = (n) : 0), \
+		(a).at = realloc((a).at, (a)._cap * sizeof *(a).at)) : 0)
 #define sb_reserve(a,n) sb_setcap((a), (a)._cap + (n))
 
 #define sb_push(a,v) (sb_setlen((a), (a)._len + 1), (a).at[(a)._len - 1] = (v))
 #define sb_addn(a,n) sb_setlen((a), (a)._len + (n))
 
 #define sb_free(a) (free((a).at), (a).at = 0, (a)._len = (a)._cap = 0)
-#define sb_shrink(a) ((a)._cap = (a)._len, \
-                      (a).at = realloc((a).at, (a)._cap * sizeof *(a).at))
+#define sb_shrink(a) ((((a)._cap = (a)._len) == 0) ? sb_free(a), 0 : \
+                      ((a).at = realloc((a).at, (a)._cap * sizeof *(a).at), 0))
 
 /* n <= sb_len  && n > 0*/
 #define sb_popn(a,n) (assert(n <= (a)._len && n > 0), (a)._len -= (n))
