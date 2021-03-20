@@ -1,3 +1,4 @@
+#define RANDOM_H_IMPLEMENTATION
 #include <cauldron/random.h>
 #include <cauldron/test.h>
 
@@ -37,18 +38,29 @@ int
 main(void)
 {
 	size_t i, j, cnt, size;
+	PRNG32RomuQuad prng32;
 	PRNG64RomuQuad prng64;
 	size_t *arr = malloc(MAX_SIZE * sizeof *arr);
 	size_t *sorted = malloc(MAX_SIZE * sizeof *arr);
+	prng32_romu_quad_randomize(&prng32);
 	prng64_romu_quad_randomize(&prng64);
 
 	for (i = 0; i < MAX_SIZE; ++i)
 		sorted[i] = arr[i] = i;
 
-	TEST_BEGIN("shuf_arr");
+	TEST_BEGIN("shuf32_arr");
+	for (cnt = i = 0; i < N; ++i) {
+		size = dist_uniform_u32(MAX_SIZE-2, prng32_romu_quad, &prng32)+2;
+		shuf32_arr(arr, size, sizeof *arr, prng32_romu_quad, &prng32);
+		cnt += validate_shuffle(arr, sorted, size);
+	}
+	TEST_ASSERT((float)cnt / N - 1.0 < ALPHA);
+	TEST_END();
+
+	TEST_BEGIN("shuf64_arr");
 	for (cnt = i = 0; i < N; ++i) {
 		size = dist_uniform_u64(MAX_SIZE-2, prng64_romu_quad, &prng64)+2;
-		shuf_arr(arr, size, sizeof *arr, prng64_romu_quad, &prng64);
+		shuf64_arr(arr, size, sizeof *arr, prng64_romu_quad, &prng64);
 		cnt += validate_shuffle(arr, sorted, size);
 	}
 	TEST_ASSERT((float)cnt / N - 1.0 < ALPHA);

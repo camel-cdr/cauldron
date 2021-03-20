@@ -5,6 +5,7 @@
 #include <inttypes.h>
 #include <stdlib.h>
 
+#define RANDOM_H_IMPLEMENTATION
 #include <cauldron/random.h>
 #include <cauldron/arg.h>
 

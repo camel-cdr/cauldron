@@ -1,3 +1,4 @@
+#define RANDOM_H_IMPLEMENTATION
 #include <cauldron/random.h>
 #include <cauldron/random-xoroshiro128-jump.h>
 #include <cauldron/test.h>

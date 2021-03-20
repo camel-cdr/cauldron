@@ -60,7 +60,7 @@
 #define sb_rm_unstable(a,i) ((a).at[i] = (a).at[(a)._len -= 1])
 
 /* 0 <= i <= sb_len */
-#define sb_insn(a,i,n) (assert(i >= i && i <= (a)._len), \
+#define sb_insn(a,i,n) (assert(0 <= i && i <= (a)._len), \
                         (sb_addn((a), (n)), \
                          memmove((a).at + (i) + (n), (a).at + i, \
                          ((a)._len - (n) - (i)) * sizeof *(a).at)))

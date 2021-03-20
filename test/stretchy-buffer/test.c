@@ -4,6 +4,7 @@
 #include <string.h>
 #include <math.h>
 
+#define RANDOM_H_IMPLEMENTATION
 #include <cauldron/random.h>
 #include <cauldron/stretchy-buffer.h>
 #include <cauldron/test.h>

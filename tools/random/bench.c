@@ -1,3 +1,4 @@
+#define RANDOM_H_IMPLEMENTATION
 #include <cauldron/random.h>
 #include <cauldron/stretchy-buffer.h>
 

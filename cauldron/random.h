@@ -43,10 +43,39 @@
  *     - We use tex math notation for more complex mathematical expressions.
  *       If you have trouble reading them just try using online tex engines
  *       like http://atomurl.net/math/.
- *     - Everything that isn't portable is guarded by ..._AVAILABLE macros.
  *     - The code from each chapter should be independent and could be
  *       copy-pasted into any other project.
- *
+ *     - We use the stb style for header only libraries, that is we only supply
+ *       the implementation of non inline functions if RANDOM_H_IMPLEMENTATION
+ *       is defined. This means that you must define RANDOM_H_IMPLEMENTATION
+ *       in EXACTLY ONE C file before you include this header file:
+ *           #define RANDOM_H_IMPLEMENTATION
+ *           #include "random.h"
+ */
+#if !defined(RANDOM_H_INCLUDED) || defined(RANDOM_H_IMPLEMENTATION)
+
+#ifdef RANDOM_H_IMPLEMENTATION
+#define _GNU_SOURCE
+#include <assert.h>
+#include <limits.h>
+#include <math.h>
+#endif
+
+#include <float.h>
+#include <stddef.h>
+#include <stdint.h>
+/*
+ *     - We assume that 32 and 64-bit integers are available and that the
+ *       floating point representation uses at least 7 bits for the exponent
+ *       (This simplifies the assumptions for dist_normal(f)_zig later).
+ *     - Everything else that isn't portable is guarded by ..._AVAILABLE macros.
+ */
+#if !(UINT32_MAX && UINT64_MAX && \
+    (32 - FLT_MANT_DIG) >= 7 && (64 - DBL_MANT_DIG) >= 7)
+# error random.h: platform not supported
+#endif
+
+/*
  * 1.2 API overview ------------------------------------------------------------
  *
  * True random number generator:
@@ -130,19 +159,8 @@
  *         void shuf_lcg_init(ShufLcg *, size_t mod, size_t seed[3]);
  *         void shuf_lcg_randomize(ShufLcg *, size_t mod);
  *         size_t shuf_lcg(ShufLcg *rng);
- */
-
-#if !defined(RANDOM_H_INCLUDED)
-
-#define _GNU_SOURCE
-#include <assert.h>
-#include <float.h>
-#include <limits.h>
-#include <math.h>
-#include <stddef.h>
-#include <stdint.h>
-
-/*
+ *
+ *
  * 2. True random number generators ============================================
  *
  * We'll begin by implementing the backbone of every proper usage of random
@@ -164,11 +182,13 @@
  * please consult an expert.
  */
 
-#define TRNG_AVAILABLE 1
+extern void trng_close(void);
+extern int trng_write(void *ptr, size_t n);
 
 #ifdef _WIN32
-#include <windows.h>
-#include <ntsecapi.h>
+# ifdef RANDOM_H_IMPLEMENTATION
+#  include <windows.h>
+#  include <ntsecapi.h>
 
 void
 trng_close(void) {}
@@ -181,20 +201,22 @@ int
 trng_write(void *ptr, size_t n)
 {
 	unsigned char *p;
-#if SIZE_MAX > ULONG_MAX
+	#if SIZE_MAX > ULONG_MAX
 	for (p = ptr; n > ULONG_MAX; n -= ULONG_MAX, p += ULONG_MAX) {
 		if (!RtlGenRandom(p, ULONG_MAX))
 			return 0;
 	}
-#endif
+	#endif
 	if (!RtlGenRandom(p, n))
 		return 0;
 	RtlGenRandom(p, n);
 	return 1;
 }
 
+# endif /* RANDOM_H_IMPLEMENTATION */
 #elif defined(__OpenBSD__) || defined(__CloudABI__) || defined(__wasi__)
-#include <stdlib.h>
+# ifdef RANDOM_H_IMPLEMENTATION
+#  include <stdlib.h>
 
 void
 trng_close(void) {}
@@ -205,12 +227,15 @@ trng_write(void *ptr, size_t n)
 	arc4random_buf(ptr, n);
 	return 1;
 }
+
+# endif /* RANDOM_H_IMPLEMENTATION */
 #elif defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
+# ifdef RANDOM_H_IMPLEMENTATION
+#  include <unistd.h>
+#  include <fcntl.h>
+#  include <sys/stat.h>
+#  include <sys/syscall.h>
+#  include <sys/types.h>
 
 /* getrandom is only available on some UNIX-like OS, so we'll try calling the
  * getrandom syscall. We'll otherwise read from "/dev/urandom" as a fallback,
@@ -255,17 +280,22 @@ trng_write(void *ptr, size_t n)
 	return 1;
 }
 
+# endif /* RANDOM_H_IMPLEMENTATION */
 #else
-#undef TRNG_AVAILABLE
-#define TRNG_AVAILABLE 0
+# define TRNG_NOT_AVAILABLE 1
+void trng_close(void) { assert(0 && "random.h: trng not available "); }
+int trng_write(void *ptr, size_t n) { trng_close(); }
 #endif
 
-#if TRNG_AVAILABLE
+#if !TRNG_NOT_AVAILABLE
 
-/* We implement trng_write_notallzero because many PRNGs must be initialized
- * with at least one bit set. */
+/* We implement the trng_write_notallzero helper funciton,
+ * because many PRNGs must be initialized with at least one bit set. */
 
-static int
+extern int trng_write_notallzero(void *ptr, size_t n);
+
+# ifdef RANDOM_H_IMPLEMENTATION
+int
 trng_write_notallzero(void *ptr, size_t n)
 {
 	unsigned char *p;
@@ -281,11 +311,11 @@ trng_write_notallzero(void *ptr, size_t n)
 	}
 	return 0;
 }
+# endif /* RANDOM_H_IMPLEMENTATION */
 
 /* trng_u32/64 are used to be api compatible with the PRNGs */
 
-#if UINT32_MAX
-static uint32_t
+static inline uint32_t
 trng_u32(void *ptr)
 {
 	uint32_t x;
@@ -293,10 +323,8 @@ trng_u32(void *ptr)
 	trng_write(&x, sizeof x);
 	return x;
 }
-#endif /* UINT32_MAX */
 
-#if UINT64_MAX
-static uint64_t
+static inline uint64_t
 trng_u64(void *ptr)
 {
 	uint64_t x;
@@ -304,9 +332,8 @@ trng_u64(void *ptr)
 	trng_write(&x, sizeof x);
 	return x;
 }
-#endif /* UINT64_MAX */
 
-#endif /* TRNG_AVAILABLE */
+#endif /* TRNG_NOT_AVAILABLE */
 
 /*
  * 3. Pseudorandom number generator ============================================
@@ -456,9 +483,6 @@ trng_u64(void *ptr)
  * apply a variable rotate permutation to the generated output.
  */
 
-#define PRNG32_PCG_AVAILABLE (UINT64_MAX && UINT32_MAX)
-#if PRNG32_PCG_AVAILABLE
-
 #define PRNG32_PCG_MULT UINT64_C(6364136223846793005)
 
 typedef struct { uint64_t state, stream; } PRNG32Pcg;
@@ -491,7 +515,10 @@ prng32_pcg(void *rng)
 	return (perm >> rot) | (perm << ((-rot) & 31));
 }
 
-static void
+extern void prng32_pcg_jump(PRNG32Pcg *rng, uint64_t by);
+
+#ifdef RANDOM_H_IMPLEMENTATION
+void
 prng32_pcg_jump(PRNG32Pcg *rng, uint64_t by)
 {
 	uint64_t curmult = PRNG32_PCG_MULT, curplus = rng->stream;
@@ -512,13 +539,13 @@ prng32_pcg_jump(PRNG32Pcg *rng, uint64_t by)
 	}
 	rng->state = actmult * rng->state + actplus;
 }
+#endif /* RANDOM_H_IMPLEMENTATION */
 
-#endif /* PRNG32_PCG_AVAILABLE */
 
-#define PRNG64_PCG_AVAILABLE (__SIZEOF_INT128__ && UINT64_MAX)
+#define PRNG64_PCG_AVAILABLE (__SIZEOF_INT128__)
 #if PRNG64_PCG_AVAILABLE
 
-#define PRNG64_PCG_MULT \
+# define PRNG64_PCG_MULT \
 	(((__uint128_t)UINT64_C(2549297995355413924) << 64) + \
 	               UINT64_C(4865540595714422341))
 
@@ -553,7 +580,10 @@ prng64_pcg(void *rng)
 	return (xorshifted >> rot) | (xorshifted << ((-rot) & 63));
 }
 
-static void
+extern void prng64_pcg_jump(PRNG64Pcg *rng, __uint128_t by);
+
+# ifdef RANDOM_H_IMPLEMENTATION
+void
 prng64_pcg_jump(PRNG64Pcg *rng, __uint128_t by)
 {
 	__uint128_t curmult = PRNG64_PCG_MULT, curplus = rng->stream;
@@ -569,6 +599,7 @@ prng64_pcg_jump(PRNG64Pcg *rng, __uint128_t by)
 	}
 	rng->state = actmult * rng->state + actplus;
 }
+# endif /* RANDOM_H_IMPLEMENTATION */
 
 #endif /* PRNG64_PCG_AVAILABLE */
 
@@ -625,8 +656,6 @@ prng64_pcg_jump(PRNG64Pcg *rng, __uint128_t by)
 
 #define PRNG_ROMU_ROTL(x,k) (((x) << (k)) | ((x) >> (8 * sizeof(x) - (k))))
 
-#define PRNG32_ROMU_AVAILABLE (!!UINT32_MAX)
-#if PRNG32_ROMU_AVAILABLE
 
 typedef struct { uint32_t s[3]; } PRNG32RomuTrio; /* not all zero */
 
@@ -671,11 +700,6 @@ prng32_romu_quad(void *rng)
 	r->s[3] = PRNG_ROMU_ROTL(r->s[3], 9);
 	return s1;
 }
-
-#endif /* PRNG32_ROMU_AVAILABLE */
-
-#define PRNG64_ROMU_AVAILABLE (!!UINT64_MAX)
-#if PRNG64_ROMU_AVAILABLE
 
 typedef struct { uint64_t s[2]; } PRNG64RomuDuo; /* not all zero */
 
@@ -755,7 +779,6 @@ prng64_romu_quad(void *rng)
 	return s1;
 }
 
-#endif /* PRNG64_ROMU_AVAILABLE */
 
 #undef PRNG_ROMU_ROTL
 
@@ -778,11 +801,8 @@ prng64_romu_quad(void *rng)
  * scramble (ss/pp i.e. '**'/'++'). It's recommended to use the s/p variants for
  * generating floating-point numbers.
  */
-
 #define PRNG_XORSHIFT_ROTL(x,k) (((x) << (k)) | ((x) >> (8 * sizeof(x) - (k))))
 
-#define PRNG32_XORSHIFT_AVAILABLE (!!UINT32_MAX)
-#if PRNG32_XORSHIFT_AVAILABLE
 
 typedef struct { uint32_t s[2]; } PRNG32Xoroshiro64; /* not all zero */
 
@@ -863,11 +883,6 @@ prng32_xoshiro128ss(void *rng)
 	return res;
 }
 
-#endif /* PRNG32_XORSHIFT_AVAILABLE */
-
-#define PRNG64_XORSHIFT_AVAILABLE (!!UINT64_MAX)
-#if PRNG64_XORSHIFT_AVAILABLE
-
 typedef struct { uint64_t s[2]; } PRNG64Xoroshiro128; /* not all zero */
 
 static inline void
@@ -947,8 +962,6 @@ prng64_xoshiro256ss(void *rng)
 	return res;
 }
 
-#endif /* PRNG64_XORSHIFT_AVAILABLE */
-
 /* There are also 512/1024-bit xoroshiro variant's, although 256-bits are
  * already more than enough. */
 
@@ -979,13 +992,18 @@ prng64_xoshiro256ss(void *rng)
  *        $ done
  */
 
-#if PRNG32_XORSHIFT_AVAILABLE
-static const uint32_t prng32Xoroshiro128Jump2Pow64[4] = /* 0-9-11 */
+extern const uint32_t prng32Xoroshiro128Jump2Pow64[4];
+extern const uint32_t prng32Xoroshiro128Jump2Pow96[4];
+extern void prng32_xoshiro128_jump(PRNG32Xoshiro128 *rng,
+                                   const uint32_t jump[4]);
+
+#ifdef RANDOM_H_IMPLEMENTATION
+const uint32_t prng32Xoroshiro128Jump2Pow64[4] = /* 0-9-11 */
 	{ 0x8764000B, 0xF542D2D3, 0X6FA035C3, 0x77F2DB5B };
-static const uint32_t prng32Xoroshiro128Jump2Pow96[4] = /* 0-9-11 */
+const uint32_t prng32Xoroshiro128Jump2Pow96[4] = /* 0-9-11 */
 	{ 0xB523952E, 0x0B6F099F, 0xCCF5A0EF, 0x1C580662 };
 
-static void
+void
 prng32_xoshiro128_jump(PRNG32Xoshiro128 *rng, const uint32_t jump[4])
 {
 	size_t i, b, j;
@@ -998,36 +1016,49 @@ prng32_xoshiro128_jump(PRNG32Xoshiro128 *rng, const uint32_t jump[4])
 	for (i = 0; i < 4; i++)
 		rng->s[i] = s[i];
 }
-#endif /* PRNG32_XORSHIFT_AVAILABLE */
+#endif /* RANDOM_H_IMPLEMENTATION */
 
-#if PRNG64_XORSHIFT_AVAILABLE
-static const uint64_t prng64Xoroshiro128Jump2Pow16[2] = /* 24-16-37 */
+extern const uint64_t prng64Xoroshiro128Jump2Pow16[2],
+	prng64Xoroshiro128Jump2Pow32[2], prng64Xoroshiro128Jump2Pow48[2],
+	prng64Xoroshiro128Jump2Pow64[2], prng64Xoroshiro128Jump2Pow96[2];
+extern const uint64_t prng64Xoshiro256Jump2Pow32[4],
+	prng64Xoshiro256Jump2Pow48[4], prng64Xoshiro256Jump2Pow64[4],
+	prng64Xoshiro256Jump2Pow96[4], prng64Xoshiro256Jump2Pow128[4],
+	prng64Xoshiro256Jump2Pow160[4], prng64Xoshiro256Jump2Pow192[4];
+
+extern void prng64_xoroshiro128_jump(PRNG64Xoroshiro128 *rng,
+                                     const uint64_t jump[2]);
+extern void prng64_xoshiro256_jump(PRNG64Xoshiro256 *rng,
+                                   const uint64_t jump[4]);
+
+#ifdef RANDOM_H_IMPLEMENTATION
+const uint64_t prng64Xoroshiro128Jump2Pow16[2] = /* 24-16-37 */
 	{ 0xB82CA99A09A4E71E, 0x81E1DD96586CF985 };
-static const uint64_t prng64Xoroshiro128Jump2Pow32[2] = /* 24-16-37 */
+const uint64_t prng64Xoroshiro128Jump2Pow32[2] = /* 24-16-37 */
 	{ 0xFAD843622B252C78, 0xD4E95EEF9EDBDBC6 };
-static const uint64_t prng64Xoroshiro128Jump2Pow48[2] = /* 24-16-37 */
+const uint64_t prng64Xoroshiro128Jump2Pow48[2] = /* 24-16-37 */
 	{ 0xD769CFC9028DEB78, 0x9B19BA6B3752065A };
-static const uint64_t prng64Xoroshiro128Jump2Pow64[2] = /* 24-16-37 */
+const uint64_t prng64Xoroshiro128Jump2Pow64[2] = /* 24-16-37 */
 	{ 0xDF900294D8F554A5, 0x170865DF4B3201FC };
-static const uint64_t prng64Xoroshiro128Jump2Pow96[2] = /* 24-16-37 */
+const uint64_t prng64Xoroshiro128Jump2Pow96[2] = /* 24-16-37 */
 	{ 0xD2A98B26625EEE7B, 0xDDDF9B1090AA7AC1 };
 
-static const uint64_t prng64Xoshiro256Jump2Pow32[4] = /* 0-17-54 */
+const uint64_t prng64Xoshiro256Jump2Pow32[4] = /* 0-17-54 */
 { 0x58120D583C112F69,0x7D8D0632BD08E6AC,0x214FAFC0FBDBC208,0xE055D3520FDB9D7 };
-static const uint64_t prng64Xoshiro256Jump2Pow48[4] = /* 0-17-54 */
+const uint64_t prng64Xoshiro256Jump2Pow48[4] = /* 0-17-54 */
 { 0xF11FB4FAEA62C7F1,0xF825539DEE5E4763,0x474579292F705634,0x5F728BE2C97E9066 };
-static const uint64_t prng64Xoshiro256Jump2Pow64[4] = /* 0-17-54 */
+const uint64_t prng64Xoshiro256Jump2Pow64[4] = /* 0-17-54 */
 { 0xB13C16E8096F0754,0xB60D6C5B8C78F106,0x34FAFF184785C20A,0x12E4A2FBFC19BFF9 };
-static const uint64_t prng64Xoshiro256Jump2Pow96[4] = /* 0-17-54 */
+const uint64_t prng64Xoshiro256Jump2Pow96[4] = /* 0-17-54 */
 { 0x148C356C3114B7A9,0xCDB45D7DEF42C317,0xB27C05962EA56A13,0x31EEBB6C82A9615F };
-static const uint64_t prng64Xoshiro256Jump2Pow128[4] = /* 0-17-54 */
+const uint64_t prng64Xoshiro256Jump2Pow128[4] = /* 0-17-54 */
 { 0x180EC6D33CFD0ABA,0xD5A61266F0C9392C,0xA9582618E03FC9AA,0x39ABDC4529B1661C };
-static const uint64_t prng64Xoshiro256Jump2Pow160[4] = /* 0-17-54 */
+const uint64_t prng64Xoshiro256Jump2Pow160[4] = /* 0-17-54 */
 { 0xC04B4F9C5D26C200,0x69E6E6E431A2D40B,0x4823B45B89DC689C,0xF567382197055BF0 };
-static const uint64_t prng64Xoshiro256Jump2Pow192[4] = /* 0-17-54 */
+const uint64_t prng64Xoshiro256Jump2Pow192[4] = /* 0-17-54 */
 { 0x76E15D3EFEFDCBBF,0xC5004E441C522FB3,0x77710069854EE241,0x39109BB02ACBE635 };
 
-static void
+void
 prng64_xoroshiro128_jump(PRNG64Xoroshiro128 *rng, const uint64_t jump[2])
 {
 	size_t i, j, b;
@@ -1041,7 +1072,7 @@ prng64_xoroshiro128_jump(PRNG64Xoroshiro128 *rng, const uint64_t jump[2])
 		rng->s[i] = s[i];
 }
 
-static void
+void
 prng64_xoshiro256_jump(PRNG64Xoshiro256 *rng, const uint64_t jump[4])
 {
 	size_t i, b, j;
@@ -1054,7 +1085,7 @@ prng64_xoshiro256_jump(PRNG64Xoshiro256 *rng, const uint64_t jump[4])
 	for (i = 0; i < 4; i++)
 		rng->s[i] = s[i];
 }
-#endif /* PRNG64_XORSHIFT_AVAILABLE  */
+#endif /* RANDOM_H_IMPLEMENTATION */
 
 /*
  * 3.4 Middle Square Weyl Sequence PRNGs ---------------------------------------
@@ -1131,12 +1162,9 @@ prng64_xoshiro256_jump(PRNG64Xoshiro256 *rng, const uint64_t jump[4])
  * encryption purposes.
  */
 
-#define CSPRNG32_CHACHA_AVAILABLE (!!UINT32_MAX)
-#if CSPRNG32_CHACHA_AVAILABLE
-
 /* Should be 20 for cryptographical security. */
 #ifndef CSPRNG32_CHACHA_ROUNDS
-#define CSPRNG32_CHACHA_ROUNDS 20
+# define CSPRNG32_CHACHA_ROUNDS 20
 #endif
 
 typedef struct {
@@ -1144,6 +1172,12 @@ typedef struct {
 	int idx;
 } CSPRNG32Chacha;
 
+extern void csprng32_chacha_init(CSPRNG32Chacha *rng, uint32_t seed[8],
+                                 uint32_t stream[2]);
+extern void csprng32_chacha_randomize(void *rng);
+extern uint32_t csprng32_chacha(void *rng);
+
+#ifdef RANDOM_H_IMPLEMENTATION
 void
 csprng32_chacha_init(CSPRNG32Chacha *rng, uint32_t seed[8], uint32_t stream[2])
 {
@@ -1159,7 +1193,7 @@ csprng32_chacha_init(CSPRNG32Chacha *rng, uint32_t seed[8], uint32_t stream[2])
 	rng->idx = 16;
 }
 
-static inline void
+void
 csprng32_chacha_randomize(void *rng)
 {
 	uint32_t seed[8+2];
@@ -1169,16 +1203,16 @@ csprng32_chacha_randomize(void *rng)
 
 /* The user should make sure not to call the generator more than 2^{64} times
  * with the same seed! */
-static uint32_t
+uint32_t
 csprng32_chacha(void *rng)
 {
-#define CSPRNG32_CHACHA_ROTL(x,k) \
-	(((x) << (k)) | ((x) >> (8 * sizeof(x) - (k))))
-#define CSPRNG32_CHACHA_QR(x, a, b, c, d) ( \
-	x[a] += x[b], x[d] ^= x[a], x[d] = CSPRNG32_CHACHA_ROTL(x[d], 16), \
-	x[c] += x[d], x[b] ^= x[c], x[b] = CSPRNG32_CHACHA_ROTL(x[b], 12), \
-	x[a] += x[b], x[d] ^= x[a], x[d] = CSPRNG32_CHACHA_ROTL(x[d],  8), \
-	x[c] += x[d], x[b] ^= x[c], x[b] = CSPRNG32_CHACHA_ROTL(x[b],  7))
+	#define CSPRNG32_CHACHA_ROTL(x,k) \
+		(((x) << (k)) | ((x) >> (8 * sizeof(x) - (k))))
+	#define CSPRNG32_CHACHA_QR(x, a, b, c, d) ( \
+		x[a]+=x[b], x[d]^=x[a], x[d]=CSPRNG32_CHACHA_ROTL(x[d],16), \
+		x[c]+=x[d], x[b]^=x[c], x[b]=CSPRNG32_CHACHA_ROTL(x[b],12), \
+		x[a]+=x[b], x[d]^=x[a], x[d]=CSPRNG32_CHACHA_ROTL(x[d], 8), \
+		x[c]+=x[d], x[b]^=x[c], x[b]=CSPRNG32_CHACHA_ROTL(x[b], 7))
 
 	CSPRNG32Chacha *r = rng;
 
@@ -1207,11 +1241,10 @@ csprng32_chacha(void *rng)
 	}
 	return r->s[r->idx++];
 
-#undef CSPRNG32_CHACHA_ROTL
-#undef CSPRNG32_CHACHA_QR
+	#undef CSPRNG32_CHACHA_ROTL
+	#undef CSPRNG32_CHACHA_QR
 }
-
-#endif /* CSPRNG32_CHACHA_AVAILABLE */
+#endif /* RANDOM_H_IMPLEMENTATION */
 
 
 /*
@@ -1296,9 +1329,7 @@ csprng32_chacha(void *rng)
  * multiplication:
  */
 
-#define dist_UNIFORM_U32_AVAILABLE (!!UINT32_MAX)
-#if dist_UNIFORM_U32_AVAILABLE
-uint32_t
+static inline uint32_t
 dist_uniform_u32(uint32_t range, /* [0,range) */
                  uint32_t (*rand32)(void*), void *rng)
 {
@@ -1324,11 +1355,8 @@ dist_uniform_u32(uint32_t range, /* [0,range) */
 	return r;
 #endif
 }
-#endif /* dist_UNIFORM_U32_AVAILABLE */
 
-#define dist_UNIFORM_U64_AVAILABLE (!!UINT64_MAX)
-#if dist_UNIFORM_U64_AVAILABLE
-uint64_t
+static inline uint64_t
 dist_uniform_u64(uint64_t range, /* [0,range) */
                  uint64_t (*rand64)(void*), void *rng)
 {
@@ -1354,7 +1382,6 @@ dist_uniform_u64(uint64_t range, /* [0,range) */
 	return r;
 #endif
 }
-#endif /* dist_UNIFORM_U64_AVAILABLE */
 
 /*
  * 5.2 Uniform real distribution -----------------------------------------------
@@ -1494,29 +1521,35 @@ dist_uniform(uint_least64_t x)
  *                 [     ] <-- This range would be too likely
  */
 
+extern float dist_uniformf_dense(
+		float a, float b, /* [a,b] */
+		uint32_t (*rand32)(void*), void *rng);
+
+extern double
+dist_uniform_dense(
+		double a, double b, /* [a,b] */
+		uint64_t (*rand64)(void*), void *rng);
+
+#ifdef RANDOM_H_IMPLEMENTATION
+
 /* We'll begin by writing a macro that decrements the exponent until one bit is
  * set, using __builtin_ctz if it's available. */
-#if __GNUC__ >= 4 || __clang_major__ >= 2 || \
-	(__GNUC__ == 3 && __GNUC_MINOR__ >= 4) || \
-	(__clang_major__ == 1 && __clang_minor__ >= 5)
-	#if UINT_MAX >= UINT32_MAX
-		#define DIST_UNIFORMF_DENSE_DEC_CTZ(exp, x) \
-			((exp) -= __builtin_ctz(x))
-	#elif ULONG_MAX >= UINT32_MAX
-		#define DIST_UNIFORMF_DENSE_DEC_CTZ(exp, x) \
-			((exp) -= __builtin_ctzl(x))
-	#endif
-	#if UINT_MAX >= UINT64_MAX
-		#define DIST_UNIFORM_DENSE_DEC_CTZ(exp, x) \
-			((exp) -= __builtin_ctz(x))
-	#elif ULONG_MAX >= UINT64_MAX
-		#define DIST_UNIFORM_DENSE_DEC_CTZ(exp, x) \
-			((exp) -= __builtin_ctzl(x))
-	#elif ULLONG_MAX >= UINT64_MAX
-		#define DIST_UNIFORM_DENSE_DEC_CTZ(exp, x) \
-			((exp) -= __builtin_ctzll(x))
-	#endif
-#endif
+# if __GNUC__ >= 4 || __clang_major__ >= 2 || \
+     (__GNUC__ == 3 && __GNUC_MINOR__ >= 4) || \
+     (__clang_major__ == 1 && __clang_minor__ >= 5)
+#  if UINT_MAX >= UINT32_MAX
+#   define DIST_UNIFORMF_DENSE_DEC_CTZ(exp, x) ((exp) -= __builtin_ctz(x))
+#  elif ULONG_MAX >= UINT32_MAX
+#   define DIST_UNIFORMF_DENSE_DEC_CTZ(exp, x) ((exp) -= __builtin_ctzl(x))
+#  endif
+#  if UINT_MAX >= UINT64_MAX
+#   define DIST_UNIFORM_DENSE_DEC_CTZ(exp, x) ((exp) -= __builtin_ctz(x))
+#  elif ULONG_MAX >= UINT64_MAX
+#   define DIST_UNIFORM_DENSE_DEC_CTZ(exp, x) ((exp) -= __builtin_ctzl(x))
+#  elif ULLONG_MAX >= UINT64_MAX
+#   define DIST_UNIFORM_DENSE_DEC_CTZ(exp, x) ((exp) -= __builtin_ctzll(x))
+#  endif
+# endif
 
 /* Otherwise, we'll use a lookup table and a De Bruijn sequence to calculate
  * the number of trailing zeros. <15>
@@ -1545,18 +1578,18 @@ dist_uniform(uint_least64_t x)
  * Thus we get a distinct De Bruijn subsequence for every possible power and the
  * index can now be determined via a lookup table. */
 
-#ifndef DIST_UNIFORMF_DENSE_DEC_CTZ
-#define DIST_UNIFORMF_DENSE_DEC_CTZ(exp, x) do { \
+# ifndef DIST_UNIFORMF_DENSE_DEC_CTZ
+#  define DIST_UNIFORMF_DENSE_DEC_CTZ(exp, x) do { \
 		static const char deBruijn[32] = { \
 			0, 1, 28,2,29,14,24,3,30,22,20,15,25,17, 4,8, \
 			31,27,13,23,21,19,16,7,26,12,18, 6,11, 5,10,9 }; \
 		(exp) -= deBruijn[(((x) & -(x)) * \
 		                  UINT32_C(0x077CB531)) >> 27]; \
 	} while (0)
-#endif
+# endif
 
-#ifndef DIST_UNIFORM_DENSE_DEC_CTZ
-#define DIST_UNIFORM_DENSE_DEC_CTZ(exp, x) do { \
+# ifndef DIST_UNIFORM_DENSE_DEC_CTZ
+#  define DIST_UNIFORM_DENSE_DEC_CTZ(exp, x) do { \
 		static const char deBruijn[64] = { \
 			0,  1, 2,53, 3, 7,54,27, 4,38,41, 8,34,55,48,28, \
 			62, 5,39,46,44,42,22, 9,24,35,59,56,49,18,29,11, \
@@ -1565,12 +1598,9 @@ dist_uniform(uint_least64_t x)
 		(exp) -= deBruijn[(((x) & -(x)) * \
 		                UINT64_C(0x022FDD63CC95386D)) >> 58]; \
 	} while (0)
-#endif
+# endif
 
-#define DIST_UNIFORMF_DENSE_AVAILABLE (!!UINT32_MAX)
-#if DIST_UNIFORMF_DENSE_AVAILABLE
-
-static float
+float
 dist_uniformf_dense(
 		float a, float b, /* [a,b] */
 		uint32_t (*rand32)(void*), void *rng)
@@ -1694,15 +1724,10 @@ dist_uniformf_dense(
 		if (u.f >= a && u.f <= b)
 			return u.f;
 	}
-#undef DIST_UNIFORMF_DENSE_MANT
+	#undef DIST_UNIFORMF_DENSE_MANT
 }
 
-#endif /* DIST_UNIFORMF_DENSE_AVAILABLE */
-
-#define DIST_UNIFORM_DENSE_AVAILABLE (!!UINT64_MAX)
-#if DIST_UNIFORM_DENSE_AVAILABLE
-
-static double
+double
 dist_uniform_dense(
 		double a, double b, /* [a,b] */
 		uint64_t (*rand64)(void*), void *rng)
@@ -1826,13 +1851,13 @@ dist_uniform_dense(
 		if (u.f >= a && u.f <= b)
 			return u.f;
 	}
-#undef DIST_UNIFORMF_DENSE_MANT
+	#undef DIST_UNIFORMF_DENSE_MANT
 }
 
-#endif /* DIST_UNIFORM_DENSE_AVAILABLE */
+# undef DIST_UNIFORMF_DENSE_DEC_CTZ
+# undef DIST_UNIFORM_DENSE_DEC_CTZ
 
-#undef DIST_UNIFORMF_DENSE_DEC_CTZ
-#undef DIST_UNIFORM_DENSE_DEC_CTZ
+#endif /* RANDOM_H_IMPLEMENTATION */
 
 /*
  * 5.3 Normal real distribution ------------------------------------------------
@@ -1876,8 +1901,12 @@ dist_uniform_dense(
  *                      s=0.449871  a=0.19600   t=-0.386595
  *                      b=0.25472 r_1=0.27597 r_2=0.27846
  */
+extern float dist_normalf(uint32_t (*rand32)(void*), void *rng);
+extern double dist_normal(uint64_t (*rand64)(void*), void *rng);
 
-static float
+#ifdef RANDOM_H_IMPLEMENTATION
+
+float
 dist_normalf(uint32_t (*rand32)(void*), void *rng)
 {
 	static const float s = 0.449871f, t =-0.386595f, a = 0.19600f;
@@ -1904,7 +1933,7 @@ dist_normalf(uint32_t (*rand32)(void*), void *rng)
 	return v / u;
 }
 
-static double
+double
 dist_normal(uint64_t (*rand64)(void*), void *rng)
 {
 	static const double s = 0.449871, t =-0.386595, a = 0.19600;
@@ -1930,6 +1959,8 @@ dist_normal(uint64_t (*rand64)(void*), void *rng)
 
 	return v / u;
 }
+
+#endif /* RANDOM_H_IMPLEMENTATION */
 
 /*
  * 5.3.2 Ziggurat method .......................................................
@@ -1972,22 +2003,41 @@ dist_normal(uint64_t (*rand64)(void*), void *rng)
  * saves more time in the long run.
  */
 
-#define DIST_NORMALF_ZIG_AVAILABLE (UINT32_MAX && (32 - FLT_MANT_DIG) >= 7)
-#if DIST_NORMALF_ZIG_AVAILABLE
-
 #ifndef DIST_NORMALF_ZIG_COUNT
-#define DIST_NORMALF_ZIG_COUNT 128
-#define DIST_NORMALF_ZIG_R     3.4426198558966522559L
-#define DIST_NORMALF_ZIG_AREA  0.00991256303533646112916L
+# define DIST_NORMALF_ZIG_COUNT 128
+# define DIST_NORMALF_ZIG_R     3.4426198558966522559L
+# define DIST_NORMALF_ZIG_AREA  0.00991256303533646112916L
 #elif DIST_NORMALF_ZIG_COUNT > 128
-#error "DIST_NORMALF_ZIG_COUNT must be a power of two less than or equal to 128"
+# error random.h: DIST_NORMALF_ZIG_COUNT must be a power of two rand <= 128
 #endif
 
 typedef struct {
 	float x[DIST_NORMALF_ZIG_COUNT + 1];
 } DistNormalfZig;
 
-static void
+extern void dist_normalf_zig_init(DistNormalfZig *zig);
+extern float dist_normalf_zig(const DistNormalfZig *zig,
+                              uint32_t (*rand32)(void*), void *rng);
+
+#ifndef DIST_NORMAL_ZIG_COUNT
+# define DIST_NORMAL_ZIG_COUNT 256
+# define DIST_NORMAL_ZIG_R     3.65415288536100716461
+# define DIST_NORMAL_ZIG_AREA  0.00492867323397465524494
+#elif DIST_NORMAL_ZIG_COUNT > 1024
+# error random.h: DIST_NORMAL_ZIG_COUNT must be a power of two and <= 1024
+#endif
+
+typedef struct {
+	double x[DIST_NORMAL_ZIG_COUNT + 1];
+} DistNormalZig;
+
+extern void dist_normal_zig_init(DistNormalZig *zig);
+extern double dist_normal_zig(const DistNormalZig *zig,
+                              uint64_t (*rand64)(void*), void *rng);
+
+#ifdef RANDOM_H_IMPLEMENTATION
+
+void
 dist_normalf_zig_init(DistNormalfZig *zig)
 {
 	size_t i;
@@ -2005,9 +2055,8 @@ dist_normalf_zig_init(DistNormalfZig *zig)
 	zig->x[DIST_NORMALF_ZIG_COUNT] = 0;
 }
 
-static float
-dist_normalf_zig(const DistNormalfZig *zig,
-		uint32_t (*rand32)(void*), void *rng)
+float
+dist_normalf_zig(const DistNormalfZig *zig, uint32_t (*rand32)(void*), void *rng)
 {
 	/* We don't want to rely on the implementation of dist_uniformf,
 	 * to ignore the lower bits, which are needed to extract a random index
@@ -2058,24 +2107,7 @@ dist_normalf_zig(const DistNormalfZig *zig,
 	#undef DIST_NORMALF_ZIG_2FLT
 }
 
-#endif /* DIST_NORMALF_ZIG_AVAILABLE */
-
-#define DIST_NORMAL_ZIG_AVAILABLE (UINT64_MAX && (64 - DBL_MANT_DIG) >= 7)
-#if DIST_NORMAL_ZIG_AVAILABLE
-
-#ifndef DIST_NORMAL_ZIG_COUNT
-#define DIST_NORMAL_ZIG_COUNT 256
-#define DIST_NORMAL_ZIG_R     3.65415288536100716461
-#define DIST_NORMAL_ZIG_AREA  0.00492867323397465524494
-#elif DIST_NORMAL_ZIG_COUNT > 1024
-#error "DIST_NORMAL_ZIG_COUNT must be a power of two less than or equal to 1024"
-#endif
-
-typedef struct {
-	double x[DIST_NORMAL_ZIG_COUNT + 1];
-} DistNormalZig;
-
-static void
+void
 dist_normal_zig_init(DistNormalZig *zig)
 {
 	size_t i;
@@ -2093,9 +2125,8 @@ dist_normal_zig_init(DistNormalZig *zig)
 	zig->x[DIST_NORMAL_ZIG_COUNT] = 0;
 }
 
-static double
-dist_normal_zig(const DistNormalZig *zig,
-		uint64_t (*rand64)(void*), void *rng)
+double
+dist_normal_zig(const DistNormalZig *zig, uint64_t (*rand64)(void*), void *rng)
 {
 	/* We don't want to rely on the implementation of dist_uniform,
 	 * to ignore the lower bits, which are needed to extract a random index
@@ -2146,7 +2177,7 @@ dist_normal_zig(const DistNormalZig *zig,
 	#undef DIST_NORMAL_ZIG_2DBL
 }
 
-#endif /* DIST_NORMAL_ZIG_AVAILABLE */
+#endif /* RANDOM_H_IMPLEMENTATION */
 
 /*
  * 6. Shuffling ================================================================
@@ -2156,8 +2187,35 @@ dist_normal_zig(const DistNormalZig *zig,
  * This can be done with multiple approaches, most popularly via shuffling the
  * array. */
 
-static void
-shuf_arr(void *base, uint64_t nel, uint64_t size,
+extern void shuf32_arr(void *base, uint32_t nel, uint32_t size,
+                       uint32_t (*rand32)(void*), void *rng);
+extern void shuf64_arr(void *base, uint64_t nel, uint64_t size,
+                       uint64_t (*rand64)(void*), void *rng);
+
+#ifdef RANDOM_H_IMPLEMENTATION
+
+void
+shuf32_arr(void *base, uint32_t nel, uint32_t size,
+         uint32_t (*rand32)(void*), void *rng)
+{
+	unsigned char *b = base;
+	while (nel > 1) {
+		uint32_t s = size;
+		unsigned char *r = b + size *
+		                   dist_uniform_u32(nel, rand32, rng);
+		unsigned char *l = b + size * (--nel);
+
+		/* swap */
+		for (; s; s--, ++l, ++r) {
+			unsigned char tmp = *r;
+			*r = *l;
+			*l = tmp;
+		}
+	}
+}
+
+void
+shuf64_arr(void *base, uint64_t nel, uint64_t size,
          uint64_t (*rand64)(void*), void *rng)
 {
 	unsigned char *b = base;
@@ -2175,6 +2233,8 @@ shuf_arr(void *base, uint64_t nel, uint64_t size,
 		}
 	}
 }
+
+#endif /* RANDOM_H_IMPLEMENTATION */
 
 /* But we might not want to or need to modify the order of the array.
  * In such cases, we can use a shuffle iterator, that returns pseudorandom
@@ -2195,7 +2255,7 @@ shuf_arr(void *base, uint64_t nel, uint64_t size,
 
 
 /* Two values are coprime if their greatest common denominator (GCD) is one. */
-size_t
+static inline size_t
 shuf__gcd(size_t a, size_t b)
 {
 	while (b) {
@@ -2208,7 +2268,7 @@ shuf__gcd(size_t a, size_t b)
 
 typedef struct { size_t x, c, mod; } ShufWeyl;
 
-static void
+static inline void
 shuf_weyl_init(ShufWeyl *rng, size_t mod, size_t seed[2])
 {
 	rng->x = seed[0];
@@ -2245,7 +2305,7 @@ shuf_weyl(ShufWeyl *rng)
 
 typedef struct { size_t x, a, c, mod, mask; } ShufLcg;
 
-static void
+static inline void
 shuf_lcg_init(ShufLcg *rng, size_t mod, size_t seed[3])
 {
 	rng->x = seed[0];

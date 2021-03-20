@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 
+#define RANDOM_H_IMPLEMENTATION
 #include <cauldron/random.h>
 
 /* This is some messy testing of dist_uniformf_exact, read at your own risk. */

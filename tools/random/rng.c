@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define RANDOM_H_IMPLEMENTATION
 #include <cauldron/random.h>
 
 #include "msws.h"

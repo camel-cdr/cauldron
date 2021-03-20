@@ -24,6 +24,7 @@
  */
 
 #define _USE_MATH_DEFINES
+#define RANDOM_H_IMPLEMENTATION
 #include <cauldron/random.h>
 #include <cauldron/test.h>
 #include <stdio.h>
@@ -122,8 +123,8 @@ test_mean(double m, double dm, double v, double (*f)(void))
 	TEST_ASSERT_MSG(fabs(s) <= d, (
 		"\tparameter %g is outside the confidence interval [%g; %g]\n"
 		"\tthis may be due to statistical fluctuations, so try again.\n"
-		"\tin the long run this test should fail 1 of %u times.",
-		m, s - d, s + d, (unsigned)(ALPHA + 0.5)));
+		"\tin the long run this test should fail 1 of %f times.",
+		m, s - d, s + d, round(ALPHA + 0.5)));
 }
 
 /* Test for the parameter P of a binomial distribution. */
@@ -150,9 +151,9 @@ test_variance(double p, double dp, unsigned (*f)(void))
 	TEST_ASSERT_MSG(fabs(x) <= t, (
 		"\tParameter %g is outside the confidence interval [%g; %g]\n"
 		"\tThis may be due to statistical fluctuations, so try again.\n"
-		"\tIn the long run this test should fail 1 of %u times.",
+		"\tIn the long run this test should fail 1 of %f times.",
 		p, (k - t * s) / n, (k + t * s) / n,
-		(unsigned)(ALPHA + 0.5)));
+		round(ALPHA + 0.5)));
 }
 
 static double (*distNormal)(void);
