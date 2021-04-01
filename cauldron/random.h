@@ -546,16 +546,16 @@ prng32_pcg_jump(PRNG32Pcg *rng, uint64_t by)
 #if PRNG64_PCG_AVAILABLE
 
 # define PRNG64_PCG_MULT \
-	(((__uint128_t)UINT64_C(2549297995355413924) << 64) + \
+	(((__uint128_t)UINT64_C(2549297995355413924) << 64) | \
 	               UINT64_C(4865540595714422341))
 
 typedef struct { __uint128_t state, stream; } PRNG64Pcg;
 
 static inline void
-prng64_pcg_init(PRNG64Pcg *rng, __uint128_t seed, __uint128_t stream)
+prng64_pcg_init(PRNG64Pcg *rng, uint64_t seed[2], uint64_t stream[2])
 {
-	rng->state = seed;
-	rng->stream = stream | 1;
+	rng->state = ((__uint128_t)seed[0] << 64) | seed[1];
+	rng->stream = ((__uint128_t)stream[0] << 64) | stream[1] | 1;
 }
 
 static inline void
@@ -580,22 +580,23 @@ prng64_pcg(void *rng)
 	return (xorshifted >> rot) | (xorshifted << ((-rot) & 63));
 }
 
-extern void prng64_pcg_jump(PRNG64Pcg *rng, __uint128_t by);
+extern void prng64_pcg_jump(PRNG64Pcg *rng, uint64_t by[2]);
 
 # ifdef RANDOM_H_IMPLEMENTATION
 void
-prng64_pcg_jump(PRNG64Pcg *rng, __uint128_t by)
+prng64_pcg_jump(PRNG64Pcg *rng, uint64_t by[2])
 {
 	__uint128_t curmult = PRNG64_PCG_MULT, curplus = rng->stream;
 	__uint128_t actmult = 1,               actplus = 0;
-	while (by > 0) {
-		if (by & 1) {
+	__uint128_t by128 = ((__uint128_t)by[0]) << 64 | by[1];
+	while (by128 > 0) {
+		if (by128 & 1) {
 			actmult *= curmult;
 			actplus = actplus * curmult + curplus;
 		}
 		curplus = (curmult + 1) * curplus;
 		curmult *= curmult;
-		by /= 2;
+		by128 /= 2;
 	}
 	rng->state = actmult * rng->state + actplus;
 }

@@ -2,6 +2,8 @@
  * Olaf Bernstein <camel-cdr@protonmail.com>
  * Distributed under the MIT license, see license at the end of the file.
  * New versions available at https://github.com/camel-cdr/cauldron
+ *
+ * TODO: test if alignment works
  */
 
 #ifndef ARENA_ALLOCATOR_H_INCLUDED
@@ -58,7 +60,6 @@ aa_alloc(aa_Arena *arena, size_t size)
 #define aa_ALIGN_UP(x, n) (((x) + (n) - 1) & ~((n) - 1))
 	size = aa_ALIGN_UP(size, sizeof(union aa_Align));
 	it = prev = arena->current;
-#undef aa_ALIGN_UP
 
 	/* find the first block with enough space */
 	while (it && it->ptr + size > it->end)
@@ -70,7 +71,8 @@ aa_alloc(aa_Arena *arena, size_t size)
 		it->ptr += size;
 	} else {
 		/* needs to be allocated */
-		size_t n = sizeof(struct aa_Header) + size + aa_BLOCK_SIZE;
+		size_t hdrsize = aa_ALIGN_UP(sizeof(struct aa_Header));
+		size_t n = hdrsize + size + aa_BLOCK_SIZE;
 		it = malloc(n);
 		if (arena->current) {
 			arena->current = prev->next = it;
@@ -78,11 +80,13 @@ aa_alloc(aa_Arena *arena, size_t size)
 			arena->current = arena->blocks = it;
 		}
 		it->next = 0;
-		it->ptr = (unsigned char *)((struct aa_Header *)it + 1) + size;
+		it->ptr = (unsigned char *)it + hdrsize + size;
 		it->end = (unsigned char*)it + n;
 	}
 
 	return it->ptr - size;
+
+#undef aa_ALIGN_UP
 }
 
 void

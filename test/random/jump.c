@@ -23,17 +23,21 @@ main(void)
 	} TEST_END(); } while (0)
 
 	size_t n = 123;
-#if PRNG32_PCG_AVAILABLE
+
+	{
 	TEST(PRNG32Pcg, prng32_pcg_randomize, prng32_pcg, prng32_pcg_jump, (&a, n), n);
-#endif
+	}
+
 #if PRNG64_PCG_AVAILABLE
-	TEST(PRNG64Pcg, prng64_pcg_randomize, prng64_pcg, prng64_pcg_jump, (&a, n), n);
+	{
+	uint64_t by[2] = { 0 };
+	by[1] = n;
+	TEST(PRNG64Pcg, prng64_pcg_randomize, prng64_pcg, prng64_pcg_jump, (&a, by), n);
+	}
 #endif
-#if PRNG64_XORSHIFT_AVAILABLE
 	TEST(PRNG64Xoroshiro128, prng64_xoroshiro128_randomize,
 	     prng64_xoroshiro128ss, prng64_xoroshiro128_jump,
 	     (&a, prng64_xoroshiro128Jump2Pow[8]), UINT64_C(1) << 8);
-#endif
 	/* The other xorshift prngs jump to far to test */
 
 	return EXIT_SUCCESS;
