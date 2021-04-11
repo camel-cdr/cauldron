@@ -30,7 +30,7 @@
 #include "xtest.h"
 
 #undef RAND
-#define RAND(x) (trng_write(&x, sizeof x), isfinite(x) ? x : 42)
+#define RAND(x) (x = dist_uniform(trng_u64(0)))
 
 #define FUNC test_float
 #define NAME "Sb(float)"

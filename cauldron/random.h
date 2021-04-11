@@ -498,7 +498,8 @@ static inline void
 prng32_pcg_randomize(void *rng)
 {
 	PRNG32Pcg *r = rng;
-	trng_write(r, sizeof *r);
+	trng_write(&r->state, sizeof r->state);
+	trng_write(&r->stream, sizeof r->stream);
 	r->stream |= 1;
 }
 
@@ -562,7 +563,8 @@ static inline void
 prng64_pcg_randomize(void *rng)
 {
 	PRNG64Pcg *r = rng;
-	trng_write(r, sizeof *r);
+	trng_write(&r->state, sizeof r->state);
+	trng_write(&r->stream, sizeof r->stream);
 	r->stream |= 1;
 }
 
@@ -662,7 +664,7 @@ typedef struct { uint32_t s[3]; } PRNG32RomuTrio; /* not all zero */
 
 static inline void
 prng32_romu_trio_randomize(void *rng)
-{ trng_write_notallzero(rng, sizeof(PRNG32RomuTrio)); }
+{ PRNG32RomuTrio *r = rng; trng_write_notallzero(r->s, sizeof(r->s)); }
 
 static inline uint32_t
 prng32_romu_trio(void *rng)
@@ -684,7 +686,7 @@ typedef struct { uint32_t s[4]; } PRNG32RomuQuad; /* not all zero */
 
 static inline void
 prng32_romu_quad_randomize(void *rng)
-{ trng_write_notallzero(rng, sizeof(PRNG32RomuQuad)); }
+{ PRNG32RomuQuad *r = rng; trng_write_notallzero(r->s, sizeof(r->s)); }
 
 static inline uint32_t
 prng32_romu_quad(void *rng)
@@ -706,7 +708,7 @@ typedef struct { uint64_t s[2]; } PRNG64RomuDuo; /* not all zero */
 
 static inline void
 prng64_romu_duo_randomize(void *rng)
-{ trng_write_notallzero(rng, sizeof(PRNG64RomuDuo)); }
+{ PRNG64RomuDuo *r = rng; trng_write_notallzero(r->s, sizeof(r->s)); }
 
 static inline uint64_t
 prng64_romu_duo_jr(void *rng)
@@ -740,7 +742,7 @@ typedef struct { uint64_t s[3]; } PRNG64RomuTrio; /* not all zero */
 
 static inline void
 prng64_romu_trio_randomize(void *rng)
-{ trng_write_notallzero(rng, sizeof(PRNG64RomuTrio)); }
+{ PRNG64RomuTrio *r = rng; trng_write_notallzero(r->s, sizeof(r->s)); }
 
 static inline uint64_t
 prng64_romu_trio(void *rng)
@@ -762,7 +764,7 @@ typedef struct { uint64_t s[4]; } PRNG64RomuQuad; /* not all zero */
 
 static inline void
 prng64_romu_quad_randomize(void *rng)
-{ trng_write_notallzero(rng, sizeof(PRNG64RomuQuad)); }
+{ PRNG64RomuQuad *r = rng; trng_write_notallzero(r->s, sizeof(r->s)); }
 
 static inline uint64_t
 prng64_romu_quad(void *rng)
@@ -809,7 +811,7 @@ typedef struct { uint32_t s[2]; } PRNG32Xoroshiro64; /* not all zero */
 
 static inline void
 prng32_xoroshiro64_randomize(void *rng)
-{ trng_write_notallzero(rng, sizeof(PRNG32Xoroshiro64)); }
+{ PRNG32Xoroshiro64 *r = rng; trng_write_notallzero(r->s, sizeof(r->s)); }
 
 static inline void
 prng32_xoroshiro64_advance(PRNG32Xoroshiro64 *rng) /* 26-9-13 */
@@ -847,7 +849,7 @@ typedef struct { uint32_t s[4]; } PRNG32Xoshiro128; /* not all zero */
 
 static inline void
 prng32_xoshiro128_randomize(void *rng)
-{ trng_write_notallzero(rng, sizeof(PRNG32Xoshiro128)); }
+{ PRNG32Xoshiro128 *r = rng; trng_write_notallzero(r->s, sizeof(r->s)); }
 
 static inline void
 prng32_xoshiro128_advance(PRNG32Xoshiro128 *rng) /* 0-9-11 */
@@ -888,7 +890,7 @@ typedef struct { uint64_t s[2]; } PRNG64Xoroshiro128; /* not all zero */
 
 static inline void
 prng64_xoroshiro128_randomize(void *rng)
-{ trng_write_notallzero(rng, sizeof(PRNG64Xoroshiro128)); }
+{ PRNG64Xoroshiro128 *r = rng; trng_write_notallzero(r->s, sizeof(r->s)); }
 
 static inline void
 prng64_xoroshiro128_advance(PRNG64Xoroshiro128 *rng) /* 24-16-37 */
@@ -926,7 +928,7 @@ typedef struct { uint64_t s[4]; } PRNG64Xoshiro256; /* not all zero */
 
 static inline void
 prng64_xoshiro256_randomize(void *rng)
-{ trng_write_notallzero(rng, sizeof(PRNG64Xoshiro256)); }
+{ PRNG64Xoshiro256 *r = rng; trng_write_notallzero(r->s, sizeof(r->s)); }
 
 static inline void
 prng64_xoshiro256_advance(PRNG64Xoshiro256 *rng) /* 0-17-54 */
