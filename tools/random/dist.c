@@ -11,7 +11,7 @@
 
 /*
  * Example:
- * ./rng <name> | ./dist -n 100000 n32 | ./freq.gp
+ * ./rng <name> | ./dist -n 100000 n32 | ./freqency.gp
  */
 
 static char *argv0;

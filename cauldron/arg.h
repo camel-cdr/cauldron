@@ -74,7 +74,6 @@ int main(int argc, char **argv)
 			input = ARG_VAL();
 		} else if (ARG_LONG("output")) case 'o': {
 			output = ARG_VAL();
-			break;
 		} else if (ARG_LONG("help")) case 'h': case '?': {
 			puts("help");
 			return EXIT_SUCCESS;

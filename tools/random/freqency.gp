@@ -2,10 +2,6 @@
 
 set terminal x11 enhanced persist
 
-# Acknowledgments:
-#	Neil Carter: "gnuplot Frequency Plot"
-#	URL: http://psy.swansea.ac.uk/staff/carter/gnuplot/gnuplot_frequency.htm
-
 if (0) {
 	set terminal dumb 38 20
 	set xtics 1
@@ -13,18 +9,15 @@ if (0) {
 }
 
 if (ARG1) {
-	bin_width = ARG1
+	bw = ARG1
 } else {
-	bin_width = 0.1
+	bw = 0.1
 }
 
-# Each bar is half the (visual) width of its x-range.
-set boxwidth bin_width * 0.5 absolute
+# Adopted from "http://www.phyast.pitt.edu/~zov1/"
+
+unset key
+set boxwidth 0.7 relative
 set style fill solid 1.0 noborder
-
-
-bin_number(x) = floor(x/bin_width)
-
-rounded(x) = bin_width * (bin_number(x) + 0.5)
-
-plot '/dev/stdin' using (rounded(column(1))):(1) smooth frequency with boxes
+bin(x, width) = width * floor(x / width)
+plot '/dev/stdin' using (bin($1, bw)):(1.0) smooth frequency with boxes
