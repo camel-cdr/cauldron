@@ -9,7 +9,10 @@ hashes = \
     candidates/kensler-splittable64.so \
     candidates/stub.so
 
-compile: evalpow2 rng-shuffle $(hashes)
+compile: bench evalpow2 rng-shuffle $(hashes)
+
+bench: bench.c
+	$(CC) $(LDFLAGS) $(CFLAGS) -o $@ bench.c $(LDLIBS)
 
 evalpow2: evalpow2.c
 	$(CC) $(LDFLAGS) $(CFLAGS) -o $@ evalpow2.c $(LDLIBS)
@@ -23,7 +26,7 @@ candidates/kensler-splittable64.so: candidates/kensler-splittable64.c
 candidates/stub.so: candidates/stub.c
 
 clean:
-	rm -f evalpow2 rng-shuffle $(hashes)
+	rm -f bench evalpow2 rng-shuffle $(hashes)
 
 .SUFFIXES: .so .c
 .c.so:

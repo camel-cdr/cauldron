@@ -202,6 +202,15 @@ We can also see that the trivial 64-bit version of the original `kensler-splitta
 So in conclusion the new hash function seems to have a good quality for ranges larger than `2^15`. This is actually exactly what we are looking for, because, as already mentioned, the advantages of using something like permute() are bigger with larger ranges.
 
 
+### Performance comparisons
+
+|                       | ns/hash   |
+| ---------------------:| ---------:|
+| kensler               | 4.761300  |
+| kensler-splittable64  | 7.011112  |
+| camel-cdr             | 11.332915 |
+
+
 ### A working code snippet
 
 ```c
