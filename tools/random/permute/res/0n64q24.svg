@@ -159,6 +159,13 @@
   <desc
      id="desc4">Produced by GNUPLOT 5.4 patchlevel 1 </desc>
   <rect
+     style="fill:#ffffff;stroke:none;stroke-dasharray:none;stroke-opacity:0.69999999;fill-opacity:1;stroke-width:1;stroke-miterlimit:4"
+     id="rect945"
+     width="600"
+     height="480"
+     x="0"
+     y="0" />
+  <rect
      x="0"
      y="0"
      width="600"
