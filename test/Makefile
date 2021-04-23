@@ -4,20 +4,25 @@ CC=clang
 CFLAGS=-I../ -lm -Wall -Wextra -Wno-unused -std=c89 -pedantic -Dinline="" \
        -ggdb3 -fsanitize=undefined -fsanitize=address -Os
 
-all: random-target streachy-buffer-target
-	rm -f ./a.out
+all: random-target streachy-buffer-target arena-allocator
 
 random-target:
 	${CC} ${CFLAGS} random/shuf.c && ./a.out
 	${CC} ${CFLAGS} random/jump.c && ./a.out
 	${CC} ${CFLAGS} random/dist_normal.c && ./a.out
+	rm -f ./a.out
 
 streachy-buffer-target:
 	${CC} ${CFLAGS} stretchy-buffer/test.c && ./a.out
+	rm -f ./a.out
+
+arena-allocator:
+	${CC} ${CFLAGS} arena-allocator.c && ./a.out
+	rm -f ./a.out
 
 check:
 	cppcheck \
 		-I../ -Dinline="" --std=c89 \
 		--enable=all --suppress=missingInlcude \
-		random/*.c stretchy-buffer/*.c
+		random/*.c stretchy-buffer/*.c *.c
 

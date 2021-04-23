@@ -2,13 +2,13 @@
  * Olaf Bernstein <camel-cdr@protonmail.com>
  * Distributed under the MIT license, see license at the end of the file.
  * New versions available at https://github.com/camel-cdr/cauldron
- *
- * TODO: test if alignment works
  */
 
 #ifndef ARENA_ALLOCATOR_H_INCLUDED
 
+#ifndef aa_BLOCK_SIZE
 #define aa_BLOCK_SIZE (16*1024)
+#endif
 
 typedef struct {
 	/* blocks       current
@@ -18,28 +18,7 @@ typedef struct {
 	struct aa_Block *current;
 } aa_Arena;
 
-struct aa_Block {
-	struct aa_Block *next;
-	unsigned char *ptr;
-	unsigned char *end;
-};
-
-union aa_Align {
-#if __STDC_VERSION__ >= 199901L
-	long long ll;
-#endif
-	long double ld;
-	long l;
-	double d;
-	char *p;
-	int (*f)(void);
-};
-
-struct aa_Header {
-	struct aa_Block b;
-	union aa_Align a;
-};
-
+extern void *aa_alloc_aligned(aa_Arena *arena, size_t size, size_t alignment);
 extern void *aa_alloc(aa_Arena *arena, size_t size);
 extern void aa_dealloc(aa_Arena *arena);
 extern void aa_free(aa_Arena *arena);
@@ -52,13 +31,29 @@ extern void aa_free(aa_Arena *arena);
 
 #ifdef ARENA_ALLOCATOR_IMPLEMENT
 
-void *
-aa_alloc(aa_Arena *arena, size_t size)
-{
-	struct aa_Block *it, *prev;
+#include <stddef.h>
+#include <stdlib.h>
+#include <assert.h>
 
+struct aa_Block {
+	struct aa_Block *next;
+	unsigned char *ptr;
+	unsigned char *end;
+};
+
+
+void *
+aa_alloc_aligned(aa_Arena *arena, size_t size, size_t alignment)
+{
 #define aa_ALIGN_UP(x, n) (((x) + (n) - 1) & ~((n) - 1))
-	size = aa_ALIGN_UP(size, sizeof(union aa_Align));
+
+	struct aa_Block *it, *prev;
+	size_t old = size;
+
+	assert(alignment && !(alignment & (alignment - 1u)) &&
+	       "aa_alloc_aligned: alignment must be a power-of-2");
+
+	size = aa_ALIGN_UP(size, alignment);
 	it = prev = arena->current;
 
 	/* find the first block with enough space */
@@ -71,23 +66,44 @@ aa_alloc(aa_Arena *arena, size_t size)
 		it->ptr += size;
 	} else {
 		/* needs to be allocated */
-		size_t hdrsize = aa_ALIGN_UP(sizeof(struct aa_Header));
+		size_t hdrsize = sizeof(struct aa_Block);
 		size_t n = hdrsize + size + aa_BLOCK_SIZE;
-		it = malloc(n);
-		if (arena->current) {
+		size_t an = aa_ALIGN_UP(n, alignment);
+		it = malloc(an);
+		if (arena->current)
 			arena->current = prev->next = it;
-		} else {
+		else
 			arena->current = arena->blocks = it;
-		}
 		it->next = 0;
-		it->ptr = (unsigned char *)it + hdrsize + size;
-		it->end = (unsigned char*)it + n;
+		it->ptr = (unsigned char *)it + hdrsize + size + (an - n);
+		it->end = (unsigned char*)it + an;
 	}
 
-	return it->ptr - size;
+	return it->ptr - old;
 
 #undef aa_ALIGN_UP
 }
+
+void *
+aa_alloc(aa_Arena *arena, size_t size)
+{
+#if __STDC_VERSION__ >= 201112L
+	return aa_alloc_aligned(arena, size, _Alignof(max_align_t));
+#else
+	union aa_Align {
+		long double ld;
+		long l;
+		double d;
+		char *p;
+		int (*f)(void);
+#if __STDC_VERSION__ >= 199901L
+		long long ll;
+#endif
+	};
+	return aa_alloc_aligned(arena, size, sizeof(union aa_Align));
+#endif
+}
+
 
 void
 aa_dealloc(aa_Arena *arena)
@@ -96,7 +112,7 @@ aa_dealloc(aa_Arena *arena)
 
 	/* reset block->ptr to the beginning of the block */
 	while (it) {
-		it->ptr = (unsigned char *)((struct aa_Header *)it + 1);
+		it->ptr = (unsigned char *)((struct aa_Block *)it + 1);
 		it = it->next;
 	}
 
