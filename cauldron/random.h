@@ -51,6 +51,8 @@
  *       in EXACTLY ONE C file before you include this header file:
  *           #define RANDOM_H_IMPLEMENTATION
  *           #include "random.h"
+ *     - We'll also cast all conversions from void* manually, to obtain C++
+ *       compatibility
  */
 #if !defined(RANDOM_H_INCLUDED) || defined(RANDOM_H_IMPLEMENTATION)
 
@@ -260,7 +262,7 @@ trng_write(void *ptr, size_t n)
 	 * requested bytes, which means that we need to read one chunk at a
 	 * time. */
 
-	for (p = ptr, r = 0; n > 0; n -= (size_t)r, p += r) {
+	for (p = (unsigned char*)ptr, r = 0; n > 0; n -= (size_t)r, p += r) {
 		/* if available use getrandom */
 		#ifdef SYS_getrandom
 		if ((r = syscall(SYS_getrandom, p, n, 0)) > 0)
@@ -284,35 +286,10 @@ trng_write(void *ptr, size_t n)
 #else
 # define TRNG_NOT_AVAILABLE 1
 void trng_close(void) { assert(0 && "random.h: trng not available "); }
-int trng_write(void *ptr, size_t n) { trng_close(); }
+int trng_write(void *ptr, size_t n) { trng_close(); return 0; }
 #endif
 
 #if !TRNG_NOT_AVAILABLE
-
-/* We implement the trng_write_notallzero helper funciton,
- * because many PRNGs must be initialized with at least one bit set. */
-
-extern int trng_write_notallzero(void *ptr, size_t n);
-
-# ifdef RANDOM_H_IMPLEMENTATION
-int
-trng_write_notallzero(void *ptr, size_t n)
-{
-	unsigned char *p;
-	size_t i;
-	/* Stop after 100 tries. */
-	for (i = 0; i < 100; ++i) {
-		if (!trng_write(ptr, n))
-			return 0;
-		/* Return if any bit is set. */
-		for (p = ptr; *p; ++p)
-			if (*p != 0)
-				return 1;
-	}
-	return 0;
-}
-# endif /* RANDOM_H_IMPLEMENTATION */
-
 /* trng_u32/64 are used to be api compatible with the PRNGs */
 
 static inline uint32_t
@@ -333,7 +310,46 @@ trng_u64(void *ptr)
 	return x;
 }
 
-#endif /* TRNG_NOT_AVAILABLE */
+/* We implement the trng_write_notallzero helper funciton,
+ * because many PRNGs must be initialized with at least one bit set. */
+
+extern int trng_write_notallzero(void *ptr, size_t n);
+
+# ifdef RANDOM_H_IMPLEMENTATION
+int
+trng_write_notallzero(void *ptr, size_t n)
+{
+	unsigned char *p;
+	size_t i;
+	/* Stop after 100 tries. */
+	for (i = 0; i < 100; ++i) {
+		if (!trng_write(ptr, n))
+			return 0;
+		/* Return if any bit is set. */
+		for (p = (unsigned char*)ptr; *p; ++p)
+			if (*p != 0)
+				return 1;
+	}
+	return 0;
+}
+# endif /* RANDOM_H_IMPLEMENTATION */
+
+/* To reduce the loc we also define a simple macro that defines an *_randomize
+ * function for a given PRNG */
+#define CAULDRON_MAKE_PRNG_NOTALLZERO_RANDOMIZE(Type, name) \
+	static inline void \
+	name##_randomize(void *rng) \
+	{ \
+		Type *r = (Type*)rng; \
+		trng_write_notallzero(r->s, sizeof(r->s)); \
+	}
+
+#else
+
+/* We don't want to define these functions if no trng is available */
+#define CAULDRON_MAKE_PRNG_NOTALLZERO_RANDOMIZE(Type, name)
+
+#endif/* TRNG_NOT_AVAILABLE */
 
 /*
  * 3. Pseudorandom number generator ============================================
@@ -494,14 +510,16 @@ prng32_pcg_init(PRNG32Pcg *rng, uint64_t seed, uint64_t stream)
 	rng->stream = stream | 1;
 }
 
+#if !TRNG_NOT_AVAILABLE
 static inline void
 prng32_pcg_randomize(void *rng)
 {
-	PRNG32Pcg *r = rng;
+	PRNG32Pcg *r = (PRNG32Pcg*)rng;
 	trng_write(&r->state, sizeof r->state);
 	trng_write(&r->stream, sizeof r->stream);
 	r->stream |= 1;
 }
+#endif
 
 static inline uint32_t
 prng32_pcg(void *rng)
@@ -509,7 +527,7 @@ prng32_pcg(void *rng)
 	/* Period: 2^{64} with 2^{63} streams
 	 * BigCrush: Passes
 	 * PractRand: Passes (>32T) */
-	PRNG32Pcg *r = rng;
+	PRNG32Pcg *r = (PRNG32Pcg*)rng;
 	const uint32_t perm = (uint32_t)(((r->state >> 18) ^ r->state) >> 27);
 	const uint32_t rot = (r->state >> 59);
 	r->state = r->state * PRNG32_PCG_MULT + r->stream;
@@ -559,14 +577,16 @@ prng64_pcg_init(PRNG64Pcg *rng, uint64_t seed[2], uint64_t stream[2])
 	rng->stream = ((__uint128_t)stream[0] << 64) | stream[1] | 1;
 }
 
+#if !TRNG_NOT_AVAILABLE
 static inline void
 prng64_pcg_randomize(void *rng)
 {
-	PRNG64Pcg *r = rng;
+	PRNG64Pcg *r = (PRNG64Pcg*)rng;
 	trng_write(&r->state, sizeof r->state);
 	trng_write(&r->stream, sizeof r->stream);
 	r->stream |= 1;
 }
+#endif
 
 static inline uint64_t
 prng64_pcg(void *rng)
@@ -574,7 +594,7 @@ prng64_pcg(void *rng)
 	/* Period: 2^{128} with 2^{127} streams
 	 * BigCrush: Passes
 	 * PractRand: Passes (>32T) */
-	PRNG64Pcg *r = rng;
+	PRNG64Pcg *r = (PRNG64Pcg*)rng;
 	const uint64_t xorshifted =
 			((uint64_t)(r->state >> 64)) ^ (uint64_t)r->state;
 	const uint64_t rot = (uint64_t)(r->state >> 122);
@@ -662,9 +682,7 @@ prng64_pcg_jump(PRNG64Pcg *rng, uint64_t by[2])
 
 typedef struct { uint32_t s[3]; } PRNG32RomuTrio; /* not all zero */
 
-static inline void
-prng32_romu_trio_randomize(void *rng)
-{ PRNG32RomuTrio *r = rng; trng_write_notallzero(r->s, sizeof(r->s)); }
+CAULDRON_MAKE_PRNG_NOTALLZERO_RANDOMIZE(PRNG32RomuTrio, prng32_romu_trio)
 
 static inline uint32_t
 prng32_romu_trio(void *rng)
@@ -672,7 +690,7 @@ prng32_romu_trio(void *rng)
 	/* Capacity: >2^{53}
 	 * BigCrush: Passes
 	 * PractRand: Passes (>256T) */
-	PRNG32RomuTrio *r = rng;
+	PRNG32RomuTrio *r = (PRNG32RomuTrio*)rng;
 	const uint32_t s0 = r->s[0], s1 = r->s[1], s2 = r->s[2];
 	r->s[0] = UINT32_C(3323815723) * s2;
 	r->s[1] = s1 - s0;
@@ -684,9 +702,7 @@ prng32_romu_trio(void *rng)
 
 typedef struct { uint32_t s[4]; } PRNG32RomuQuad; /* not all zero */
 
-static inline void
-prng32_romu_quad_randomize(void *rng)
-{ PRNG32RomuQuad *r = rng; trng_write_notallzero(r->s, sizeof(r->s)); }
+CAULDRON_MAKE_PRNG_NOTALLZERO_RANDOMIZE(PRNG32RomuQuad, prng32_romu_quad)
 
 static inline uint32_t
 prng32_romu_quad(void *rng)
@@ -694,7 +710,7 @@ prng32_romu_quad(void *rng)
 	/* Capacity: >2^{62}
 	 * BigCrush: Passes
 	 * PractRand: Passes (>256T) */
-	PRNG32RomuQuad *r = rng;
+	PRNG32RomuQuad *r = (PRNG32RomuQuad*)rng;
 	const uint32_t s0 = r->s[0], s1 = r->s[1], s2 = r->s[2], s3 = r->s[3];
 	r->s[0] = UINT32_C(3323815723) * s3;
 	r->s[1] = s3 + PRNG_ROMU_ROTL(s0, 26);
@@ -706,9 +722,7 @@ prng32_romu_quad(void *rng)
 
 typedef struct { uint64_t s[2]; } PRNG64RomuDuo; /* not all zero */
 
-static inline void
-prng64_romu_duo_randomize(void *rng)
-{ PRNG64RomuDuo *r = rng; trng_write_notallzero(r->s, sizeof(r->s)); }
+CAULDRON_MAKE_PRNG_NOTALLZERO_RANDOMIZE(PRNG64RomuDuo, prng64_romu_duo)
 
 static inline uint64_t
 prng64_romu_duo_jr(void *rng)
@@ -716,7 +730,7 @@ prng64_romu_duo_jr(void *rng)
 	/* Capacity: >2^{51}
 	 * BigCrush: Passes
 	 * PractRand: Passes (>256T) */
-	PRNG64RomuDuo *r = rng;
+	PRNG64RomuDuo *r = (PRNG64RomuDuo*)rng;
 	const uint64_t s0 = r->s[0];
 	r->s[0] = 15241094284759029579u * r->s[1];
 	r->s[1] = r->s[1] - s0;
@@ -730,7 +744,7 @@ prng64_romu_duo(void *rng)
 	/* Capacity: >2^{61}
 	 * BigCrush: Passes
 	 * PractRand: Passes (>256T) */
-	PRNG64RomuDuo *r = rng;
+	PRNG64RomuDuo *r = (PRNG64RomuDuo*)rng;
 	const uint64_t s0 = r->s[0];
 	r->s[0] = UINT64_C(15241094284759029579) * r->s[1];
 	r->s[1] = PRNG_ROMU_ROTL(r->s[1], 36) +
@@ -740,9 +754,7 @@ prng64_romu_duo(void *rng)
 
 typedef struct { uint64_t s[3]; } PRNG64RomuTrio; /* not all zero */
 
-static inline void
-prng64_romu_trio_randomize(void *rng)
-{ PRNG64RomuTrio *r = rng; trng_write_notallzero(r->s, sizeof(r->s)); }
+CAULDRON_MAKE_PRNG_NOTALLZERO_RANDOMIZE(PRNG64RomuTrio, prng64_romu_trio)
 
 static inline uint64_t
 prng64_romu_trio(void *rng)
@@ -750,7 +762,7 @@ prng64_romu_trio(void *rng)
 	/* Capacity: >2^{75}
 	 * BigCrush: Passes
 	 * PractRand: Passes (>256T) */
-	PRNG64RomuTrio *r = rng;
+	PRNG64RomuTrio *r = (PRNG64RomuTrio*)rng;
 	const uint64_t s0 = r->s[0], s1 = r->s[1], s2 = r->s[2];
 	r->s[0] = UINT64_C(15241094284759029579) * s2;
 	r->s[1] = s1 - s0;
@@ -762,9 +774,7 @@ prng64_romu_trio(void *rng)
 
 typedef struct { uint64_t s[4]; } PRNG64RomuQuad; /* not all zero */
 
-static inline void
-prng64_romu_quad_randomize(void *rng)
-{ PRNG64RomuQuad *r = rng; trng_write_notallzero(r->s, sizeof(r->s)); }
+CAULDRON_MAKE_PRNG_NOTALLZERO_RANDOMIZE(PRNG64RomuQuad, prng64_romu_quad)
 
 static inline uint64_t
 prng64_romu_quad(void *rng)
@@ -772,7 +782,7 @@ prng64_romu_quad(void *rng)
 	/* Capacity: >2^{90}
 	 * BigCrush: Passes
 	 * PractRand: Passes (>256T) */
-	PRNG64RomuQuad *r = rng;
+	PRNG64RomuQuad *r = (PRNG64RomuQuad*)rng;
 	const uint64_t s0 = r->s[0], s1 = r->s[1], s2 = r->s[2], s3 = r->s[3];
 	r->s[0] = UINT64_C(15241094284759029579) * s3;
 	r->s[1] = s3 + PRNG_ROMU_ROTL(s0, 52);
@@ -809,9 +819,7 @@ prng64_romu_quad(void *rng)
 
 typedef struct { uint32_t s[2]; } PRNG32Xoroshiro64; /* not all zero */
 
-static inline void
-prng32_xoroshiro64_randomize(void *rng)
-{ PRNG32Xoroshiro64 *r = rng; trng_write_notallzero(r->s, sizeof(r->s)); }
+CAULDRON_MAKE_PRNG_NOTALLZERO_RANDOMIZE(PRNG32Xoroshiro64, prng32_xoroshiro64)
 
 static inline void
 prng32_xoroshiro64_advance(PRNG32Xoroshiro64 *rng) /* 26-9-13 */
@@ -827,7 +835,7 @@ prng32_xoroshiro64s(void *rng)
 	/* Period: 2^{64}-1
 	 * BigCrush: TODO
 	 * PractRand: lower bits fail linear tests, passes all others (>128G) */
-	PRNG32Xoroshiro64 *r = rng;
+	PRNG32Xoroshiro64 *r = (PRNG32Xoroshiro64*)rng;
 	const uint32_t res = r->s[0] * 0x9E3779BB;
 	prng32_xoroshiro64_advance(r);
 	return res;
@@ -838,7 +846,7 @@ prng32_xoroshiro64ss(void *rng)
 	/* Period: 2^{64}-1
 	 * BigCrush: TODO
 	 * PractRand: Passes (>128G) */
-	PRNG32Xoroshiro64 *r = rng;
+	PRNG32Xoroshiro64 *r = (PRNG32Xoroshiro64*)rng;
 	const uint32_t tmp = r->s[0] * 0x9E3779BB;
 	const uint32_t res = PRNG_XORSHIFT_ROTL(tmp, 5) * 5;
 	prng32_xoroshiro64_advance(r);
@@ -847,9 +855,7 @@ prng32_xoroshiro64ss(void *rng)
 
 typedef struct { uint32_t s[4]; } PRNG32Xoshiro128; /* not all zero */
 
-static inline void
-prng32_xoshiro128_randomize(void *rng)
-{ PRNG32Xoshiro128 *r = rng; trng_write_notallzero(r->s, sizeof(r->s)); }
+CAULDRON_MAKE_PRNG_NOTALLZERO_RANDOMIZE(PRNG32Xoshiro128, prng32_xoshiro128)
 
 static inline void
 prng32_xoshiro128_advance(PRNG32Xoshiro128 *rng) /* 0-9-11 */
@@ -868,7 +874,7 @@ prng32_xoshiro128s(void *rng)
 	/* Period: 2^{128}-1
 	 * BigCrush: TODO
 	 * PractRand: lower bits fail linear tests, passes all others (>128G) */
-	PRNG32Xoshiro128 *r = rng;
+	PRNG32Xoshiro128 *r = (PRNG32Xoshiro128*)rng;
 	const uint32_t res = r->s[0] + r->s[3];
 	prng32_xoshiro128_advance(r);
 	return res;
@@ -879,7 +885,7 @@ prng32_xoshiro128ss(void *rng)
 	/* Period: 2^{128}-1
 	 * BigCrush: TODO
 	 * PractRand: Passes (>128G) */
-	PRNG32Xoshiro128 *r = rng;
+	PRNG32Xoshiro128 *r = (PRNG32Xoshiro128*)rng;
 	const uint32_t tmp = r->s[1] * 5;
 	const uint32_t res = PRNG_XORSHIFT_ROTL(tmp, 7) * 9;
 	prng32_xoshiro128_advance(r);
@@ -888,9 +894,7 @@ prng32_xoshiro128ss(void *rng)
 
 typedef struct { uint64_t s[2]; } PRNG64Xoroshiro128; /* not all zero */
 
-static inline void
-prng64_xoroshiro128_randomize(void *rng)
-{ PRNG64Xoroshiro128 *r = rng; trng_write_notallzero(r->s, sizeof(r->s)); }
+CAULDRON_MAKE_PRNG_NOTALLZERO_RANDOMIZE(PRNG64Xoroshiro128, prng64_xoroshiro128)
 
 static inline void
 prng64_xoroshiro128_advance(PRNG64Xoroshiro128 *rng) /* 24-16-37 */
@@ -906,7 +910,7 @@ prng64_xoroshiro128p(void *rng)
 	/* Period: 2^{128}-1
 	 * BigCrush: Passes
 	 * PractRand: lower bits fail linear tests, passes all others (>128G) */
-	PRNG64Xoroshiro128 *r = rng;
+	PRNG64Xoroshiro128 *r = (PRNG64Xoroshiro128*)rng;
 	const uint64_t res = r->s[0] + r->s[1];
 	prng64_xoroshiro128_advance(r);
 	return res;
@@ -917,7 +921,7 @@ prng64_xoroshiro128ss(void *rng)
 	/* Period: 2^{128}-1
 	 * BigCrush: Passes
 	 * PractRand: Passes (>512G) */
-	PRNG64Xoroshiro128 *r = rng;
+	PRNG64Xoroshiro128 *r = (PRNG64Xoroshiro128*)rng;
 	const uint64_t tmp = r->s[0] * 5;
 	const uint64_t res = PRNG_XORSHIFT_ROTL(tmp, 7) * 9;
 	prng64_xoroshiro128_advance(r);
@@ -926,9 +930,7 @@ prng64_xoroshiro128ss(void *rng)
 
 typedef struct { uint64_t s[4]; } PRNG64Xoshiro256; /* not all zero */
 
-static inline void
-prng64_xoshiro256_randomize(void *rng)
-{ PRNG64Xoshiro256 *r = rng; trng_write_notallzero(r->s, sizeof(r->s)); }
+CAULDRON_MAKE_PRNG_NOTALLZERO_RANDOMIZE(PRNG64Xoshiro256, prng64_xoshiro256)
 
 static inline void
 prng64_xoshiro256_advance(PRNG64Xoshiro256 *rng) /* 0-17-54 */
@@ -947,7 +949,7 @@ prng64_xoshiro256p(void *rng)
 	/* Period: 2^{256}-1
 	 * BigCrush: Passes
 	 * PractRand: lower bits fail linear tests, passes all others (>128G) */
-	PRNG64Xoshiro256 *r = rng;
+	PRNG64Xoshiro256 *r = (PRNG64Xoshiro256*)rng;
 	const uint64_t res = r->s[0] + r->s[3];
 	prng64_xoshiro256_advance(r);
 	return res;
@@ -958,7 +960,7 @@ prng64_xoshiro256ss(void *rng)
 	/* Period: 2^{256}-1
 	 * BigCrush: Passes
 	 * PractRand: Passes (>512G) */
-	PRNG64Xoshiro256 *r = rng;
+	PRNG64Xoshiro256 *r = (PRNG64Xoshiro256*)rng;
 	const uint64_t tmp = r->s[1] * 5;
 	const uint64_t res = PRNG_XORSHIFT_ROTL(tmp, 7) * 9;
 	prng64_xoshiro256_advance(r);
@@ -1201,7 +1203,7 @@ csprng32_chacha_randomize(void *rng)
 {
 	uint32_t seed[8+2];
 	trng_write(seed, sizeof *seed);
-	csprng32_chacha_init(rng, seed, seed + 8);
+	csprng32_chacha_init((CSPRNG32Chacha*)rng, seed, seed + 8);
 }
 
 /* The user should make sure not to call the generator more than 2^{64} times
@@ -1217,7 +1219,7 @@ csprng32_chacha(void *rng)
 		x[a]+=x[b], x[d]^=x[a], x[d]=CSPRNG32_CHACHA_ROTL(x[d], 8), \
 		x[c]+=x[d], x[b]^=x[c], x[b]=CSPRNG32_CHACHA_ROTL(x[b], 7))
 
-	CSPRNG32Chacha *r = rng;
+	CSPRNG32Chacha *r = (CSPRNG32Chacha*)rng;
 
 	if (r->idx >= 16) {
 		size_t i;
@@ -1301,8 +1303,8 @@ csprng32_chacha(void *rng)
  * We run into problems if the differences between the generators and our range
  * is large. A better apoach than restricting the generated size is to drop out
  * all of the biased states. This is achieved by calculating the number of
- * overrepesented digits and skipping any generated numbers that are smaller than
- * the count of those digits.
+ * overrepesented digits and skipping any generated numbers that are smaller
+ * than the count of those digits.
  *     uint32_t r, t = (-range) % range; // equivalent to '2^{32} \mod range'
  *     while ((r = rng()) < t);
  *     return r % range;
@@ -1576,8 +1578,8 @@ dist_uniform_dense(
  *                                       010  = 2
  *                                        100 = 4
  *
- * 'm' is a power-of-two, as only one bit is set, hence a multiplication with the
- * De Bruijn constant shifts it by its power.
+ * 'm' is a power-of-two, as only one bit is set, hence a multiplication with
+ * the De Bruijn constant shifts it by its power.
  * Thus we get a distinct De Bruijn subsequence for every possible power and the
  * index can now be determined via a lookup table. */
 
@@ -1609,7 +1611,8 @@ dist_uniformf_dense(
 		uint32_t (*rand32)(void*), void *rng)
 {
 	union { float f; uint32_t i; } u;
-	enum { SIGN_POS = 0, SIGN_RAND = 1, SIGN_NEG = 2 } sign;
+	enum { SIGN_POS = 0, SIGN_RAND = 1, SIGN_NEG = 2 };
+	int sign;
 	uint32_t minexp, minmant, maxexp, maxmant;
 
 	#define DIST_UNIFORMF_DENSE_MANT \
@@ -1736,7 +1739,8 @@ dist_uniform_dense(
 		uint64_t (*rand64)(void*), void *rng)
 {
 	union { double f; uint64_t i; } u;
-	enum { SIGN_POS = 0, SIGN_RAND = 1, SIGN_NEG = 2 } sign;
+	enum { SIGN_POS = 0, SIGN_RAND = 1, SIGN_NEG = 2 };
+	int sign;
 	uint64_t minexp, minmant, maxexp, maxmant;
 
 	#define DIST_UNIFORMF_DENSE_MANT \
@@ -2059,7 +2063,8 @@ dist_normalf_zig_init(DistNormalfZig *zig)
 }
 
 float
-dist_normalf_zig(const DistNormalfZig *zig, uint32_t (*rand32)(void*), void *rng)
+dist_normalf_zig(const DistNormalfZig *zig, uint32_t (*rand32)(void*),
+                 void *rng)
 {
 	/* We don't want to rely on the implementation of dist_uniformf,
 	 * to ignore the lower bits, which are needed to extract a random index
@@ -2201,7 +2206,7 @@ void
 shuf32_arr(void *base, uint32_t nel, uint32_t size,
          uint32_t (*rand32)(void*), void *rng)
 {
-	unsigned char *b = base;
+	unsigned char *b = (unsigned char*)base;
 	while (nel > 1) {
 		uint32_t s = size;
 		unsigned char *r = b + size *
@@ -2221,7 +2226,7 @@ void
 shuf64_arr(void *base, uint64_t nel, uint64_t size,
          uint64_t (*rand64)(void*), void *rng)
 {
-	unsigned char *b = base;
+	unsigned char *b = (unsigned char*)base;
 	while (nel > 1) {
 		uint64_t s = size;
 		unsigned char *r = b + size *
@@ -2401,7 +2406,8 @@ shuf_lcg(ShufLcg *rng)
  *      URL: "https://en.wikipedia.org/wiki/IEEE_754"
  *
  * <13> Frédéric Goualard (2020):
- *      "Generating Random Floating-Point Numbers byDividing Integers: a Case Study"
+ *      "Generating Random Floating-Point Numbers byDividing Integers:
+ *       a Case Study"
  *      DOI: "https://doi.org/10.1007/978-3-030-50417-5_2"
  *
  * <14> AllenB. Downey (2007):
@@ -2421,7 +2427,8 @@ shuf_lcg(ShufLcg *rng)
  *      University of Oxford: 77.
  *
  * <18> A. J. Kindermann, J. F. Monahan (1976):
- *      "Computer Generation of Random Variables Using the Ratio of Uniform Deviates"
+ *      "Computer Generation of Random Variables Using the Ratio of Uniform
+ *       Deviates"
  *      DOI: https://doi.org/10.1145/355744.355750
  *
  * <19> Joseph L. Leva (1991):
