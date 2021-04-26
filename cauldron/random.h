@@ -202,9 +202,9 @@ trng_close(void) {}
 int
 trng_write(void *ptr, size_t n)
 {
-	unsigned char *p;
+	unsigned char *p = (unsigned char*)ptr;
 	#if SIZE_MAX > ULONG_MAX
-	for (p = ptr; n > ULONG_MAX; n -= ULONG_MAX, p += ULONG_MAX) {
+	for (; n > ULONG_MAX; n -= ULONG_MAX, p += ULONG_MAX) {
 		if (!RtlGenRandom(p, ULONG_MAX))
 			return 0;
 	}
