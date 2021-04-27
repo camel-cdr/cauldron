@@ -67,7 +67,7 @@ aa_alloc(aa_Arena *arena, size_t size)
 	it = prev = arena->current;
 
 	/* find the first block with enough space */
-	while (it && it->ptr + size > it->end)
+	while (it && size > it->end - it->ptr)
 		prev = it, it = it->next;
 
 	if (it) {
