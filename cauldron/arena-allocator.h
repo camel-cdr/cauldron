@@ -18,7 +18,6 @@ typedef struct {
 	struct aa_Block *current;
 } aa_Arena;
 
-extern void *aa_alloc_aligned(aa_Arena *arena, size_t size, size_t alignment);
 extern void *aa_alloc(aa_Arena *arena, size_t size);
 extern void aa_dealloc(aa_Arena *arena);
 extern void aa_free(aa_Arena *arena);
@@ -31,9 +30,7 @@ extern void aa_free(aa_Arena *arena);
 
 #ifdef ARENA_ALLOCATOR_IMPLEMENT
 
-#include <stddef.h>
 #include <stdlib.h>
-#include <assert.h>
 
 struct aa_Block {
 	struct aa_Block *next;
@@ -41,19 +38,32 @@ struct aa_Block {
 	unsigned char *end;
 };
 
+#if __STDC_VERSION__ >= 201112L
+#include <stddef.h>
+# define aa_MAX_ALIGN _Alignof(max_align_t)
+#else
+	union aa_MaxAlign {
+		long double ld;
+		long l;
+		double d;
+		char *p;
+		int (*f)(void);
+# if __STDC_VERSION__ >= 199901L
+		long long ll;
+# endif
+	};
+# define aa_MAX_ALIGN sizeof(union aa_MaxAlign)
+#endif
 
 void *
-aa_alloc_aligned(aa_Arena *arena, size_t size, size_t alignment)
+aa_alloc(aa_Arena *arena, size_t size)
 {
 #define aa_ALIGN_UP(x, n) (((x) + (n) - 1) & ~((n) - 1))
 
 	struct aa_Block *it, *prev;
 	size_t old = size;
 
-	assert(alignment && !(alignment & (alignment - 1u)) &&
-	       "aa_alloc_aligned: alignment must be a power-of-2");
-
-	size = aa_ALIGN_UP(size, alignment);
+	size = aa_ALIGN_UP(size, aa_MAX_ALIGN);
 	it = prev = arena->current;
 
 	/* find the first block with enough space */
@@ -68,7 +78,7 @@ aa_alloc_aligned(aa_Arena *arena, size_t size, size_t alignment)
 		/* needs to be allocated */
 		size_t hdrsize = sizeof(struct aa_Block);
 		size_t n = hdrsize + size + aa_BLOCK_SIZE;
-		size_t an = aa_ALIGN_UP(n, alignment);
+		size_t an = aa_ALIGN_UP(n, aa_MAX_ALIGN);
 		it = malloc(an);
 		if (arena->current)
 			arena->current = prev->next = it;
@@ -83,27 +93,6 @@ aa_alloc_aligned(aa_Arena *arena, size_t size, size_t alignment)
 
 #undef aa_ALIGN_UP
 }
-
-void *
-aa_alloc(aa_Arena *arena, size_t size)
-{
-#if __STDC_VERSION__ >= 201112L
-	return aa_alloc_aligned(arena, size, _Alignof(max_align_t));
-#else
-	union aa_Align {
-		long double ld;
-		long l;
-		double d;
-		char *p;
-		int (*f)(void);
-#if __STDC_VERSION__ >= 199901L
-		long long ll;
-#endif
-	};
-	return aa_alloc_aligned(arena, size, sizeof(union aa_Align));
-#endif
-}
-
 
 void
 aa_dealloc(aa_Arena *arena)
