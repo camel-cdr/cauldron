@@ -27,7 +27,6 @@
  * References
  * Licensing
  *     Alternative A - MIT License
- *     Alternative B - Public Domain
  *
  * 1. Introduction =============================================================
  *
