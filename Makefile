@@ -12,6 +12,10 @@ uninstall:
 	-cd "$(DESTDIR)$(PREFIX)/include/cauldron" && rm $(HEADERS)
 	-rmdir "$(DESTDIR)$(PREFIX)/include/cauldron"
 
+clean:
+	make -C tools/random/ clean
+	make -C tools/random/permute/ clean
+
 check:
 	cd tools/random && make check
 	cd tools/bithacks && make check
