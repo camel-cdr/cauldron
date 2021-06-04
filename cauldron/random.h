@@ -1337,7 +1337,6 @@ static inline uint32_t
 dist_uniform_u32(uint32_t range, /* [0,range) */
                  uint32_t (*rand32)(void*), void *rng)
 {
-#if UINT64_MAX
 	uint32_t x = rand32(rng);
 	uint64_t m = (uint64_t)x * (uint64_t)range;
 	uint32_t l = m;
@@ -1350,14 +1349,6 @@ dist_uniform_u32(uint32_t range, /* [0,range) */
 		}
 	}
 	return m >> 32;
-#else /* fallback algorithm  */
-	uint32_t x, r;
-	do {
-		x = rand32(rng);
-		r = x % range;
-	} while (x - r > -range);
-	return r;
-#endif
 }
 
 static inline uint64_t
