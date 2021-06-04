@@ -56,10 +56,12 @@
 #if !defined(RANDOM_H_INCLUDED) || defined(RANDOM_H_IMPLEMENTATION)
 
 #ifdef RANDOM_H_IMPLEMENTATION
-#define _GNU_SOURCE
-#include <assert.h>
-#include <limits.h>
-#include <math.h>
+# ifndef _GNU_SOURCE
+#  define _GNU_SOURCE
+# endif
+# include <assert.h>
+# include <limits.h>
+# include <math.h>
 #endif
 
 #include <float.h>
