@@ -16,7 +16,8 @@ PractRand:
 	wget https://downloads.sourceforge.net/project/pracrand/PractRand-pre0.95.zip
 	unzip PractRand-pre0.95.zip -d tmp
 	rm PractRand-pre0.95.zip
-	clang++ $(CFLAGS) -O2 tmp/tools/RNG_test.cpp tmp/src/*.cpp \
+	clang++ $(CFLAGS) -Ofast \
+	       tmp/tools/RNG_test.cpp tmp/src/*.cpp \
 	       tmp/src/RNGs/*.cpp tmp/src/RNGs/other/*.cpp \
 	       -Itmp/include -pthread -std=gnu++11 -o $@
 	rm -rf tmp
@@ -24,11 +25,11 @@ PractRand:
 dist: dist.c
 	$(CC) $(CFLAGS) -Ofast -o $@ -lm dist.c
 
-rng: rng.c
-	$(CC) $(CFLAGS) -Ofast -o $@ -lm rng.c
+rng: rng.c msws.h
+	$(CC) $(CFLAGS) -msse2 -msse -march=native -maes -Ofast -o $@ -lm rng.c
 
-bench: bench.c
-	$(CC) $(CFLAGS) -Ofast -o $@ -lm bench.c
+bench: bench.c msws.h
+	gcc $(CFLAGS) -msse2 -msse -march=native -maes -Ofast -o $@ -lm bench.c
 
 check:
 	cppcheck \

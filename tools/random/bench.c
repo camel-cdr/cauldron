@@ -1,6 +1,6 @@
 #define RANDOM_H_IMPLEMENTATION
 #include <cauldron/random.h>
-#include <cauldron/stretchy-buffer.h>
+#include <cauldron/bench.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,30 +8,26 @@
 
 #include "msws.h"
 
-#ifndef RANDOM_BENCHMARK_COUNT
-# define RANDOM_BENCHMARK_COUNT (1024*1024*32)
-#endif
+#define COUNT (1024*128)
+#define SAMPLES (128)
 
 #define MAKE_RNG(name, type, init, next, ftype, max) \
 	do { \
-		Record r; \
-		volatile double pi; \
-		size_t i, c; \
-		ftype x, y; \
 		type rng; \
-		clock_t beg; \
 		init; \
-		beg = clock(); \
-		for (i = c = 0; i < RANDOM_BENCHMARK_COUNT; ++i) { \
-			x = (ftype)next / max; \
-			y = (ftype)next / max; \
-			if (x*x + y*y <= (ftype)1.0) \
-				++c; \
+		BENCH(name, 2, SAMPLES) { \
+			ftype x, y; \
+			size_t i, c; \
+			double pi; \
+			for (i = c = 0; i < COUNT; ++i) { \
+				x = (ftype)next / max; \
+				y = (ftype)next / max; \
+				if (x*x + y*y <= (ftype)1.0) \
+					++c; \
+			} \
+			pi = (double)c / COUNT * 4.0; \
+			BENCH_VOLATILE(pi); \
 		} \
-		pi = (double)c / RANDOM_BENCHMARK_COUNT * 4.0; \
-		r.time = (double)(clock() - beg) / CLOCKS_PER_SEC; \
-		r.rng = name; \
-		sb_push(records, r); \
 	} while (0)
 
 #define MAKE_32(type, func, rnd) \
@@ -41,24 +37,11 @@
 	MAKE_RNG(#func, type, rnd(&rng), func(&rng), \
 	         double, UINT64_MAX)
 
-typedef struct {
-	double time;
-	const char *rng;
-} Record;
-
-static int
-record_cmp(const void *lhs, const void *rhs)
-{
-	const Record *l = lhs, *r = rhs;
-	return l->time > r->time ? 1 : -1;
-}
-
 int
 main(void)
 {
 	size_t i;
 	puts("Note: Execution times between categories aren't comparable!\n");
-	Sb(Record) records;
 
 	puts("32-bit:");
 	MAKE_RNG("msws32_64bit", MsWs32_64bit, trng_write(&rng, sizeof rng),
@@ -71,11 +54,7 @@ main(void)
 	MAKE_32(PRNG32Xoshiro128, prng32_xoshiro128s, prng32_xoshiro128_randomize);
 	MAKE_32(PRNG32Xoshiro128, prng32_xoshiro128ss, prng32_xoshiro128_randomize);
 	MAKE_32(CSPRNG32Chacha, csprng32_chacha, csprng32_chacha_randomize);
-	qsort(records.at, sb_len(records), sizeof *records.at, record_cmp);
-	for (i = 0; i < sb_len(records); ++i) {
-		printf("\t%s: %fs\n", records.at[i].rng, records.at[i].time);
-	}
-	sb_setlen(records, 0);
+	bench_done();
 
 
 	puts("\n64-bit:");
@@ -96,10 +75,7 @@ main(void)
 	MAKE_64(PRNG64Xoroshiro128, prng64_xoroshiro128ss, prng64_xoroshiro128_randomize);
 	MAKE_64(PRNG64Xoshiro256, prng64_xoshiro256p, prng64_xoshiro256_randomize);
 	MAKE_64(PRNG64Xoshiro256, prng64_xoshiro256ss, prng64_xoshiro256_randomize);
-	qsort(records.at, sb_len(records), sizeof *records.at, record_cmp);
-	for (i = 0; i < sb_len(records); ++i) {
-		printf("\t%s: %fs\n", records.at[i].rng, records.at[i].time);
-	}
-	sb_free(records);
+	bench_done();
+	bench_free();
 }
 
