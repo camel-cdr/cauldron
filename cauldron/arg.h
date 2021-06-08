@@ -54,7 +54,8 @@ ARG_LONG_func(char **argv0, const char *name)
 
 #ifdef ARG_EXAMPLE
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
 	char *argv0 = argv[0];
 	int a = 0, b = 0, c = 0, reverse;
@@ -97,6 +98,8 @@ int main(int argc, char **argv)
 	puts("\nargv:");
 	while (*argv)
 		puts(*argv++);
+
+	return 0;
 }
 
 #endif /* ARG_EXAMPLE */

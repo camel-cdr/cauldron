@@ -30,6 +30,7 @@ extern void aa_free(aa_Arena *arena);
 
 #ifdef ARENA_ALLOCATOR_IMPLEMENT
 
+#include <assert.h>
 #include <stdlib.h>
 
 struct aa_Block {
@@ -67,7 +68,8 @@ aa_alloc(aa_Arena *arena, size_t size)
 	it = prev = arena->current;
 
 	/* find the first block with enough space */
-	while (it && size > it->end - it->ptr)
+	assert(it ? it->end >= it->ptr : 1);
+	while (it && size > (size_t)(it->end - it->ptr))
 		prev = it, it = it->next;
 
 	if (it) {
