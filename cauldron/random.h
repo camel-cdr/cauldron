@@ -1830,7 +1830,7 @@ dist_uniform_dense(
 			exp -= 64;
 
 		/* decrement exp by the number of trailing zeros */
-		DIST_UNIFORMF_DENSE_DEC_CTZ(exp, x);
+		DIST_UNIFORM_DENSE_DEC_CTZ(exp, x);
 
 		/* repeat when the exponent is too low or on underflow */
 		if ((exp < minexp) || (exp > maxexp))
