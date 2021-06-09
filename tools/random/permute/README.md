@@ -238,11 +238,11 @@ permute64_init(Permute64 *this, uint64_t len, uint64_t seed)
 }
 
 uint64_t
-permute64(const Permute64 *this, uint64_t idx)
+permute64(Permute64 const *this, uint64_t idx)
 {
-	const uint64_t mask = this->mask;
-	const uint64_t len = this->len;
-	const uint64_t seed = this->seed;
+	uint64_t const mask = this->mask;
+	uint64_t const len = this->len;
+	uint64_t const seed = this->seed;
 	do {
 		idx ^= seed;
 		/* splittable64 */

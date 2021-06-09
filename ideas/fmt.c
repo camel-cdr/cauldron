@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #define FMT_BEGIN(fmt) do { \
-	const char *internal__fmt = fmt; \
+	char const *internal__fmt = fmt; \
 	internal__fmt += printf("%s", internal__fmt) + 1;
 
 
@@ -35,7 +35,7 @@ fmt_Vec3(Vec3 v)
 	} FMT_END;
 }
 
-void fmt_uint_base(unsigned x, int base, const char *digits)
+void fmt_uint_base(unsigned x, int base, char const *digits)
 {
 	char arr[sizeof x * CHAR_BIT];
 	char *s = arr + sizeof arr;

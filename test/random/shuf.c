@@ -12,9 +12,9 @@
 #define ALPHA (0.5)
 
 int
-comp_size_t(const void *lhs, const void *rhs)
+comp_size_t(void const *lhs, void const *rhs)
 {
-	const size_t *l = lhs, *r = rhs;
+	size_t const *l = lhs, *r = rhs;
 	return *l - *r;
 }
 

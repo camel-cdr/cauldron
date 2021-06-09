@@ -15,9 +15,9 @@ static PRNG32RomuQuad prng32;
 #define ALPHA (NRANGES * 10.0)
 
 static int
-fcomp(const void *lhs, const void *rhs)
+fcomp(void const *lhs, void const *rhs)
 {
-	const float *l = lhs, *r = rhs;
+	float const *l = lhs, *r = rhs;
 	return *l > *r;
 }
 
