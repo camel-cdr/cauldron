@@ -529,8 +529,8 @@ prng32_pcg(void *rng)
 	 * BigCrush: Passes
 	 * PractRand: Passes (>32T) */
 	PRNG32Pcg *r = (PRNG32Pcg*)rng;
-	const uint32_t perm = (uint32_t)(((r->state >> 18) ^ r->state) >> 27);
-	const uint32_t rot = (r->state >> 59);
+	uint32_t const perm = (uint32_t)(((r->state >> 18) ^ r->state) >> 27);
+	uint32_t const rot = (r->state >> 59);
 	r->state = r->state * PRNG32_PCG_MULT + r->stream;
 	return (perm >> rot) | (perm << ((-rot) & 31));
 }
@@ -596,9 +596,9 @@ prng64_pcg(void *rng)
 	 * BigCrush: Passes
 	 * PractRand: Passes (>32T) */
 	PRNG64Pcg *r = (PRNG64Pcg*)rng;
-	const uint64_t xorshifted =
+	uint64_t const xorshifted =
 			((uint64_t)(r->state >> 64)) ^ (uint64_t)r->state;
-	const uint64_t rot = (uint64_t)(r->state >> 122);
+	uint64_t const rot = (uint64_t)(r->state >> 122);
 	r->state = r->state * PRNG64_PCG_MULT + r->stream;
 	return (xorshifted >> rot) | (xorshifted << ((-rot) & 63));
 }
@@ -692,7 +692,7 @@ prng32_romu_trio(void *rng)
 	 * BigCrush: Passes
 	 * PractRand: Passes (>256T) */
 	PRNG32RomuTrio *r = (PRNG32RomuTrio*)rng;
-	const uint32_t s0 = r->s[0], s1 = r->s[1], s2 = r->s[2];
+	uint32_t const s0 = r->s[0], s1 = r->s[1], s2 = r->s[2];
 	r->s[0] = UINT32_C(3323815723) * s2;
 	r->s[1] = s1 - s0;
 	r->s[2] = s2 - s1;
@@ -712,7 +712,7 @@ prng32_romu_quad(void *rng)
 	 * BigCrush: Passes
 	 * PractRand: Passes (>256T) */
 	PRNG32RomuQuad *r = (PRNG32RomuQuad*)rng;
-	const uint32_t s0 = r->s[0], s1 = r->s[1], s2 = r->s[2], s3 = r->s[3];
+	uint32_t const s0 = r->s[0], s1 = r->s[1], s2 = r->s[2], s3 = r->s[3];
 	r->s[0] = UINT32_C(3323815723) * s3;
 	r->s[1] = s3 + PRNG_ROMU_ROTL(s0, 26);
 	r->s[2] = s2 - s1;
@@ -732,7 +732,7 @@ prng64_romu_duo_jr(void *rng)
 	 * BigCrush: Passes
 	 * PractRand: Passes (>256T) */
 	PRNG64RomuDuo *r = (PRNG64RomuDuo*)rng;
-	const uint64_t s0 = r->s[0];
+	uint64_t const s0 = r->s[0];
 	r->s[0] = 15241094284759029579u * r->s[1];
 	r->s[1] = r->s[1] - s0;
 	r->s[1] = PRNG_ROMU_ROTL(r->s[1], 27);
@@ -746,7 +746,7 @@ prng64_romu_duo(void *rng)
 	 * BigCrush: Passes
 	 * PractRand: Passes (>256T) */
 	PRNG64RomuDuo *r = (PRNG64RomuDuo*)rng;
-	const uint64_t s0 = r->s[0];
+	uint64_t const s0 = r->s[0];
 	r->s[0] = UINT64_C(15241094284759029579) * r->s[1];
 	r->s[1] = PRNG_ROMU_ROTL(r->s[1], 36) +
 	          PRNG_ROMU_ROTL(r->s[1], 15) - s0;
@@ -764,7 +764,7 @@ prng64_romu_trio(void *rng)
 	 * BigCrush: Passes
 	 * PractRand: Passes (>256T) */
 	PRNG64RomuTrio *r = (PRNG64RomuTrio*)rng;
-	const uint64_t s0 = r->s[0], s1 = r->s[1], s2 = r->s[2];
+	uint64_t const s0 = r->s[0], s1 = r->s[1], s2 = r->s[2];
 	r->s[0] = UINT64_C(15241094284759029579) * s2;
 	r->s[1] = s1 - s0;
 	r->s[2] = s2 - s1;
@@ -784,7 +784,7 @@ prng64_romu_quad(void *rng)
 	 * BigCrush: Passes
 	 * PractRand: Passes (>256T) */
 	PRNG64RomuQuad *r = (PRNG64RomuQuad*)rng;
-	const uint64_t s0 = r->s[0], s1 = r->s[1], s2 = r->s[2], s3 = r->s[3];
+	uint64_t const s0 = r->s[0], s1 = r->s[1], s2 = r->s[2], s3 = r->s[3];
 	r->s[0] = UINT64_C(15241094284759029579) * s3;
 	r->s[1] = s3 + PRNG_ROMU_ROTL(s0, 52);
 	r->s[2] = s2 - s1;
@@ -837,7 +837,7 @@ prng32_xoroshiro64s(void *rng)
 	 * BigCrush: TODO
 	 * PractRand: lower bits fail linear tests, passes all others (>128G) */
 	PRNG32Xoroshiro64 *r = (PRNG32Xoroshiro64*)rng;
-	const uint32_t res = r->s[0] * 0x9E3779BB;
+	uint32_t const res = r->s[0] * 0x9E3779BB;
 	prng32_xoroshiro64_advance(r);
 	return res;
 }
@@ -848,8 +848,8 @@ prng32_xoroshiro64ss(void *rng)
 	 * BigCrush: TODO
 	 * PractRand: Passes (>128G) */
 	PRNG32Xoroshiro64 *r = (PRNG32Xoroshiro64*)rng;
-	const uint32_t tmp = r->s[0] * 0x9E3779BB;
-	const uint32_t res = PRNG_XORSHIFT_ROTL(tmp, 5) * 5;
+	uint32_t const tmp = r->s[0] * 0x9E3779BB;
+	uint32_t const res = PRNG_XORSHIFT_ROTL(tmp, 5) * 5;
 	prng32_xoroshiro64_advance(r);
 	return res;
 }
@@ -861,7 +861,7 @@ CAULDRON_MAKE_PRNG_NOTALLZERO_RANDOMIZE(PRNG32Xoshiro128, prng32_xoshiro128)
 static inline void
 prng32_xoshiro128_advance(PRNG32Xoshiro128 *rng) /* 0-9-11 */
 {
-	const uint32_t t = rng->s[1] << 9;
+	uint32_t const t = rng->s[1] << 9;
 	rng->s[2] ^= rng->s[0];
 	rng->s[3] ^= rng->s[1];
 	rng->s[1] ^= rng->s[2];
@@ -876,7 +876,7 @@ prng32_xoshiro128s(void *rng)
 	 * BigCrush: TODO
 	 * PractRand: lower bits fail linear tests, passes all others (>128G) */
 	PRNG32Xoshiro128 *r = (PRNG32Xoshiro128*)rng;
-	const uint32_t res = r->s[0] + r->s[3];
+	uint32_t const res = r->s[0] + r->s[3];
 	prng32_xoshiro128_advance(r);
 	return res;
 }
@@ -887,8 +887,8 @@ prng32_xoshiro128ss(void *rng)
 	 * BigCrush: TODO
 	 * PractRand: Passes (>128G) */
 	PRNG32Xoshiro128 *r = (PRNG32Xoshiro128*)rng;
-	const uint32_t tmp = r->s[1] * 5;
-	const uint32_t res = PRNG_XORSHIFT_ROTL(tmp, 7) * 9;
+	uint32_t const tmp = r->s[1] * 5;
+	uint32_t const res = PRNG_XORSHIFT_ROTL(tmp, 7) * 9;
 	prng32_xoshiro128_advance(r);
 	return res;
 }
@@ -912,7 +912,7 @@ prng64_xoroshiro128p(void *rng)
 	 * BigCrush: Passes
 	 * PractRand: lower bits fail linear tests, passes all others (>128G) */
 	PRNG64Xoroshiro128 *r = (PRNG64Xoroshiro128*)rng;
-	const uint64_t res = r->s[0] + r->s[1];
+	uint64_t const res = r->s[0] + r->s[1];
 	prng64_xoroshiro128_advance(r);
 	return res;
 }
@@ -923,8 +923,8 @@ prng64_xoroshiro128ss(void *rng)
 	 * BigCrush: Passes
 	 * PractRand: Passes (>512G) */
 	PRNG64Xoroshiro128 *r = (PRNG64Xoroshiro128*)rng;
-	const uint64_t tmp = r->s[0] * 5;
-	const uint64_t res = PRNG_XORSHIFT_ROTL(tmp, 7) * 9;
+	uint64_t const tmp = r->s[0] * 5;
+	uint64_t const res = PRNG_XORSHIFT_ROTL(tmp, 7) * 9;
 	prng64_xoroshiro128_advance(r);
 	return res;
 }
@@ -936,7 +936,7 @@ CAULDRON_MAKE_PRNG_NOTALLZERO_RANDOMIZE(PRNG64Xoshiro256, prng64_xoshiro256)
 static inline void
 prng64_xoshiro256_advance(PRNG64Xoshiro256 *rng) /* 0-17-54 */
 {
-	const uint64_t t = rng->s[1] << 17;
+	uint64_t const t = rng->s[1] << 17;
 	rng->s[2] ^= rng->s[0];
 	rng->s[3] ^= rng->s[1];
 	rng->s[1] ^= rng->s[2];
@@ -951,7 +951,7 @@ prng64_xoshiro256p(void *rng)
 	 * BigCrush: Passes
 	 * PractRand: lower bits fail linear tests, passes all others (>128G) */
 	PRNG64Xoshiro256 *r = (PRNG64Xoshiro256*)rng;
-	const uint64_t res = r->s[0] + r->s[3];
+	uint64_t const res = r->s[0] + r->s[3];
 	prng64_xoshiro256_advance(r);
 	return res;
 }
@@ -962,8 +962,8 @@ prng64_xoshiro256ss(void *rng)
 	 * BigCrush: Passes
 	 * PractRand: Passes (>512G) */
 	PRNG64Xoshiro256 *r = (PRNG64Xoshiro256*)rng;
-	const uint64_t tmp = r->s[1] * 5;
-	const uint64_t res = PRNG_XORSHIFT_ROTL(tmp, 7) * 9;
+	uint64_t const tmp = r->s[1] * 5;
+	uint64_t const res = PRNG_XORSHIFT_ROTL(tmp, 7) * 9;
 	prng64_xoshiro256_advance(r);
 	return res;
 }
@@ -998,19 +998,19 @@ prng64_xoshiro256ss(void *rng)
  *        $ done
  */
 
-extern const uint32_t prng32Xoroshiro128Jump2Pow64[4];
-extern const uint32_t prng32Xoroshiro128Jump2Pow96[4];
+extern uint32_t const prng32Xoroshiro128Jump2Pow64[4];
+extern uint32_t const prng32Xoroshiro128Jump2Pow96[4];
 extern void prng32_xoshiro128_jump(PRNG32Xoshiro128 *rng,
-                                   const uint32_t jump[4]);
+                                   uint32_t const jump[4]);
 
 #ifdef RANDOM_H_IMPLEMENTATION
-const uint32_t prng32Xoroshiro128Jump2Pow64[4] = /* 0-9-11 */
+uint32_t const prng32Xoroshiro128Jump2Pow64[4] = /* 0-9-11 */
 	{ 0x8764000B, 0xF542D2D3, 0X6FA035C3, 0x77F2DB5B };
-const uint32_t prng32Xoroshiro128Jump2Pow96[4] = /* 0-9-11 */
+uint32_t const prng32Xoroshiro128Jump2Pow96[4] = /* 0-9-11 */
 	{ 0xB523952E, 0x0B6F099F, 0xCCF5A0EF, 0x1C580662 };
 
 void
-prng32_xoshiro128_jump(PRNG32Xoshiro128 *rng, const uint32_t jump[4])
+prng32_xoshiro128_jump(PRNG32Xoshiro128 *rng, uint32_t const jump[4])
 {
 	size_t i, b, j;
 	uint32_t s[4] = { 0 };
@@ -1024,48 +1024,48 @@ prng32_xoshiro128_jump(PRNG32Xoshiro128 *rng, const uint32_t jump[4])
 }
 #endif /* RANDOM_H_IMPLEMENTATION */
 
-extern const uint64_t prng64Xoroshiro128Jump2Pow16[2],
+extern uint64_t const prng64Xoroshiro128Jump2Pow16[2],
 	prng64Xoroshiro128Jump2Pow32[2], prng64Xoroshiro128Jump2Pow48[2],
 	prng64Xoroshiro128Jump2Pow64[2], prng64Xoroshiro128Jump2Pow96[2];
-extern const uint64_t prng64Xoshiro256Jump2Pow32[4],
+extern uint64_t const prng64Xoshiro256Jump2Pow32[4],
 	prng64Xoshiro256Jump2Pow48[4], prng64Xoshiro256Jump2Pow64[4],
 	prng64Xoshiro256Jump2Pow96[4], prng64Xoshiro256Jump2Pow128[4],
 	prng64Xoshiro256Jump2Pow160[4], prng64Xoshiro256Jump2Pow192[4];
 
 extern void prng64_xoroshiro128_jump(PRNG64Xoroshiro128 *rng,
-                                     const uint64_t jump[2]);
+                                     uint64_t const jump[2]);
 extern void prng64_xoshiro256_jump(PRNG64Xoshiro256 *rng,
-                                   const uint64_t jump[4]);
+                                   uint64_t const jump[4]);
 
 #ifdef RANDOM_H_IMPLEMENTATION
-const uint64_t prng64Xoroshiro128Jump2Pow16[2] = /* 24-16-37 */
+uint64_t const prng64Xoroshiro128Jump2Pow16[2] = /* 24-16-37 */
 	{ 0xB82CA99A09A4E71E, 0x81E1DD96586CF985 };
-const uint64_t prng64Xoroshiro128Jump2Pow32[2] = /* 24-16-37 */
+uint64_t const prng64Xoroshiro128Jump2Pow32[2] = /* 24-16-37 */
 	{ 0xFAD843622B252C78, 0xD4E95EEF9EDBDBC6 };
-const uint64_t prng64Xoroshiro128Jump2Pow48[2] = /* 24-16-37 */
+uint64_t const prng64Xoroshiro128Jump2Pow48[2] = /* 24-16-37 */
 	{ 0xD769CFC9028DEB78, 0x9B19BA6B3752065A };
-const uint64_t prng64Xoroshiro128Jump2Pow64[2] = /* 24-16-37 */
+uint64_t const prng64Xoroshiro128Jump2Pow64[2] = /* 24-16-37 */
 	{ 0xDF900294D8F554A5, 0x170865DF4B3201FC };
-const uint64_t prng64Xoroshiro128Jump2Pow96[2] = /* 24-16-37 */
+uint64_t const prng64Xoroshiro128Jump2Pow96[2] = /* 24-16-37 */
 	{ 0xD2A98B26625EEE7B, 0xDDDF9B1090AA7AC1 };
 
-const uint64_t prng64Xoshiro256Jump2Pow32[4] = /* 0-17-54 */
+uint64_t const prng64Xoshiro256Jump2Pow32[4] = /* 0-17-54 */
 { 0x58120D583C112F69,0x7D8D0632BD08E6AC,0x214FAFC0FBDBC208,0xE055D3520FDB9D7 };
-const uint64_t prng64Xoshiro256Jump2Pow48[4] = /* 0-17-54 */
+uint64_t const prng64Xoshiro256Jump2Pow48[4] = /* 0-17-54 */
 { 0xF11FB4FAEA62C7F1,0xF825539DEE5E4763,0x474579292F705634,0x5F728BE2C97E9066 };
-const uint64_t prng64Xoshiro256Jump2Pow64[4] = /* 0-17-54 */
+uint64_t const prng64Xoshiro256Jump2Pow64[4] = /* 0-17-54 */
 { 0xB13C16E8096F0754,0xB60D6C5B8C78F106,0x34FAFF184785C20A,0x12E4A2FBFC19BFF9 };
-const uint64_t prng64Xoshiro256Jump2Pow96[4] = /* 0-17-54 */
+uint64_t const prng64Xoshiro256Jump2Pow96[4] = /* 0-17-54 */
 { 0x148C356C3114B7A9,0xCDB45D7DEF42C317,0xB27C05962EA56A13,0x31EEBB6C82A9615F };
-const uint64_t prng64Xoshiro256Jump2Pow128[4] = /* 0-17-54 */
+uint64_t const prng64Xoshiro256Jump2Pow128[4] = /* 0-17-54 */
 { 0x180EC6D33CFD0ABA,0xD5A61266F0C9392C,0xA9582618E03FC9AA,0x39ABDC4529B1661C };
-const uint64_t prng64Xoshiro256Jump2Pow160[4] = /* 0-17-54 */
+uint64_t const prng64Xoshiro256Jump2Pow160[4] = /* 0-17-54 */
 { 0xC04B4F9C5D26C200,0x69E6E6E431A2D40B,0x4823B45B89DC689C,0xF567382197055BF0 };
-const uint64_t prng64Xoshiro256Jump2Pow192[4] = /* 0-17-54 */
+uint64_t const prng64Xoshiro256Jump2Pow192[4] = /* 0-17-54 */
 { 0x76E15D3EFEFDCBBF,0xC5004E441C522FB3,0x77710069854EE241,0x39109BB02ACBE635 };
 
 void
-prng64_xoroshiro128_jump(PRNG64Xoroshiro128 *rng, const uint64_t jump[2])
+prng64_xoroshiro128_jump(PRNG64Xoroshiro128 *rng, uint64_t const jump[2])
 {
 	size_t i, j, b;
 	uint64_t s[2] = { 0 };
@@ -1079,7 +1079,7 @@ prng64_xoroshiro128_jump(PRNG64Xoroshiro128 *rng, const uint64_t jump[2])
 }
 
 void
-prng64_xoshiro256_jump(PRNG64Xoshiro256 *rng, const uint64_t jump[4])
+prng64_xoshiro256_jump(PRNG64Xoshiro256 *rng, uint64_t const jump[4])
 {
 	size_t i, b, j;
 	uint64_t s[4] = { 0 };
@@ -1203,7 +1203,7 @@ void
 csprng32_chacha_randomize(void *rng)
 {
 	uint32_t seed[8+2];
-	trng_write(seed, sizeof *seed);
+	trng_write(seed, sizeof seed);
 	csprng32_chacha_init((CSPRNG32Chacha*)rng, seed, seed + 8);
 }
 
@@ -1577,7 +1577,7 @@ dist_uniform_dense(
 
 # ifndef DIST_UNIFORMF_DENSE_DEC_CTZ
 #  define DIST_UNIFORMF_DENSE_DEC_CTZ(exp, x) do { \
-		static const char deBruijn[32] = { \
+		static char const deBruijn[32] = { \
 			0, 1, 28,2,29,14,24,3,30,22,20,15,25,17, 4,8, \
 			31,27,13,23,21,19,16,7,26,12,18, 6,11, 5,10,9 }; \
 		(exp) -= deBruijn[(((x) & -(x)) * \
@@ -1587,7 +1587,7 @@ dist_uniform_dense(
 
 # ifndef DIST_UNIFORM_DENSE_DEC_CTZ
 #  define DIST_UNIFORM_DENSE_DEC_CTZ(exp, x) do { \
-		static const char deBruijn[64] = { \
+		static char const deBruijn[64] = { \
 			0,  1, 2,53, 3, 7,54,27, 4,38,41, 8,34,55,48,28, \
 			62, 5,39,46,44,42,22, 9,24,35,59,56,49,18,29,11, \
 			63,52, 6,26,37,40,33,47,61,45,43,21,23,58,17,10, \
@@ -1650,8 +1650,8 @@ dist_uniformf_dense(
 			u.i |= UINT32_C(1) << 31;
 		return u.f;
 	} else if (minexp + 1 == maxexp) {
-		const uint32_t invminmant = DIST_UNIFORMF_DENSE_MANT - minmant;
-		const uint32_t range = invminmant + maxmant + 1;
+		uint32_t const invminmant = DIST_UNIFORMF_DENSE_MANT - minmant;
+		uint32_t const range = invminmant + maxmant + 1;
 		uint32_t mant, exp, x;
 		size_t i = 0;
 
@@ -1778,8 +1778,8 @@ dist_uniform_dense(
 			u.i |= UINT64_C(1) << 63;
 		return u.f;
 	} else if (minexp + 1 == maxexp) {
-		const uint64_t invminmant = DIST_UNIFORMF_DENSE_MANT - minmant;
-		const uint64_t range = invminmant + maxmant + 1;
+		uint64_t const invminmant = DIST_UNIFORMF_DENSE_MANT - minmant;
+		uint64_t const range = invminmant + maxmant + 1;
 		uint64_t mant, exp, x;
 		size_t i = 0;
 
@@ -1908,9 +1908,9 @@ extern double dist_normal(uint64_t (*rand64)(void*), void *rng);
 float
 dist_normalf(uint32_t (*rand32)(void*), void *rng)
 {
-	static const float s = 0.449871f, t =-0.386595f, a = 0.19600f;
-	static const float b = 0.25472f, r1 = 0.27597f, r2 = 0.27846f;
-	static const float m = 1.715527769921414f; /* 2*\sqrt{2/\e} */
+	static float const s = 0.449871f, t =-0.386595f, a = 0.19600f;
+	static float const b = 0.25472f, r1 = 0.27597f, r2 = 0.27846f;
+	static float const m = 1.715527769921414f; /* 2*\sqrt{2/\e} */
 	float u, v, x, y, Q;
 
 	do {
@@ -1935,9 +1935,9 @@ dist_normalf(uint32_t (*rand32)(void*), void *rng)
 double
 dist_normal(uint64_t (*rand64)(void*), void *rng)
 {
-	static const double s = 0.449871, t =-0.386595, a = 0.19600;
-	static const double b = 0.25472, r1 = 0.27597, r2 = 0.27846;
-	static const double m = 1.715527769921414; /* 2*\sqrt{2/\e} */
+	static double const s = 0.449871, t =-0.386595, a = 0.19600;
+	static double const b = 0.25472, r1 = 0.27597, r2 = 0.27846;
+	static double const m = 1.715527769921414; /* 2*\sqrt{2/\e} */
 	double u, v, x, y, Q;
 
 	do {
@@ -2015,7 +2015,7 @@ typedef struct {
 } DistNormalfZig;
 
 extern void dist_normalf_zig_init(DistNormalfZig *zig);
-extern float dist_normalf_zig(const DistNormalfZig *zig,
+extern float dist_normalf_zig(DistNormalfZig const *zig,
                               uint32_t (*rand32)(void*), void *rng);
 
 #ifndef DIST_NORMAL_ZIG_COUNT
@@ -2031,7 +2031,7 @@ typedef struct {
 } DistNormalZig;
 
 extern void dist_normal_zig_init(DistNormalZig *zig);
-extern double dist_normal_zig(const DistNormalZig *zig,
+extern double dist_normal_zig(DistNormalZig const *zig,
                               uint64_t (*rand64)(void*), void *rng);
 
 #ifdef RANDOM_H_IMPLEMENTATION
@@ -2055,7 +2055,7 @@ dist_normalf_zig_init(DistNormalfZig *zig)
 }
 
 float
-dist_normalf_zig(const DistNormalfZig *zig, uint32_t (*rand32)(void*),
+dist_normalf_zig(DistNormalfZig const *zig, uint32_t (*rand32)(void*),
                  void *rng)
 {
 	/* We don't want to rely on the implementation of dist_uniformf,
@@ -2069,9 +2069,9 @@ dist_normalf_zig(const DistNormalfZig *zig, uint32_t (*rand32)(void*),
 	while (1) {
 		float x, y, f0, f1;
 		union { uint32_t u; float f; } u = { 0 };
-		const uint32_t u32 = rand32(rng);
-		const uint32_t idx = (u32 >> 1) & (DIST_NORMALF_ZIG_COUNT - 1);
-		const float uf32 = DIST_NORMALF_ZIG_2FLT(u32) * zig->x[idx];
+		uint32_t const u32 = rand32(rng);
+		uint32_t const idx = (u32 >> 1) & (DIST_NORMALF_ZIG_COUNT - 1);
+		float const uf32 = DIST_NORMALF_ZIG_2FLT(u32) * zig->x[idx];
 
 		/* Take a random box (box[idx])
 		 * and get the value of a random x-coordinate inside it.
@@ -2126,7 +2126,7 @@ dist_normal_zig_init(DistNormalZig *zig)
 }
 
 double
-dist_normal_zig(const DistNormalZig *zig, uint64_t (*rand64)(void*), void *rng)
+dist_normal_zig(DistNormalZig const *zig, uint64_t (*rand64)(void*), void *rng)
 {
 	/* We don't want to rely on the implementation of dist_uniform,
 	 * to ignore the lower bits, which are needed to extract a random index
@@ -2139,9 +2139,9 @@ dist_normal_zig(const DistNormalZig *zig, uint64_t (*rand64)(void*), void *rng)
 	while (1) {
 		double x, y, f0, f1;
 		union { uint64_t u; double f; } u = { 0 };
-		const uint64_t u64 = rand64(rng);
-		const uint64_t idx = (u64 >> 1) & (DIST_NORMAL_ZIG_COUNT - 1);
-		const double uf64 = DIST_NORMAL_ZIG_2DBL(u64) * zig->x[idx];
+		uint64_t const u64 = rand64(rng);
+		uint64_t const idx = (u64 >> 1) & (DIST_NORMAL_ZIG_COUNT - 1);
+		double const uf64 = DIST_NORMAL_ZIG_2DBL(u64) * zig->x[idx];
 
 		/* Take a random box (box[idx])
 		 * and get the value of a random x-coordinate inside it.
