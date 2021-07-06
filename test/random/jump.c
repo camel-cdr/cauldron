@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define MASK UINT16_MAX
+
 int
 main(void)
 {
@@ -27,7 +29,7 @@ main(void)
 
 	TEST_BEGIN("prng64_pcg_jump");
 	for (i = 0; i < 25; ++i) {
-		size_t n = prng64_romu_quad(&prng64) & UINT16_MAX;
+		size_t n = prng64_romu_quad(&prng64) & MASK;
 		TEST(PRNG32Pcg, prng32_pcg_randomize, prng32_pcg,
 		     prng32_pcg_jump, (&a, n), n);
 	}
@@ -37,7 +39,7 @@ main(void)
 		TEST_BEGIN("prng64_pcg_jump");
 		for (i = 0; i < 25; ++i) {
 			uint64_t by[2] = { 0 };
-			by[1] = prng64_romu_quad(&prng64) & UINT16_MAX;
+			by[1] = prng64_romu_quad(&prng64) & MASK;
 			TEST(PRNG64Pcg, prng64_pcg_randomize, prng64_pcg,
 			     prng64_pcg_jump, (&a, by), by[1]);
 		}
@@ -52,8 +54,6 @@ main(void)
 	}
 	TEST_END();
 	/* The other xorshift prngs jump to far to test */
-
-
 
 	return EXIT_SUCCESS;
 }

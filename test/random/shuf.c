@@ -7,7 +7,7 @@
 #include <string.h>
 
 #define MAX_SIZE (1024)
-#define N (128)
+#define COUNT (128)
 
 #define ALPHA (0.5)
 
@@ -49,25 +49,25 @@ main(void)
 		sorted[i] = arr[i] = i;
 
 	TEST_BEGIN("shuf32_arr");
-	for (cnt = i = 0; i < N; ++i) {
+	for (cnt = i = 0; i < COUNT; ++i) {
 		size = dist_uniform_u32(MAX_SIZE-2, prng32_romu_quad, &prng32)+2;
 		shuf32_arr(arr, size, sizeof *arr, prng32_romu_quad, &prng32);
 		cnt += validate_shuffle(arr, sorted, size);
 	}
-	TEST_ASSERT((float)cnt / N - 1.0 < ALPHA);
+	TEST_ASSERT((float)cnt / COUNT - 1.0 < ALPHA);
 	TEST_END();
 
 	TEST_BEGIN("shuf64_arr");
-	for (cnt = i = 0; i < N; ++i) {
+	for (cnt = i = 0; i < COUNT; ++i) {
 		size = dist_uniform_u64(MAX_SIZE-2, prng64_romu_quad, &prng64)+2;
 		shuf64_arr(arr, size, sizeof *arr, prng64_romu_quad, &prng64);
 		cnt += validate_shuffle(arr, sorted, size);
 	}
-	TEST_ASSERT((float)cnt / N - 1.0 < ALPHA);
+	TEST_ASSERT((float)cnt / COUNT - 1.0 < ALPHA);
 	TEST_END();
 
 	TEST_BEGIN("shuf_weyl")
-	for (cnt = i = 0; i < N; ++i) {
+	for (cnt = i = 0; i < COUNT; ++i) {
 		ShufWeyl weyl;
 		size = dist_uniform_u64(MAX_SIZE-2, prng64_romu_quad, &prng64)+2;
 		shuf_weyl_randomize(&weyl, size);
@@ -80,11 +80,11 @@ main(void)
 
 		cnt += validate_shuffle(arr, sorted, size);
 	}
-	TEST_ASSERT((float)cnt / N - 1.0 < ALPHA);
+	TEST_ASSERT((float)cnt / COUNT - 1.0 < ALPHA);
 	TEST_END();
 
 	TEST_BEGIN("shuf_lcg")
-	for (cnt = i = 0; i < N; ++i) {
+	for (cnt = i = 0; i < COUNT; ++i) {
 		ShufLcg lcg;
 		size = dist_uniform_u64(MAX_SIZE-2, prng64_romu_quad, &prng64)+2;
 		shuf_lcg_randomize(&lcg, size);
@@ -97,7 +97,7 @@ main(void)
 
 		cnt += validate_shuffle(arr, sorted, size);
 	}
-	TEST_ASSERT((float)cnt / N - 1.0 < ALPHA);
+	TEST_ASSERT((float)cnt / COUNT - 1.0 < ALPHA);
 	TEST_END();
 
 	free(sorted);
