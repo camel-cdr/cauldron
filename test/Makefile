@@ -12,7 +12,7 @@ CXX_END=&& $$x && rm -f $$x
 CC_BIG_ENDIAN_BEG=x=`mktemp` && \
                   which mips-linux-gnu-gcc qemu-mips >/dev/null && \
                   mips-linux-gnu-gcc -I../ -static -o $$x
-CC_BIG_ENDIAN_END=-lm && qemu-mips $$x && rm -f $$x
+CC_BIG_ENDIAN_END=-lm && qemu-mips $$x && rm -f $$x || true
 
 all: random-target streachy-buffer-target arena-allocator
 
