@@ -263,7 +263,7 @@ trng_write(void *ptr, size_t n)
 	 * requested bytes, which means that we need to read one chunk at a
 	 * time. */
 
-	for (p = (unsigned char*)ptr, r = 0; n > 0; n -= (size_t)r, p += r) {
+	for (p = (unsigned char*)ptr; n > 0; n -= (size_t)r, p += r) {
 		/* if available use getrandom */
 		#ifdef SYS_getrandom
 		if ((r = syscall(SYS_getrandom, p, n, 0)) > 0)
@@ -604,11 +604,11 @@ prng64_pcg(void *rng)
 	return (xorshifted >> rot) | (xorshifted << ((-rot) & 63u));
 }
 
-extern void prng64_pcg_jump(PRNG64Pcg *rng, uint64_t by[2]);
+extern void prng64_pcg_jump(PRNG64Pcg *rng, uint64_t const by[2]);
 
 # ifdef RANDOM_H_IMPLEMENTATION
 void
-prng64_pcg_jump(PRNG64Pcg *rng, uint64_t by[2])
+prng64_pcg_jump(PRNG64Pcg *rng, uint64_t const by[2])
 {
 	__uint128_t curmult = PRNG64_PCG_MULT, curplus = rng->stream;
 	__uint128_t actmult = 1,               actplus = 0;
@@ -1619,9 +1619,7 @@ dist_uniformf_dense(
 			((UINT32_C(1) << (FLT_MANT_DIG - 1)) - 1)
 
 	/* make sure a is smaller than b */
-	if (a == b) {
-		return a;
-	} else if (a > b) {
+	if (a > b) {
 		float tmp = a;
 		a = b;
 		b = tmp;
@@ -1660,7 +1658,7 @@ dist_uniformf_dense(
 		       minmant);
 
 		/* apply signedness */
-		/**/ if (sign == SIGN_RAND)
+		if (sign == SIGN_RAND)
 			u.i |= rand32(rng) & (UINT32_C(1) << 31);
 		else if (sign == SIGN_NEG)
 			u.i |= UINT32_C(1) << 31;
@@ -1668,8 +1666,11 @@ dist_uniformf_dense(
 		#ifdef __cplusplus
 			memcpy(&u.f, &u.i, sizeof u.f);
 		#endif
+
 		return u.f;
-	} else if (minexp + 1 == maxexp) {
+	}
+
+	if (minexp + 1 == maxexp) {
 		uint32_t const invminmant = DIST_UNIFORMF_DENSE_MANT - minmant;
 		uint32_t const range = invminmant + maxmant + 1;
 		uint32_t mant, exp, x;
@@ -1708,7 +1709,7 @@ dist_uniformf_dense(
 		u.i = (exp << (FLT_MANT_DIG - 1)) | mant;
 
 		/* apply signedness */
-		/**/ if (sign == SIGN_RAND)
+		if (sign == SIGN_RAND)
 			u.i |= x << 31;
 		else if (sign == SIGN_NEG)
 			u.i |= UINT32_C(1) << 31;
@@ -1717,7 +1718,9 @@ dist_uniformf_dense(
 			memcpy(&u.f, &u.i, sizeof u.f);
 		#endif
 		return u.f;
-	} else while (1) {
+	}
+
+	while (1) {
 		uint32_t exp, x;
 
 		/* decrement exp until at least one bit is set */
@@ -1737,7 +1740,7 @@ dist_uniformf_dense(
 		u.i = (exp << (FLT_MANT_DIG - 1)) | (x >> (33 - FLT_MANT_DIG));
 
 		/* apply signedness */
-		/**/ if (sign == SIGN_RAND)
+		if (sign == SIGN_RAND)
 			u.i |= x << 31;
 		else if (sign == SIGN_NEG)
 			u.i |= UINT32_C(1) << 31;
@@ -1771,9 +1774,7 @@ dist_uniform_dense(
 			((UINT64_C(1) << (DBL_MANT_DIG - 1)) - 1)
 
 	/* make sure a is smaller than b */
-	if (a == b) {
-		return a;
-	} else if (a > b) {
+	if (a > b) {
 		double tmp = a;
 		a = b;
 		b = tmp;
@@ -1813,7 +1814,7 @@ dist_uniform_dense(
 		       minmant);
 
 		/* apply signedness */
-		/**/ if (sign == SIGN_RAND)
+		if (sign == SIGN_RAND)
 			u.i |= rand64(rng) & (UINT64_C(1) << 63);
 		else if (sign == SIGN_NEG)
 			u.i |= UINT64_C(1) << 63;
@@ -1822,7 +1823,9 @@ dist_uniform_dense(
 			memcpy(&u.f, &u.i, sizeof u.f);
 		#endif
 		return u.f;
-	} else if (minexp + 1 == maxexp) {
+	}
+
+	if (minexp + 1 == maxexp) {
 		uint64_t const invminmant = DIST_UNIFORMF_DENSE_MANT - minmant;
 		uint64_t const range = invminmant + maxmant + 1;
 		uint64_t mant, exp, x;
@@ -1861,7 +1864,7 @@ dist_uniform_dense(
 		u.i = (exp << (DBL_MANT_DIG - 1)) | mant;
 
 		/* apply signedness */
-		/**/ if (sign == SIGN_RAND)
+		if (sign == SIGN_RAND)
 			u.i |= x << 63;
 		else if (sign == SIGN_NEG)
 			u.i |= UINT64_C(1) << 63;
@@ -1870,7 +1873,9 @@ dist_uniform_dense(
 			memcpy(&u.f, &u.i, sizeof u.f);
 		#endif
 		return u.f;
-	} else while (1) {
+	}
+
+	while (1) {
 		uint64_t exp, x;
 
 		/* decrement exp until at least one bit is set */
@@ -1890,7 +1895,7 @@ dist_uniform_dense(
 		u.i = (exp << (DBL_MANT_DIG - 1)) | (x >> (65 - DBL_MANT_DIG));
 
 		/* apply signedness */
-		/**/ if (sign == SIGN_RAND)
+		if (sign == SIGN_RAND)
 			u.i |= x << 63;
 		else if (sign == SIGN_NEG)
 			u.i |= UINT64_C(1) << 63;
@@ -2129,7 +2134,7 @@ dist_normalf_zig(DistNormalfZig const *zig, uint32_t (*rand32)(void*),
 		 * Since we can't rely on dist_uniformf adhering to this order,
 		 * we define a custom conversion macro: */
 		#define DIST_NORMALF_ZIG_2FLT(x) \
-			((x >> (32 - FLT_MANT_DIG)) * \
+			(((x) >> (32 - FLT_MANT_DIG)) * \
 			 (1.0f / (UINT32_C(1) << FLT_MANT_DIG)))
 
 		u32 = rand32(rng);
@@ -2152,10 +2157,9 @@ dist_normalf_zig(DistNormalfZig const *zig, uint32_t (*rand32)(void*),
 				    1.0f / DIST_NORMALF_ZIG_R;
 				y = logf(1-DIST_NORMALF_ZIG_2FLT(rand32(rng)));
 			} while (-(y + y) < x * x);
-			if (u32 & 1)
-				return x - (float)DIST_NORMALF_ZIG_R;
-			else
-				return (float)DIST_NORMALF_ZIG_R - x;
+			return u32 & 1u ?
+				x - DIST_NORMALF_ZIG_R :
+				DIST_NORMALF_ZIG_R - x;
 		}
 
 		/* Take a random x-coordinate U in between x[idx] and x[idx+1]
@@ -2219,7 +2223,7 @@ dist_normal_zig(DistNormalZig const *zig, uint64_t (*rand64)(void*), void *rng)
 		 * Since we can't rely on dist_uniformf adhering to this order,
 		 * we define a custom conversion macro: */
 		#define DIST_NORMAL_ZIG_2DBL(x) \
-			((x >> (64 - DBL_MANT_DIG)) * \
+			(((x) >> (64 - DBL_MANT_DIG)) * \
 			 (1.0 / (UINT64_C(1) << DBL_MANT_DIG)))
 
 		u64 = rand64(rng);
@@ -2242,10 +2246,9 @@ dist_normal_zig(DistNormalZig const *zig, uint64_t (*rand64)(void*), void *rng)
 				    1.0 / DIST_NORMAL_ZIG_R;
 				y = log(1 - DIST_NORMAL_ZIG_2DBL(rand64(rng)));
 			} while (-(y + y) < x * x);
-			if (u64 & 1)
-				return x - (double)DIST_NORMAL_ZIG_R;
-			else
-				return (double)DIST_NORMAL_ZIG_R - x;
+			return u64 & 1u ?
+				x - DIST_NORMAL_ZIG_R :
+				DIST_NORMAL_ZIG_R - x;
 		}
 
 		/* Take a random x-coordinate U in between x[idx] and x[idx+1]

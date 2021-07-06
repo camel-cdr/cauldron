@@ -14,7 +14,13 @@ CC_BIG_ENDIAN_BEG=x=`mktemp` && \
                   mips-linux-gnu-gcc -I../ -static -o $$x
 CC_BIG_ENDIAN_END=-lm && qemu-mips $$x && rm -f $$x || true
 
-all: random-target streachy-buffer-target arena-allocator
+all: arena-allocator random-target streachy-buffer-target
+
+arena-allocator:
+	${CC_BEG} arena-allocator.c ${CC_END}
+	${CC_BIG_ENDIAN_BEG} arena-allocator.c ${CC_BIG_ENDIAN_END}
+	rm -f ./a.out
+
 
 random-target: random-shuf random-jump random-dist-normal
 
@@ -41,15 +47,3 @@ streachy-buffer-target:
 	${CC_BEG} stretchy-buffer/test.c ${CC_END}
 	${CC_BIG_ENDIAN_BEG} stretchy-buffer/test.c ${CC_BIG_ENDIAN_END}
 	rm -f ./a.out
-
-arena-allocator:
-	${CC_BEG} arena-allocator.c ${CC_END}
-	${CC_BIG_ENDIAN_BEG} arena-allocator.c ${CC_BIG_ENDIAN_END}
-	rm -f ./a.out
-
-check:
-	cppcheck \
-		-I../ -Dinline="" --std=c89 \
-		--enable=all --suppress=missingInlcude \
-		random/*.c stretchy-buffer/*.c *.c
-

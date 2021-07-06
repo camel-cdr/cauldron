@@ -34,9 +34,6 @@ rand64(void *arg)
 	return x;
 }
 
-static float randf32(void) { return dist_uniformf(rand32(0)); }
-static double randf64(void) { return dist_uniform(rand64(0)); }
-
 static void
 usage(void)
 {

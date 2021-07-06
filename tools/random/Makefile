@@ -29,13 +29,7 @@ rng: rng.c msws.h
 	$(CC) $(CFLAGS) -msse2 -msse -march=native -maes -Ofast -o $@ -lm rng.c
 
 bench: bench.c msws.h
-	gcc $(CFLAGS) -msse2 -msse -march=native -maes -Ofast -o $@ -lm bench.c
-
-check:
-	cppcheck \
-		-I../../ -Dinline="" --std=c89 \
-		--enable=all --suppress=missingInlcude \
-		bench.c dist.c dist_uniform_exact.c rng.c ziggurat-constants.c
+	gcc $(CFLAGS) -march=native -Ofast -o $@ -lm bench.c
 
 clean:
 	rm -f $(BIN) testu01 PractRand

@@ -16,7 +16,22 @@ clean:
 	make -C tools/random/ clean
 	make -C tools/random/permute/ clean
 
-check:
-	cd tools/random && make check
-	cd tools/bithacks && make check
-	cd test && make check
+TIDY=clang-tidy -checks='cert-*,clang-analyzer-*,linuxkernel-*,misc-*, \
+                         performance-*,portability-*,readability-*, \
+                         -readability-braces-around-statements, \
+                         -readability-isolate-declaration, \
+                         -readability-magic-numbers, \
+                         -readability-uppercase-literal-suffix, \
+                         -cert-dcl37-c,-cert-dcl51-cpp' \
+                -header-filter='.*' --extra-arg-before=-I. \
+                --extra-arg=-std=c89 --extra-arg=-Dinline=""
+
+tidy:
+	${TIDY} cauldron/arg.h --extra-arg=-DARG_EXAMPLE
+	${TIDY} --extra-arg=-std=gnu99 cauldron/bench.h --extra-arg=-DBENCH_EXAMPLE
+	${TIDY} cauldron/test.h --extra-arg=-DTEST_EXAMPLE
+	${TIDY} test/arena-allocator.c
+	${TIDY} test/random/dist_normal.c
+	${TIDY} test/random/jump.c
+	${TIDY} test/random/shuf.c
+	${TIDY} test/stretchy-buffer/test.c

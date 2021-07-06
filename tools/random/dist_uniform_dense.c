@@ -6,7 +6,7 @@
 #define RANDOM_H_IMPLEMENTATION
 #include <cauldron/random.h>
 
-/* This is some messy testing of dist_uniformf_exact, read at your own risk. */
+/* This is some messy testing of dist_uniformf_dense, read at your own risk. */
 
 static PRNG32RomuQuad prng32;
 
@@ -42,7 +42,7 @@ main(void)
 
 		qsort(r, 4, sizeof *r, fcomp);
 
-		float expected = ((float)r[2]-r[1]) / ((float)r[3]-r[0]);
+		float expected = (r[2]-r[1]) * 1.0f / (r[3]-r[0]);
 		float ntests = ALPHA / expected;
 		if (ntests > MAX_TESTS)
 			goto rep;
@@ -54,8 +54,8 @@ main(void)
 			//do { x = dist_uniformf(prng32_romu_quad(&prng32)); } while (x < r[0] || x > r[3]);
 			x = dist_uniformf(prng32_romu_quad(&prng32)) * (r[3] - r[0]) + r[0];
 #else
-			//do { x = dist_uniformf_exact(0, 1, prng32_romu_quad, &prng32); } while (x < r[0] || x > r[3]);
-			x = dist_uniformf_exact(r[0], r[3], prng32_romu_quad, &prng32);
+			//do { x = dist_uniformf_dense(0, 1, prng32_romu_quad, &prng32); } while (x < r[0] || x > r[3]);
+			x = dist_uniformf_dense(r[0], r[3], prng32_romu_quad, &prng32);
 #endif
 			if (x >= r[1] && x <= r[2])
 				++cnt;

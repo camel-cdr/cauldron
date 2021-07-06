@@ -156,6 +156,39 @@ bench_hash64(uint64_t x)
 #endif
 
 /*
+ * Example:
+ */
+
+#ifdef BENCH_EXAMPLE
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int
+main(void)
+{
+	size_t i;
+	BENCH("sum", 8, 64) {
+		unsigned int sum = 0;
+		for (i = 0; i < 1024*16u; ++i) {
+			sum += i;
+			BENCH_VOLATILE_REG(sum);
+		}
+	}
+	BENCH("product", 8, 64) {
+		unsigned char sum = 0;
+		for (i = 0; i < 1024*16u; ++i) {
+			sum *= i;
+			BENCH_VOLATILE_REG(sum);
+		}
+	}
+	bench_done();
+	return 0;
+}
+
+#endif /* BENCH_EXAMPLE */
+
+/*
  * Copyright (c) 2021 Olaf Berstein
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal

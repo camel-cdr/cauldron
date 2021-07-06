@@ -19,7 +19,7 @@ comp_size_t(void const *lhs, void const *rhs)
 }
 
 size_t
-validate_shuffle(size_t *arr, size_t *sorted, size_t size)
+validate_shuffle(size_t *arr, size_t const *sorted, size_t size)
 {
 	size_t i, cnt;
 	/* we'd expect to get on average 1 element with the same position */

@@ -59,7 +59,7 @@ int
 main(int argc, char **argv)
 {
 	char *argv0 = argv[0];
-	int a = 0, b = 0, c = 0, reverse;
+	int a = 0, b = 0, c = 0, reverse = 0;
 	char const *input = "default", *output = "default";
 	int readstdin = 0;
 
