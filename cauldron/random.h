@@ -62,6 +62,9 @@
 # include <assert.h>
 # include <limits.h>
 # include <math.h>
+# ifdef __cplusplus
+#  include <string.h>
+# endif
 #endif
 
 #include <float.h>
@@ -73,7 +76,7 @@
  *       (This simplifies the assumptions for dist_normal(f)_zig later).
  *     - Everything else that isn't portable is guarded by ..._AVAILABLE macros.
  */
-#if !(UINT32_MAX && UINT64_MAX && \
+#if !(UINT32_MAX && UINT64_MAX && INT_MAX <= UINT32_MAX && \
     (32 - FLT_MANT_DIG) >= 7 && (64 - DBL_MANT_DIG) >= 7)
 # error random.h: platform not supported
 #endif
@@ -82,7 +85,7 @@
  * 1.2 API overview ------------------------------------------------------------
  *
  * True random number generator:
- *     void trng_close(void);
+ *     void trng_close(void)
  *     int trng_write(void *ptr, size_t n);
  *     int trng_write_notallzero(void *ptr, size_t n);
  *
@@ -126,9 +129,9 @@
  *     uint32_t dist_uniform_u32(uint32_t r, uint32_t (*)(void*), void *);
  *     uint64_t dist_uniform_u64(uint64_t r, uint64_t (*)(void*), void *);
  *
- *     // random floating-point from the output of an RNG output
- *     float dist_uniformf(uint_least32_t x);
- *     double dist_uniform(uint_least64_t x);
+ *     // random floating-point from the output of an RNG output inside [0,1)
+ *     float dist_uniformf(uint32_t x);
+ *     double dist_uniform(uint64_t x);
  *
  *     // random floating-point in range [a,b] including all representable
  *     // values
@@ -142,8 +145,8 @@
  *     // a faster dist_normal(f) implementation using a lookup table
  *     void dist_normalf_zig_init(DistNormalfZig *);
  *     void dist_normal_zig_init(DistNormalZig *);
- *     float dist_normalf_zig(DistNormalfZig*, uint32_t (*)(void*), void*);
- *     double dist_normal_zig(DistNormalZig*, uint64_t (*)(void*), void*);
+ *     float dist_normalf_zig(DistNormalfZig *, uint32_t (*)(void*), void *);
+ *     double dist_normal_zig(DistNormalZig *, uint64_t (*)(void*), void *);
  *
  * Shuffling:
  *
@@ -210,10 +213,7 @@ trng_write(void *ptr, size_t n)
 			return 0;
 	}
 	#endif
-	if (!RtlGenRandom(p, n))
-		return 0;
-	RtlGenRandom(p, n);
-	return 1;
+	return RtlGenRandom(p, n);
 }
 
 # endif /* RANDOM_H_IMPLEMENTATION */
@@ -508,7 +508,7 @@ static inline void
 prng32_pcg_init(PRNG32Pcg *rng, uint64_t seed, uint64_t stream)
 {
 	rng->state = seed;
-	rng->stream = stream | 1;
+	rng->stream = stream | 1u;
 }
 
 #if !TRNG_NOT_AVAILABLE
@@ -518,7 +518,7 @@ prng32_pcg_randomize(void *rng)
 	PRNG32Pcg *r = (PRNG32Pcg*)rng;
 	trng_write(&r->state, sizeof r->state);
 	trng_write(&r->stream, sizeof r->stream);
-	r->stream |= 1;
+	r->stream |= 1u;
 }
 #endif
 
@@ -529,10 +529,10 @@ prng32_pcg(void *rng)
 	 * BigCrush: Passes
 	 * PractRand: Passes (>32T) */
 	PRNG32Pcg *r = (PRNG32Pcg*)rng;
-	uint32_t const perm = (uint32_t)(((r->state >> 18) ^ r->state) >> 27);
-	uint32_t const rot = (r->state >> 59);
+	uint32_t const perm = ((r->state >> 18) ^ r->state) >> 27;
+	uint32_t const rot = r->state >> 59;
 	r->state = r->state * PRNG32_PCG_MULT + r->stream;
-	return (perm >> rot) | (perm << ((-rot) & 31));
+	return (perm >> rot) | (perm << (-rot & 31u));
 }
 
 extern void prng32_pcg_jump(PRNG32Pcg *rng, uint64_t by);
@@ -548,19 +548,18 @@ prng32_pcg_jump(PRNG32Pcg *rng, uint64_t by)
 	 * above, but we can't compute this without arbitrary precision
 	 * arithmetic. Fortunately, there is an O(log(i)) jump ahead algorithm
 	 * from Forrest B. Brown <9>, which we've implemented here. */
-	 while (by > 0) {
-		if (by & 1) {
+	while (by > 0) {
+		if (by & 1u) {
 			actmult *= curmult;
 			actplus = actplus * curmult + curplus;
 		}
-		curplus = (curmult + 1) * curplus;
+		curplus = (curmult + 1u) * curplus;
 		curmult *= curmult;
-		by /= 2;
+		by >>= 1;
 	}
 	rng->state = actmult * rng->state + actplus;
 }
 #endif /* RANDOM_H_IMPLEMENTATION */
-
 
 #define PRNG64_PCG_AVAILABLE (__SIZEOF_INT128__)
 #if PRNG64_PCG_AVAILABLE
@@ -572,10 +571,12 @@ prng32_pcg_jump(PRNG32Pcg *rng, uint64_t by)
 typedef struct { __uint128_t state, stream; } PRNG64Pcg;
 
 static inline void
-prng64_pcg_init(PRNG64Pcg *rng, uint64_t seed[2], uint64_t stream[2])
+prng64_pcg_init(PRNG64Pcg *rng,
+                uint64_t const seed[2],
+                uint64_t const stream[2])
 {
 	rng->state = ((__uint128_t)seed[0] << 64) | seed[1];
-	rng->stream = ((__uint128_t)stream[0] << 64) | stream[1] | 1;
+	rng->stream = ((__uint128_t)stream[0] << 64) | 1u | stream[1];
 }
 
 #if !TRNG_NOT_AVAILABLE
@@ -598,9 +599,9 @@ prng64_pcg(void *rng)
 	PRNG64Pcg *r = (PRNG64Pcg*)rng;
 	uint64_t const xorshifted =
 			((uint64_t)(r->state >> 64)) ^ (uint64_t)r->state;
-	uint64_t const rot = (uint64_t)(r->state >> 122);
+	uint64_t const rot = r->state >> 122;
 	r->state = r->state * PRNG64_PCG_MULT + r->stream;
-	return (xorshifted >> rot) | (xorshifted << ((-rot) & 63));
+	return (xorshifted >> rot) | (xorshifted << ((-rot) & 63u));
 }
 
 extern void prng64_pcg_jump(PRNG64Pcg *rng, uint64_t by[2]);
@@ -613,13 +614,13 @@ prng64_pcg_jump(PRNG64Pcg *rng, uint64_t by[2])
 	__uint128_t actmult = 1,               actplus = 0;
 	__uint128_t by128 = ((__uint128_t)by[0]) << 64 | by[1];
 	while (by128 > 0) {
-		if (by128 & 1) {
+		if (by128 & 1u) {
 			actmult *= curmult;
 			actplus = actplus * curmult + curplus;
 		}
-		curplus = (curmult + 1) * curplus;
+		curplus = (curmult + 1u) * curplus;
 		curmult *= curmult;
-		by128 /= 2;
+		by128 >>= 1;
 	}
 	rng->state = actmult * rng->state + actplus;
 }
@@ -733,7 +734,7 @@ prng64_romu_duo_jr(void *rng)
 	 * PractRand: Passes (>256T) */
 	PRNG64RomuDuo *r = (PRNG64RomuDuo*)rng;
 	uint64_t const s0 = r->s[0];
-	r->s[0] = 15241094284759029579u * r->s[1];
+	r->s[0] = UINT64_C(15241094284759029579) * r->s[1];
 	r->s[1] = r->s[1] - s0;
 	r->s[1] = PRNG_ROMU_ROTL(r->s[1], 27);
 	return s0;
@@ -1178,14 +1179,17 @@ typedef struct {
 	int idx;
 } CSPRNG32Chacha;
 
-extern void csprng32_chacha_init(CSPRNG32Chacha *rng, uint32_t seed[8],
-                                 uint32_t stream[2]);
+extern void csprng32_chacha_init(CSPRNG32Chacha *rng,
+                                 uint32_t const seed[8],
+                                 uint32_t const stream[2]);
 extern void csprng32_chacha_randomize(void *rng);
 extern uint32_t csprng32_chacha(void *rng);
 
 #ifdef RANDOM_H_IMPLEMENTATION
 void
-csprng32_chacha_init(CSPRNG32Chacha *rng, uint32_t seed[8], uint32_t stream[2])
+csprng32_chacha_init(CSPRNG32Chacha *rng,
+                     uint32_t const seed[8],
+                     uint32_t const stream[2])
 {
 	rng->s[ 0] = 0x61707865; rng->s[ 1] = 0x3320646E;
 	rng->s[ 2] = 0x79622D32; rng->s[ 3] = 0x6B206574;
@@ -1317,10 +1321,10 @@ csprng32_chacha(void *rng)
 	do { \
 		type dist_UNIFORM_INT_x, dist_UNIFORM_INT_r; \
 		do { \
-			dist_UNIFORM_INT_x = rng; \
-			dist_UNIFORM_INT_r = x % range; \
-		} while (dist_UNIFORM_INT_x - dist_UNIFORM_INT_r  > -range); \
-		*result = dist_UNIFORM_INT_r; \
+			dist_UNIFORM_INT_x = (rng); \
+			dist_UNIFORM_INT_r = (x) % (range); \
+		} while (dist_UNIFORM_INT_x - dist_UNIFORM_INT_r  > -(range)); \
+		*(result) = dist_UNIFORM_INT_r; \
 	} while (0)
 
 /* This macro can't be used inside of expressions and the following should hold
@@ -1431,14 +1435,14 @@ dist_uniform_u64(uint64_t range, /* [0,range) */
  */
 
 static inline float
-dist_uniformf(uint_least32_t x)
+dist_uniformf(uint32_t x)
 {
 	return (x >> (32 - FLT_MANT_DIG)) *
 	       (1.0f / (UINT32_C(1) << FLT_MANT_DIG));
 }
 
 static inline double
-dist_uniform(uint_least64_t x)
+dist_uniform(uint64_t x)
 {
 	return (x >> (64 - DBL_MANT_DIG)) *
 	       (1.0 / (UINT64_C(1) << DBL_MANT_DIG));
@@ -1602,7 +1606,11 @@ dist_uniformf_dense(
 		float a, float b, /* [a,b] */
 		uint32_t (*rand32)(void*), void *rng)
 {
-	union { float f; uint32_t i; } u;
+	#ifdef __cplusplus
+		struct { float f; uint32_t i; } u;
+	#else
+		union { float f; uint32_t i; } u;
+	#endif
 	enum { SIGN_POS = 0, SIGN_RAND = 1, SIGN_NEG = 2 };
 	int sign;
 	uint32_t minexp, minmant, maxexp, maxmant;
@@ -1628,10 +1636,18 @@ dist_uniformf_dense(
 		case SIGN_NEG: min = b; max = a; break;
 		}
 		/* extract the minimum and maximum exponent and mantissa */
-		u.f = min;
+		#ifdef __cplusplus
+			memcpy(&u.i, &min, sizeof u.i);
+		#else
+			u.f = min;
+		#endif
 		minexp = (u.i << 1) >> (FLT_MANT_DIG);
 		minmant = u.i & DIST_UNIFORMF_DENSE_MANT;
-		u.f = max;
+		#ifdef __cplusplus
+			memcpy(&u.i, &max, sizeof u.i);
+		#else
+			u.f = max;
+		#endif
 		maxexp = (u.i << 1) >> (FLT_MANT_DIG);
 		maxmant = u.i & DIST_UNIFORMF_DENSE_MANT;
 	}
@@ -1648,6 +1664,10 @@ dist_uniformf_dense(
 			u.i |= rand32(rng) & (UINT32_C(1) << 31);
 		else if (sign == SIGN_NEG)
 			u.i |= UINT32_C(1) << 31;
+
+		#ifdef __cplusplus
+			memcpy(&u.f, &u.i, sizeof u.f);
+		#endif
 		return u.f;
 	} else if (minexp + 1 == maxexp) {
 		uint32_t const invminmant = DIST_UNIFORMF_DENSE_MANT - minmant;
@@ -1692,6 +1712,10 @@ dist_uniformf_dense(
 			u.i |= x << 31;
 		else if (sign == SIGN_NEG)
 			u.i |= UINT32_C(1) << 31;
+
+		#ifdef __cplusplus
+			memcpy(&u.f, &u.i, sizeof u.f);
+		#endif
 		return u.f;
 	} else while (1) {
 		uint32_t exp, x;
@@ -1718,6 +1742,10 @@ dist_uniformf_dense(
 		else if (sign == SIGN_NEG)
 			u.i |= UINT32_C(1) << 31;
 
+		#ifdef __cplusplus
+			memcpy(&u.f, &u.i, sizeof u.f);
+		#endif
+
 		/* reject if not in range */
 		if (u.f >= a && u.f <= b)
 			return u.f;
@@ -1730,7 +1758,11 @@ dist_uniform_dense(
 		double a, double b, /* [a,b] */
 		uint64_t (*rand64)(void*), void *rng)
 {
-	union { double f; uint64_t i; } u;
+	#ifndef __cplusplus
+		union { double f; uint64_t i; } u;
+	#else
+		struct { double f; uint64_t i; } u;
+	#endif
 	enum { SIGN_POS = 0, SIGN_RAND = 1, SIGN_NEG = 2 };
 	int sign;
 	uint64_t minexp, minmant, maxexp, maxmant;
@@ -1756,10 +1788,19 @@ dist_uniform_dense(
 		case SIGN_NEG: min = b; max = a; break;
 		}
 		/* extract the minimum and maximum exponent and mantissa */
-		u.f = min;
+
+		#ifdef __cplusplus
+			memcpy(&u.i, &min, sizeof u.i);
+		#else
+			u.f = min;
+		#endif
 		minexp = (u.i << 1) >> (DBL_MANT_DIG);
 		minmant = u.i & DIST_UNIFORMF_DENSE_MANT;
-		u.f = max;
+		#ifdef __cplusplus
+			memcpy(&u.i, &max, sizeof u.i);
+		#else
+			u.f = max;
+		#endif
 		maxexp = (u.i << 1) >> (DBL_MANT_DIG);
 		maxmant = u.i & DIST_UNIFORMF_DENSE_MANT;
 	}
@@ -1776,6 +1817,10 @@ dist_uniform_dense(
 			u.i |= rand64(rng) & (UINT64_C(1) << 63);
 		else if (sign == SIGN_NEG)
 			u.i |= UINT64_C(1) << 63;
+
+		#ifdef __cplusplus
+			memcpy(&u.f, &u.i, sizeof u.f);
+		#endif
 		return u.f;
 	} else if (minexp + 1 == maxexp) {
 		uint64_t const invminmant = DIST_UNIFORMF_DENSE_MANT - minmant;
@@ -1820,6 +1865,10 @@ dist_uniform_dense(
 			u.i |= x << 63;
 		else if (sign == SIGN_NEG)
 			u.i |= UINT64_C(1) << 63;
+
+		#ifdef __cplusplus
+			memcpy(&u.f, &u.i, sizeof u.f);
+		#endif
 		return u.f;
 	} else while (1) {
 		uint64_t exp, x;
@@ -1845,6 +1894,10 @@ dist_uniform_dense(
 			u.i |= x << 63;
 		else if (sign == SIGN_NEG)
 			u.i |= UINT64_C(1) << 63;
+
+		#ifdef __cplusplus
+			memcpy(&u.f, &u.i, sizeof u.f);
+		#endif
 
 		/* reject if not in range */
 		if (u.f >= a && u.f <= b)
@@ -2058,27 +2111,37 @@ float
 dist_normalf_zig(DistNormalfZig const *zig, uint32_t (*rand32)(void*),
                  void *rng)
 {
-	/* We don't want to rely on the implementation of dist_uniformf,
-	 * to ignore the lower bits, which are needed to extract a random index
-	 * in the range [0;DIST_NORMALF_ZIG_COUNT-1] from just one call to the
-	 * RNG. */
-	#define DIST_NORMALF_ZIG_2FLT(x) \
-		((x >> (32 - FLT_MANT_DIG)) * \
-		 (1.0f / (UINT32_C(1) << FLT_MANT_DIG)))
+	float x, y, f0, f1, uf32;
+	uint32_t u32, idx;
+	union { uint32_t i; float f; } u;
 
 	while (1) {
-		float x, y, f0, f1;
-		union { uint32_t u; float f; } u = { 0 };
-		uint32_t const u32 = rand32(rng);
-		uint32_t const idx = (u32 >> 1) & (DIST_NORMALF_ZIG_COUNT - 1);
-		float const uf32 = DIST_NORMALF_ZIG_2FLT(u32) * zig->x[idx];
+		/* To minimize calls to the rng we, use every bit for its own
+		 * purposes:
+		 *    - The MANT_DIG most significant bits are used to generate
+		 *      a random floating-point number
+		 *    - The least significant bit is used to randomly set the
+		 *      sign of the return value
+		 *    - The second to the (DIST_NORMALF_ZIG_COUNT+1)th
+		 *      least significant bit are used to generate a index in
+		 *      the range [0,DIST_NORMALF_ZIG_COUNT)
+		 *
+		 * Since we can't rely on dist_uniformf adhering to this order,
+		 * we define a custom conversion macro: */
+		#define DIST_NORMALF_ZIG_2FLT(x) \
+			((x >> (32 - FLT_MANT_DIG)) * \
+			 (1.0f / (UINT32_C(1) << FLT_MANT_DIG)))
+
+		u32 = rand32(rng);
+		idx = (u32 >> 1) & (DIST_NORMALF_ZIG_COUNT - 1);
+		uf32 = DIST_NORMALF_ZIG_2FLT(u32) * zig->x[idx];
 
 		/* Take a random box (box[idx])
 		 * and get the value of a random x-coordinate inside it.
 		 * If it's also inside box[idx + 1] we already know to accept
 		 * this value. */
 		if (uf32 < zig->x[idx + 1])
-			return u.f = uf32, u.u |= (u32 & 1) << 31, u.f;
+			break;
 
 		/* If our random box is at the bottom, we can't use the lookup
 		 * table and need to generate a variable for the trail of the
@@ -2102,9 +2165,19 @@ dist_normalf_zig(DistNormalfZig const *zig, uint32_t (*rand32)(void*),
 		f0 = expf(-0.5f * (zig->x[idx]     * zig->x[idx]     - y));
 		f1 = expf(-0.5f * (zig->x[idx + 1] * zig->x[idx + 1] - y));
 		if (f1 + DIST_NORMALF_ZIG_2FLT(rand32(rng)) * (f0 - f1) < 1)
-			return u.f = uf32, u.u |= (u32 & 1) << 31, u.f;
+			break;
+
+		#undef DIST_NORMALF_ZIG_2FLT
 	}
-	#undef DIST_NORMALF_ZIG_2FLT
+
+	#ifdef __cplusplus
+		memcpy(&idx, &uf32, sizeof uf32);
+		idx |= (u32 & 1) << 31;
+		memcpy(&uf32, &idx, sizeof uf32);
+		return uf32;
+	#else
+		return u.f = uf32, u.i |= (u32 & 1) << 31, u.f;
+	#endif
 }
 
 void
@@ -2128,27 +2201,37 @@ dist_normal_zig_init(DistNormalZig *zig)
 double
 dist_normal_zig(DistNormalZig const *zig, uint64_t (*rand64)(void*), void *rng)
 {
-	/* We don't want to rely on the implementation of dist_uniform,
-	 * to ignore the lower bits, which are needed to extract a random index
-	 * in the range [0;DIST_NORMAL_ZIG_COUNT-1] from just one call to the
-	 * RNG. */
-	#define DIST_NORMAL_ZIG_2DBL(x) \
-		((x >> (64 - DBL_MANT_DIG)) * \
-		 (1.0 / (UINT64_C(1) << DBL_MANT_DIG)))
+	double x, y, f0, f1, uf64;
+	uint64_t u64, idx;
+	union { uint64_t i; double f; } u;
 
 	while (1) {
-		double x, y, f0, f1;
-		union { uint64_t u; double f; } u = { 0 };
-		uint64_t const u64 = rand64(rng);
-		uint64_t const idx = (u64 >> 1) & (DIST_NORMAL_ZIG_COUNT - 1);
-		double const uf64 = DIST_NORMAL_ZIG_2DBL(u64) * zig->x[idx];
+		/* To minimize calls to the rng we, use every bit for its own
+		 * purposes:
+		 *    - The MANT_DIG most significant bits are used to generate
+		 *      a random floating-point number
+		 *    - The least significant bit is used to randomly set the
+		 *      sign of the return value
+		 *    - The second to the (DIST_NORMAL_ZIG_COUNT+1)th
+		 *      least significant bit are used to generate a index in
+		 *      the range [0,DIST_NORMAL_ZIG_COUNT)
+		 *
+		 * Since we can't rely on dist_uniformf adhering to this order,
+		 * we define a custom conversion macro: */
+		#define DIST_NORMAL_ZIG_2DBL(x) \
+			((x >> (64 - DBL_MANT_DIG)) * \
+			 (1.0 / (UINT64_C(1) << DBL_MANT_DIG)))
+
+		u64 = rand64(rng);
+		idx = (u64 >> 1) & (DIST_NORMAL_ZIG_COUNT - 1);
+		uf64 = DIST_NORMAL_ZIG_2DBL(u64) * zig->x[idx];
 
 		/* Take a random box (box[idx])
 		 * and get the value of a random x-coordinate inside it.
 		 * If it's also inside box[idx + 1] we already know to accept
 		 * this value. */
 		if (uf64 < zig->x[idx + 1])
-			return u.f = uf64, u.u |= (u64 & 1) << 63, u.f;
+			break;
 
 		/* If our random box is at the bottom, we can't use the lookup
 		 * table and need to generate a variable for the trail of the
@@ -2172,9 +2255,19 @@ dist_normal_zig(DistNormalZig const *zig, uint64_t (*rand64)(void*), void *rng)
 		f0 = exp(-0.5 * (zig->x[idx]     * zig->x[idx]     - y));
 		f1 = exp(-0.5 * (zig->x[idx + 1] * zig->x[idx + 1] - y));
 		if (f1 + DIST_NORMAL_ZIG_2DBL(rand64(rng)) * (f0 - f1) < 1.0)
-			return u.f = uf64, u.u |= (u64 & 1) << 63, u.f;
+			break;
+
+		#undef DIST_NORMAL_ZIG_2DBL
 	}
-	#undef DIST_NORMAL_ZIG_2DBL
+
+	#ifdef __cplusplus
+		memcpy(&idx, &uf64, sizeof uf64);
+		idx |= (u64 & 1) << 63;
+		memcpy(&uf64, &idx, sizeof uf64);
+		return uf64;
+	#else
+		return u.f = uf64, u.i |= (u64 & 1) << 63, u.f;
+	#endif
 }
 
 #endif /* RANDOM_H_IMPLEMENTATION */
@@ -2269,7 +2362,7 @@ shuf__gcd(size_t a, size_t b)
 typedef struct { size_t x, c, mod; } ShufWeyl;
 
 static inline void
-shuf_weyl_init(ShufWeyl *rng, size_t mod, size_t seed[2])
+shuf_weyl_init(ShufWeyl *rng, size_t mod, size_t const seed[2])
 {
 	rng->x = seed[0];
 	rng->mod = mod;
@@ -2306,7 +2399,7 @@ shuf_weyl(ShufWeyl *rng)
 typedef struct { size_t x, a, c, mod, mask; } ShufLcg;
 
 static inline void
-shuf_lcg_init(ShufLcg *rng, size_t mod, size_t seed[3])
+shuf_lcg_init(ShufLcg *rng, size_t mod, size_t const seed[3])
 {
 	rng->x = seed[0];
 	/* a-1 must be divisible by 4 */
