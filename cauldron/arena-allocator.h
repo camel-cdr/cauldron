@@ -6,6 +6,8 @@
 
 #ifndef ARENA_ALLOCATOR_H_INCLUDED
 
+#include <stddef.h>
+
 #ifndef aa_BLOCK_SIZE
 #define aa_BLOCK_SIZE (16*1024)
 #endif
@@ -40,7 +42,6 @@ struct aa_Block {
 };
 
 #if __STDC_VERSION__ >= 201112L
-#include <stddef.h>
 # define aa_MAX_ALIGN _Alignof(max_align_t)
 #else
 	union aa_MaxAlign {

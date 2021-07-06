@@ -24,7 +24,7 @@ main(void)
 		TEST_X(char, 'u');
 		TEST_X(char, 'w');
 		TEST_X(char, 'u');
-		TEST_X(long, 31415926l);
+		TEST_X(long, 31415926L);
 		TEST_X(short, 420);
 		TEST_X(double, 420.69);
 		aa_dealloc(&a);

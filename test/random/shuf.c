@@ -14,7 +14,7 @@
 int
 comp_size_t(void const *lhs, void const *rhs)
 {
-	size_t const *l = lhs, *r = rhs;
+	size_t const *l = (size_t const*)lhs, *r = (size_t const*)rhs;
 	return *l - *r;
 }
 
@@ -40,8 +40,8 @@ main(void)
 	size_t i, j, cnt, size;
 	PRNG32RomuQuad prng32;
 	PRNG64RomuQuad prng64;
-	size_t *arr = malloc(MAX_SIZE * sizeof *arr);
-	size_t *sorted = malloc(MAX_SIZE * sizeof *arr);
+	size_t *arr = (size_t*)malloc(MAX_SIZE * sizeof *arr);
+	size_t *sorted = (size_t*)malloc(MAX_SIZE * sizeof *arr);
 	prng32_romu_quad_randomize(&prng32);
 	prng64_romu_quad_randomize(&prng64);
 

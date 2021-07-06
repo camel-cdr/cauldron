@@ -20,7 +20,7 @@ FUNC(void)
 	for (i = 0; i < sb_len(a); ++i)
 		TEST_ASSERT(EQ(a.at[i], b.at[i]));
 
-	x = RAND(x);
+	RAND(x);
 	sb_push(a, x);
 	TEST_ASSERT(EQ(a.at[sb_len(a) - 1], x));
 	TEST_ASSERT(sb_len(a) == 33);

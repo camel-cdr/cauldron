@@ -13,7 +13,8 @@ static int
 ARG_LONG_func(char **argv0, const char *name)
 {
 	char *argIt = *argv0;
-	for (; *argIt == *name && *argIt; argIt++, name++);
+	while (*argIt == *name && *argIt)
+		argIt++, name++;
 	if (*argIt == *name || (*argIt == '=' && !*name)) {
 		*argv0 = argIt;
 		return 1;
@@ -59,7 +60,7 @@ main(int argc, char **argv)
 {
 	char *argv0 = argv[0];
 	int a = 0, b = 0, c = 0, reverse;
-	char *input = "default", *output = "default";
+	char const *input = "default", *output = "default";
 	int readstdin = 0;
 
 	ARG_BEGIN {
@@ -76,7 +77,16 @@ main(int argc, char **argv)
 		} else if (ARG_LONG("output")) case 'o': {
 			output = ARG_VAL();
 		} else if (ARG_LONG("help")) case 'h': case '?': {
-			puts("help");
+			printf("Usage: %s [OPTION...] [STRING...]\n", argv0);
+			puts("Example usage of arg.h\n");
+			puts("Options:");
+			puts("  -a,                set a to true");
+			puts("  -b,                set a to true");
+			puts("  -c,                set a to true");
+			puts("  -r, --reserve      set reserve to true");
+			puts("  -i, --input=STR    set input string to STR");
+			puts("  -o, --output=STR   set output string to STR");
+			puts("  -h, --help         display this help and exit");
 			return EXIT_SUCCESS;
 		} else { default:
 			fprintf(stderr,
@@ -97,7 +107,7 @@ main(int argc, char **argv)
 
 	puts("\nargv:");
 	while (*argv)
-		puts(*argv++);
+		printf("  %s\n", *argv++);
 
 	return 0;
 }

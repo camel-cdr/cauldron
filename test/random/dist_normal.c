@@ -191,10 +191,10 @@ test_norm(double (*norm)(void))
 {
 	distNormal = norm;
 	test_mean(0, 0.03, 1, test_norm1);
-	test_variance(0.2397500611, 0.005, test_norm2);
-	test_variance(0.0169474268, 0.001, test_norm3);
+	test_variance(0.2397500611, 0.01, test_norm2);
+	test_variance(0.0169474268, 0.003, test_norm3);
 	test_mean(0, 0.05, 4, test_norm4);
-	test_variance(0.3085375387, 0.01,test_norm5);
+	test_variance(0.3085375387, 0.02,test_norm5);
 }
 
 

@@ -7,14 +7,14 @@ A collection of single-file C libraries and tools with the goal to be portable a
 
 ## Libraries
 
-library                                             | description
--------                                             | -----------
-**[arena-allocator.h](cauldron/arena-allocator.h)** | drop in arena allocator
-**[arg.h](cauldron/arg.h)**                         | POSIX compliant argument parser based on plan9's arg(3)
-**[bench.h](cauldron/bench.h)**                     | micro benchmarking framework
-**[random.h](cauldron/random.h)**                   | literate random number library and tutorial
-**[stretchy-buffer.h](cauldron/stretchy-buffer.h)** | generic dynamic array
-**[test.h](cauldron/test.h)**                       | minimal unit testing
+ library                                             | description                                             | language
+:-------                                             |:-----------                                             |:--------:
+ **[arena-allocator.h](cauldron/arena-allocator.h)** | drop in arena allocator                                 | C
+ **[arg.h](cauldron/arg.h)**                         | POSIX compliant argument parser based on plan9's arg(3) | C/C++
+ **[bench.h](cauldron/bench.h)**                     | micro benchmarking framework                            | C/C++
+ **[random.h](cauldron/random.h)**                   | literate random number library and tutorial             | C/C++
+ **[stretchy-buffer.h](cauldron/stretchy-buffer.h)** | generic dynamic array                                   | C
+ **[test.h](cauldron/test.h)**                       | minimal unit testing                                    | C/C++
 
 ## Tools
 

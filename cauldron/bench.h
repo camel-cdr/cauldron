@@ -11,29 +11,44 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <float.h>
+#include <math.h>
 
 #if !defined(__pnacl__) && !defined(__EMSCRIPTEN__) && \
     (defined(__clang__) || defined(__GNUC__) || defined(__INTEL_COMPILER))
-# if defined(__clang__)
-#  define BENCH_VOLATILE(p) asm volatile("" : "+r,m"(p) :: "memory")
-# else
-#  define BENCH_VOLATILE(p) asm volatile("" : "+m,r"(p) :: "memory")
-# endif
+
+/* artificial use of all of memory */
 # define BENCH_CLOBBER() asm volatile("":::"memory")
-#elif defined(_MSC_VER)
-__declspec(noinline) static void bench_use_ptr(char const volatile*) {}
-# define BENCH_VOLATILE(p) bench_use_ptr(p);
-# define BENCH_CLOBBER() _ReadWriteBarrier()
+/* artificial dependency of x on all of memory and all of memory on x */
+# define BENCH_VOLATILE(x) asm volatile("" : "+g"(x) : "g"(x) : "memory")
+# define BENCH_VOLATILE_REG(x) asm volatile("" : "+r"(x) : "r"(x) : "memory")
+# define BENCH_VOLATILE_MEM(x) asm volatile("" : "+m"(x) : "m"(x) : "memory")
+
 #else
-static void bench_use_ptr(char const volatile *p) {}
-# define BENCH_VOLATILE(p) bench_use_ptr((char const volatile*)p)
-# define BENCH_CLOBBER() (void)
+
+# if defined(_MSC_VER)
+#  pragma optimize("", off)
+static inline void bench__use_ptr(void const volatile *x) {}
+/* artificial use of all of memory */
+# define BENCH_CLOBBER() _ReadWriteBarrier()
+#  pragma optimize("", on)
+# else
+static void bench_use_ptr(char const volatile *x) {}
+/* artificial use of all of memory */
+# define BENCH_CLOBBER()
+# endif
+
+/* artificial use of all of memory dependent on x */
+# define BENCH_CLOBBER_WITH(x) (bench__use_ptr(&(x)), BENCH_CLOBBER())
+# define BENCH_CLOBBER_WITH_REG(x) (bench__use_ptr(&(x)), BENCH_CLOBBER())
+# define BENCH_CLOBBER_WITH_MEM(x) (bench__use_ptr(&(x)), BENCH_CLOBBER())
+
 #endif
 
 
 typedef struct {
 	size_t count;
-	double mean, M2;
+	double min, mean, M2;
 	char const *title;
 } BenchRecord;
 
@@ -48,10 +63,11 @@ typedef struct {
 static Bench benchInternal;
 
 #define BENCH(title, warmup, samples) \
-	for (bench_append(title), benchInternal.i = (warmup) + (samples); \
+	for (bench_append(title), \
+	     benchInternal.i = (warmup) + (samples); \
 	     (benchInternal.t = clock()), benchInternal.i--; \
 	     benchInternal.i < (samples) ? \
-	     bench_update((clock()-benchInternal.t)*1./CLOCKS_PER_SEC) : 0)
+	     bench_update((clock()-benchInternal.t)*1./CLOCKS_PER_SEC),0 : 0)
 
 static inline void
 bench_append(char const *title)
@@ -60,10 +76,12 @@ bench_append(char const *title)
 	BenchRecord *r;
 	if (b->count >= b->cap) {
 		b->cap = (b->cap << 1) + 1;
-		b->records = realloc(b->records, b->cap * sizeof *b->records);
+		b->records = (BenchRecord *)
+		              realloc(b->records, b->cap * sizeof *b->records);
 	}
 	r = &b->records[b->count++];
 	r->mean = r->M2 = r->count = 0;
+	r->min = DBL_MAX;
 	r->title = title;
 }
 
@@ -74,21 +92,23 @@ bench_update(double time)
 	double const delta = time - r->mean;
 	r->mean += delta / ++r->count;
 	r->M2 += delta * (time - r->mean);
+	if (time < r->min)
+		r->min = time;
 }
 
 static inline int
-bench_record_cmp(const void *lhs, const void *rhs)
+bench_record_cmp(void const *lhs, void const *rhs)
 {
-	const BenchRecord *l = lhs, *r = rhs;
+	BenchRecord const *l = (BenchRecord const *)lhs;
+	BenchRecord const *r = (BenchRecord const *)rhs;
 	return l->mean > r->mean ? 1 : -1;
 }
-
 
 static inline void
 bench_done(void)
 {
 	size_t i, j, maxlen;
-	double minmean = 1e256;
+	double minmean = DBL_MAX;
 	Bench *b = &benchInternal;
 	qsort(b->records, b->count, sizeof *b->records, bench_record_cmp);
 
@@ -106,9 +126,10 @@ bench_done(void)
 		for (j = 0; j < maxlen-l; ++j)
 			putchar(' ');
 
-		printf("%.6e   +/- %.0e \n",
+		printf("mean: %.9e,   stddev: %.2e,   min: %.9e \n",
 		       b->records[i].mean / minmean,
-		       b->records[i].M2 / b->records[i].count / minmean);
+		       sqrt(b->records[i].M2 / b->records[i].count) / minmean,
+		       b->records[i].min);
 	}
 	b->count = 0;
 }
@@ -119,13 +140,14 @@ bench_free(void)
 	free(benchInternal.records);
 }
 
+
 static inline uint64_t
 bench_hash64(uint64_t x)
 {
 	x ^= x >> 30;
-	x *= UINT64_C(0xbf58476d1ce4e5b9);
+	x *= UINT64_C(0xBF58476D1CE4E5B9);
 	x ^= x >> 27;
-	x *= UINT64_C(0x94d049bb133111eb);
+	x *= UINT64_C(0x94D049BB133111EB);
 	x ^= x >> 31;
 	return x;
 }
