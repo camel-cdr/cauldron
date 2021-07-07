@@ -11,10 +11,11 @@ then
 	in=$2
 else
 	echo "usage: $0 [c++] FILE"
+	exit 1
 fi
 
 
-CFLAGS="-I../ -lm -Wall -Wextra -Wno-unused -pedantic -std=c89 -Dinline=  -ggdb"
+CFLAGS="-I../ -lm -Wall -Wextra -Wno-unused -pedantic -std=c89 -Dinline=  -ggdb -Werror=vla"
 CXXFLAGS="-I../ -lm -Wall -Wextra -Wno-unused -pedantic -xc++ -ggdb3"
 
 
