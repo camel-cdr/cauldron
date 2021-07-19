@@ -46,16 +46,18 @@ usage(void)
 	puts("  -h, --help                  display this help and exit\n");
 
 	puts("Distributions:");
-	puts("  u32 [MAX]   uniform unsigned 32-bit integers");
-	puts("  u64 [MAX]   uniform unsigned 64-bit integers");
-	puts("  f32   uniform 32-bit floating point");
-	puts("  f64   uniform 64-bit floating point");
-	puts("  n32   normal distributed 32-bit floating point");
-	puts("  n64   normal distributed 64-bit floating point");
-	puts("  n32z   normal distributed 32-bit floating point");
-	puts("          using the ziggurat method");
-	puts("  n64z   normal distributed 64-bit floating point");
-	puts("          using the ziggurat method");
+	puts("  u32 [MAX]      uniform unsigned 32-bit integers");
+	puts("  u64 [MAX]      uniform unsigned 64-bit integers");
+	puts("  f32            uniform 32-bit floating point");
+	puts("  f64            uniform 64-bit floating point");
+	puts("  f32d MIN MAX   uniform 32-bit floating point dense");
+	puts("  f64d MIN MAX   uniform 64-bit floating point dense");
+	puts("  n32            normal distributed 32-bit floating point");
+	puts("  n64            normal distributed 64-bit floating point");
+	puts("  n32z           normal distributed 32-bit floating point");
+	puts("                 using the ziggurat method");
+	puts("  n64z           normal distributed 64-bit floating point");
+	puts("                 using the ziggurat method");
 }
 
 int
@@ -110,6 +112,22 @@ main(int argc, char **argv)
 		} else if (strcmp(*argv, "f64") == 0) {
 			while (count--)
 				printf("%.*g\n", precision, dist_uniform(rand64(0)));
+		} else if (strcmp(*argv, "f32d") == 0) {
+			float a = atof(argv[1]);
+			float b = atof(argv[2]);
+			argc -= 2;
+			argv += 2;
+			while (count--)
+				printf("%.*g\n", precision,
+				       dist_uniformf_dense(a, b, rand32, 0));
+		} else if (strcmp(*argv, "f64d") == 0) {
+			double a = atof(argv[1]);
+			double b = atof(argv[2]);
+			argc -= 2;
+			argv += 2;
+			while (count--)
+				printf("%.*g\n", precision,
+				       dist_uniform_dense(a, b, rand64, 0));
 		} else if (strcmp(*argv, "n32") == 0) {
 			while (count--)
 				printf("%.*g\n", precision, dist_normalf(rand32, 0));

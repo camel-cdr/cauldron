@@ -1,6 +1,6 @@
 PREFIX = /usr/local
 
-HEADERS = arena-allocator.h arg.h random.h random-xmacros.h random-xoroshiro128-jump.h stretchy-buffer.h test.h
+HEADERS = arena-allocator.h arg.h bench.h random.h random-xmacros.h random-xoroshiro128-jump.h stretchy-buffer.h test.h
 
 all:
 

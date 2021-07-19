@@ -8,20 +8,20 @@
 
 #include "msws.h"
 
-#define COUNT (1024*128)
-#define SAMPLES (128)
+#define COUNT (1024*1024)
+#define SAMPLES (64)
 
 #define MAKE_RNG(name, type, init, next, ftype, max) \
 	do { \
 		type rng; \
 		init; \
-		BENCH(name, 2, SAMPLES) { \
+		BENCH(name, 8, SAMPLES) { \
 			ftype x, y; \
 			size_t i, c; \
 			double pi; \
 			for (i = c = 0; i < COUNT; ++i) { \
-				x = (ftype)next / max; \
-				y = (ftype)next / max; \
+				x = next * (ftype)1.0 / max; \
+				y = next * (ftype)1.0 / max; \
 				if (x*x + y*y <= (ftype)1.0) \
 					++c; \
 			} \
@@ -31,11 +31,9 @@
 	} while (0)
 
 #define MAKE_32(type, func, rnd) \
-	MAKE_RNG(#func, type, rnd(&rng), func(&rng), \
-	         float, UINT32_MAX)
+	MAKE_RNG(#func, type, rnd(&rng), func(&rng), float, UINT32_MAX)
 #define MAKE_64(type, func, rnd) \
-	MAKE_RNG(#func, type, rnd(&rng), func(&rng), \
-	         double, UINT64_MAX)
+	MAKE_RNG(#func, type, rnd(&rng), func(&rng), double, UINT64_MAX)
 
 int
 main(void)
@@ -43,7 +41,7 @@ main(void)
 	size_t i;
 	puts("Note: Execution times between categories aren't comparable!\n");
 
-	puts("32-bit:");
+	puts("32-bit");
 	MAKE_RNG("msws32_64bit", MsWs32_64bit, trng_write(&rng, sizeof rng),
 	         msws32_64bit(&rng), float, UINT32_MAX);
 	MAKE_32(PRNG32Pcg, prng32_pcg, prng32_pcg_randomize);
@@ -57,7 +55,7 @@ main(void)
 	bench_done();
 
 
-	puts("\n64-bit:");
+	puts("\n64-bit");
 	MAKE_RNG("msws64_2x64bit", MsWs64_2x64bit, trng_write(&rng, sizeof rng),
 	         msws64_2x64bit(&rng), double, UINT64_MAX);
 #if __SIZEOF_INT128__
@@ -76,6 +74,9 @@ main(void)
 	MAKE_64(PRNG64Xoshiro256, prng64_xoshiro256p, prng64_xoshiro256_randomize);
 	MAKE_64(PRNG64Xoshiro256, prng64_xoshiro256ss, prng64_xoshiro256_randomize);
 	bench_done();
+	putchar('\n');
+
 	bench_free();
+	return 0;
 }
 

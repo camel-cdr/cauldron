@@ -145,9 +145,9 @@ static inline uint64_t
 bench_hash64(uint64_t x)
 {
 	x ^= x >> 30;
-	x *= UINT64_C(0xBF58476D1CE4E5B9);
+	x *= 0xBF58476D1CE4E5B9u;
 	x ^= x >> 27;
-	x *= UINT64_C(0x94D049BB133111EB);
+	x *= 0x94D049BB133111EBu;
 	x ^= x >> 31;
 	return x;
 }

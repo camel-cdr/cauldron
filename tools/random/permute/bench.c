@@ -25,7 +25,7 @@ die(char *fmt, ...)
 	exit(EXIT_FAILURE);
 }
 
-#define N (1llu << 30)
+#define N (1uLL << 30)
 
 int
 main(int argc, char **argv)

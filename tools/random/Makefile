@@ -1,6 +1,6 @@
 .POSIX:
 CC = c99
-CFLAGS+=-I../../
+CFLAGS=-I../../
 
 BIN = dist rng bench ziggurat-constants
 
@@ -26,7 +26,7 @@ dist: dist.c
 	$(CC) $(CFLAGS) -Ofast -o $@ -lm dist.c
 
 rng: rng.c msws.h
-	$(CC) $(CFLAGS) -msse2 -msse -march=native -maes -Ofast -o $@ -lm rng.c
+	$(CC) $(CFLAGS) -march=native -Ofast -o $@ -lm rng.c
 
 bench: bench.c msws.h
 	gcc $(CFLAGS) -march=native -Ofast -o $@ -lm bench.c
