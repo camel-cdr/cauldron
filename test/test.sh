@@ -15,8 +15,8 @@ shift 1
 for var in "$@"
 do
 	[ "$var" = "c++" ] && cpp=1
-	[ "$var" = "c89" ] && CVER+="-Dinline=  -std=c89 "
-	[ "$var" = "c99" ] && CVER+="-std=c99 "
+	[ "$var" = "c89" ] && CVER="-Dinline=  -std=c89 "
+	[ "$var" = "c99" ] && CVER="-std=c99 "
 done
 
 CFLAGS=$CFLAGS$CVER
