@@ -20,7 +20,7 @@ main(void)
 		TEST_ASSERT(*x == (v)); \
 	} while (0)
 
-	for (i = 0; i < 3; ++i) {
+	for (i = 0; i < 32; ++i) {
 		TEST_X(char, 'u');
 		TEST_X(char, 'w');
 		TEST_X(char, 'u');
@@ -31,7 +31,8 @@ main(void)
 	}
 
 	TEST_END();
-
 	aa_free(&a);
+
+	return 0;
 }
 

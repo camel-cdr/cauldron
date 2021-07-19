@@ -55,5 +55,5 @@ main(void)
 	TEST_END();
 	/* The other xorshift prngs jump to far to test */
 
-	return EXIT_SUCCESS;
+	return 0;
 }

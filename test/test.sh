@@ -2,25 +2,24 @@
 
 cpp=0
 
-if [ "$#" -eq 1 ]
-then
-	in=$1
-elif [ "$#" -eq "2" ] && [ "$1" = "c++" ]
-then
-	cpp=1
-	in=$2
-else
-	echo "usage: $0 [c++] FILE"
-	exit 1
-fi
 
-
-CFLAGS="-I../ -lm -Wall -Wextra -Wno-unused -pedantic -std=c89 -Dinline=  -ggdb -Werror=vla"
-CXXFLAGS="-I../ -lm -Wall -Wextra -Wno-unused -pedantic -xc++ -ggdb3"
-
+CFLAGS="-I../ -lm -Wall -Wextra -Werror=vla -Wno-unused -pedantic -ggdb "
+CXXFLAGS="-I../ -lm -Wall -Wextra -Werror=vla -Wno-unused -pedantic -xc++ -ggdb3"
 
 out=$(mktemp)
 trap '{ rm -f -- "$out"; }' EXIT
+
+
+in=$1
+shift 1
+for var in "$@"
+do
+	[ "$var" = "c++" ] && cpp=1
+	[ "$var" = "c89" ] && CVER+="-Dinline=  -std=c89 "
+	[ "$var" = "c99" ] && CVER+="-std=c99 "
+done
+
+CFLAGS=$CFLAGS$CVER
 
 # Test with sanitizers
 clang $CFLAGS -fsanitize=address,undefined,leak -ftrapv $in -o $out && $out

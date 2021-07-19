@@ -1351,7 +1351,7 @@ dist_uniform_u32(uint32_t range, /* [0,range) */
 		while (l < (-range) % range) {
 			x = rand32(rng);
 			m = (uint64_t)x * (uint64_t)range;
-			l = (uint32_t)m;
+			l = m;
 		}
 	}
 	return m >> 32;
@@ -1613,22 +1613,21 @@ dist_uniformf_dense(
 	int sign;
 	uint32_t minexp, minmant, maxexp, maxmant;
 
+	/* Note that there is an implicit bit at the left of the mantissa,
+	 * which means, that FLT_MANT_DIG is the number of bits in the mantissa
+	 * plus one. */
 	#define DIST_UNIFORMF_DENSE_MANT \
 			((UINT32_C(1) << (FLT_MANT_DIG - 1)) - 1)
 
 	/* make sure a is smaller than b */
-	if (a > b) {
-		float tmp = a;
-		a = b;
-		b = tmp;
-	}
+	assert(a < b);
 
 	{
 		/* calculate min and max with respect to signedness */
 		float min, max;
 		switch ((sign = (a < 0.0f) + (b < 0.0f))) {
 		case SIGN_POS: min = a; max = b; break;
-		case SIGN_RAND: min = 0; max = (b > -a) ? b : -a; break;
+		case SIGN_RAND: min = 0; max = (b > -a) ? b : a; break;
 		case SIGN_NEG: min = b; max = a; break;
 		}
 		/* extract the minimum and maximum exponent and mantissa */
@@ -1648,8 +1647,7 @@ dist_uniformf_dense(
 		maxmant = u.i & DIST_UNIFORMF_DENSE_MANT;
 	}
 
-	/* optimize special cases, that could otherwise reject almost all
-	 * possible values of the mantissa. */
+	/* optimize special case where the exponents are the same */
 	if (minexp == maxexp) {
 		u.i = (minexp << (FLT_MANT_DIG - 1)) |
 		       (dist_uniform_u32(maxmant - minmant + 1, rand32, rng) +
@@ -1657,18 +1655,19 @@ dist_uniformf_dense(
 
 		/* apply signedness */
 		if (sign == SIGN_RAND)
-			u.i |= rand32(rng) & (UINT32_C(1) << 31);
+			u.i |= rand32(rng) << 31;
 		else if (sign == SIGN_NEG)
 			u.i |= UINT32_C(1) << 31;
 
 		#ifdef __cplusplus
 			memcpy(&u.f, &u.i, sizeof u.f);
 		#endif
-
 		return u.f;
 	}
 
-	if (minexp + 1 == maxexp) {
+	/* optimize special case where the exponents offset by one
+	 * (this doesn't work for demormalized numbers) */
+	if (minexp + 1 == maxexp && minexp > 0) {
 		uint32_t const invminmant = DIST_UNIFORMF_DENSE_MANT - minmant;
 		uint32_t const range = invminmant + maxmant + 1;
 		uint32_t mant, exp, x;
@@ -1690,7 +1689,7 @@ dist_uniformf_dense(
 				mant = dist_uniform_u32(range, rand32, rng);
 				if (mant <= maxmant)
 					break;
-			} else if (x & 3) {
+			} else if (x & 2) {
 				i -= 2, x >>= 2;
 				exp = minexp;
 				mant = dist_uniform_u32(range, rand32, rng);
@@ -1729,10 +1728,6 @@ dist_uniformf_dense(
 		/* decrement exp by the number of trailing zeros */
 		DIST_UNIFORMF_DENSE_DEC_CTZ(exp, x);
 
-		/* repeat when the exponent is too low or on underflow */
-		if ((exp < minexp) || (exp > maxexp))
-			continue;
-
 		/* combine exp with a random mantissa */
 		x = rand32(rng);
 		u.i = (exp << (FLT_MANT_DIG - 1)) | (x >> (33 - FLT_MANT_DIG));
@@ -1768,15 +1763,14 @@ dist_uniform_dense(
 	int sign;
 	uint64_t minexp, minmant, maxexp, maxmant;
 
+	/* Note that there is an implicit bit at the left of the mantissa,
+	 * which means, that DBL_MANT_DIG is the number of bits in the mantissa
+	 * plus one. */
 	#define DIST_UNIFORMF_DENSE_MANT \
 			((UINT64_C(1) << (DBL_MANT_DIG - 1)) - 1)
 
 	/* make sure a is smaller than b */
-	if (a > b) {
-		double tmp = a;
-		a = b;
-		b = tmp;
-	}
+	assert(a < b);
 
 	{
 		/* calculate min and max with respect to signedness */
@@ -1787,7 +1781,6 @@ dist_uniform_dense(
 		case SIGN_NEG: min = b; max = a; break;
 		}
 		/* extract the minimum and maximum exponent and mantissa */
-
 		#ifdef __cplusplus
 			memcpy(&u.i, &min, sizeof u.i);
 		#else
@@ -1804,8 +1797,7 @@ dist_uniform_dense(
 		maxmant = u.i & DIST_UNIFORMF_DENSE_MANT;
 	}
 
-	/* optimize special cases, that could otherwise reject almost all
-	 * possible values of the mantissa. */
+	/* optimize special case where the exponents are the same */
 	if (minexp == maxexp) {
 		u.i = (minexp << (DBL_MANT_DIG - 1)) |
 		       (dist_uniform_u64(maxmant - minmant + 1, rand64, rng) +
@@ -1813,7 +1805,7 @@ dist_uniform_dense(
 
 		/* apply signedness */
 		if (sign == SIGN_RAND)
-			u.i |= rand64(rng) & (UINT64_C(1) << 63);
+			u.i |= rand64(rng) << 63;
 		else if (sign == SIGN_NEG)
 			u.i |= UINT64_C(1) << 63;
 
@@ -1823,7 +1815,9 @@ dist_uniform_dense(
 		return u.f;
 	}
 
-	if (minexp + 1 == maxexp) {
+	/* optimize special case where the exponents offset by one
+	 * (this doesn't work for demormalized numbers) */
+	if (minexp + 1 == maxexp && minexp > 0) {
 		uint64_t const invminmant = DIST_UNIFORMF_DENSE_MANT - minmant;
 		uint64_t const range = invminmant + maxmant + 1;
 		uint64_t mant, exp, x;
@@ -1845,7 +1839,7 @@ dist_uniform_dense(
 				mant = dist_uniform_u64(range, rand64, rng);
 				if (mant <= maxmant)
 					break;
-			} else if (x & 3) {
+			} else if (x & 2) {
 				i -= 2, x >>= 2;
 				exp = minexp;
 				mant = dist_uniform_u64(range, rand64, rng);
@@ -1883,10 +1877,6 @@ dist_uniform_dense(
 
 		/* decrement exp by the number of trailing zeros */
 		DIST_UNIFORM_DENSE_DEC_CTZ(exp, x);
-
-		/* repeat when the exponent is too low or on underflow */
-		if ((exp < minexp) || (exp > maxexp))
-			continue;
 
 		/* combine exp with a random mantissa */
 		x = rand64(rng);

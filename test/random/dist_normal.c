@@ -64,7 +64,7 @@ main(void)
 	TEST_NORM(f_dist_normalf_zig);
 	TEST_NORM(f_dist_normal_zig);
 
-	return EXIT_SUCCESS;
+	return 0;
 }
 
 /* level of tests */

@@ -76,6 +76,6 @@ main(void)
 	test_ldouble();
 	test_s1();
 	test_s2();
-	return EXIT_SUCCESS;
+	return 0;
 }
 

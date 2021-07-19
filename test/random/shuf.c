@@ -103,5 +103,5 @@ main(void)
 	free(sorted);
 	free(arr);
 
-	return EXIT_SUCCESS;
+	return 0;
 }
