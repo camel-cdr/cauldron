@@ -28,8 +28,8 @@ estimate_bias(uint64_t (*hash)(uint64_t i, uint64_t mask, uint64_t seed),
 {
 	/* We treat the index and the seed together as the input. */
 	uint64_t bins[128][64] = {{0}};
-	const int64_t n = UINT64_C(1) << quality;
-	const uint64_t mask = (bits == 64) ?  UINT64_MAX : (UINT64_C(1) << bits) - 1;
+	int64_t const n = UINT64_C(1) << quality;
+	uint64_t const mask = (bits == 64) ?  UINT64_MAX : (UINT64_C(1) << bits) - 1;
 	uint64_t ns = 0;
 	double mean = 0;
 
@@ -112,10 +112,14 @@ usage(char *argv0)
 	puts("  -f, --eval-full      evaluate full seed bias ");
 
 	puts("Other options:");
-	puts("  -n, --num-bits=N     test all powers-of-two up to 2^N (default: 32)");
+	puts("  -n, --num-bits=N     number of bits used by the hash (default: 32)");
 	puts("  -o, --output=FILE    write the biases into a csv FILE");
 	puts("  -q, --quality=N      evaluation 2^N hashes per power-of-two");
 	puts("                       (12-30, default: 18)");
+	puts("  -s, --start=N        test all powers-of-two stating from 2^N");
+	puts("                       (default: 1)");
+	puts("  -S, --stop=N         test all powers-of-two up to 2^N");
+	puts("                       (default: --num-bits)");
 	puts("  -v, --verbose        print the bias for every power-of-two tested");
 	puts("  -?, -h, --help       display this help and exit");
 }
@@ -138,6 +142,9 @@ main(int argc, char **argv)
 	} seedEvalType = SEED_EVAL_FULL;
 	int nbits = 32;
 	int quality = 18;
+	int start = 1;
+	int stop = 0;
+	int stopset = 0;
 	int verbose = 0;
 	uint64_t (*hash)(uint64_t i, uint64_t mask, uint64_t seed) = 0;
 
@@ -164,9 +171,11 @@ main(int argc, char **argv)
 				    argv0, ARG_VAL());
 		} else if (ARG_LONG("quality")) case 'q': {
 			quality = atoi(ARG_VAL());
-			if (quality < 12 || quality > 30)
-				die("%s: quality out of range, expected "
-				    "12 to 30, got '%s'\n", argv0, ARG_VAL());
+		} else if (ARG_LONG("start")) case 's': {
+			start = atoi(ARG_VAL());
+		} else if (ARG_LONG("stop")) case 'S': {
+			stop = atoi(ARG_VAL());
+			stopset = 1;
 		} else if (ARG_LONG("verbose")) case 'v': {
 			verbose = 1;
 			ARG_FLAG();
@@ -179,6 +188,21 @@ main(int argc, char **argv)
 			    argv0, *argv, argv0);
 		}
 	} ARG_END;
+
+	if (quality < 12 || quality > 30)
+		die("%s: quality out of range, expected "
+		    "12 to 30, got '%d'\n", argv0, quality);
+
+	stop = (stopset) ? stop : nbits;
+
+	if (stop < start || stop > nbits)
+		die("%s: quality out of range, expected "
+		    "1 to %d, got '%d'\n", argv0, nbits, quality);
+
+	if (start < 1 || start > stop)
+		die("%s: quality out of range, expected "
+		    "1 to %d, got '%d'\n", argv0, nbits, quality);
+
 
 	if (argc != 0 || argv[0] || (!sofile && !printBest)) {
 		usage(argv0);
@@ -193,18 +217,18 @@ main(int argc, char **argv)
 
 		double totalBias = 0;
 
-		for (int i = 1; i <= nbits; ++i) {
+		for (int i = start; i <= stop; ++i) {
 			if (verbose)
-				printf("bias[%2d] = %.17g\n", i, bias);
+				printf("bias[%d] = %.17g\n", i, bias);
 			if (output)
-				fprintf(output, "%2d,%.17g\n", i, bias);
+				fprintf(output, "%d,%.17g\n", i, bias);
 			totalBias += bias;
 		}
 		if (output)
 			fclose(output);
 
 		printf("\ntotal bias = %.17g\n", totalBias);
-		printf("avr bias   = %.17g\n", totalBias / nbits);
+		printf("avr bias   = %.17g\n", totalBias / (stop - start + 1));
 
 		return EXIT_SUCCESS;
 	}
@@ -224,7 +248,7 @@ main(int argc, char **argv)
 		double avrHashTime = 0;
 
 
-		for (int i = 1; i <= nbits; ++i) {
+		for (int i = start; i <= stop; ++i) {
 			int range;
 			switch (seedEvalType) {
 			case SEED_EVAL_NONE: range = 0; break;
@@ -235,13 +259,13 @@ main(int argc, char **argv)
 					hash, i, quality, range, &t);
 			avrHashTime += t / nbits;
 			if (verbose) {
-				printf("bias[%2d] = %.17g\n", i, bias);
+				printf("bias[%d] = %.17g\n", i, bias);
 			} else {
-				printf("\r%d/%d", i, nbits);
+				printf("\r%d/%d", i - start, stop - start + 1);
 				fflush(stdout);
 			}
 			if (output) {
-				fprintf(output, "%2d,%.17g\n", i, bias);
+				fprintf(output, "%d,%.17g\n", i, bias);
 				fflush(output); /* so we can see the progress */
 			}
 			totalBias += bias;
@@ -250,7 +274,7 @@ main(int argc, char **argv)
 			fclose(output);
 
 		printf("\ntotal bias = %.17g\n", totalBias);
-		printf("avr bias   = %.17g\n", totalBias / nbits);
+		printf("avr bias   = %.17g\n", totalBias / (stop - start + 1));
 		printf("speed      = %.3f ns / hash\n", avrHashTime);
 	}
 

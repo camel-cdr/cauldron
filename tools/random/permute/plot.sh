@@ -3,7 +3,7 @@
 printbest=false
 gpeval="set terminal wxt persist;"
 cmd="./evalpow2"
-while getopts '0bcn:q:o:' OPTION
+while getopts '0bcn:q:o:s:S:' OPTION
 do
 	case $OPTION in
 	0)	cmd="${cmd} -0"
@@ -19,7 +19,11 @@ do
 		;;
 	q)	cmd="${cmd} -q $OPTARG"
 		;;
-	?)	printf "Usage: %s: [-c] [-n bits] [-q quality] files" $(basename $0) >&2
+	s)	cmd="${cmd} -s $OPTARG"
+		;;
+	S)	cmd="${cmd} -S $OPTARG"
+		;;
+	?)	printf "Usage: %s: [-c] [-n bits] [-q quality] [-s start] [-S stop] files" $(basename "$0") >&2
 		exit 2
 		;;
 	esac
@@ -31,7 +35,7 @@ gpeval="${gpeval}filenames=\""
 
 
 DIR=`mktemp -d`
-#trap '{ rm -rf -- "$DIR"; }' EXIT
+trap '{ rm -rf -- "$DIR"; }' EXIT
 
 if [ $printbest ]
 then

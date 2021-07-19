@@ -6,8 +6,7 @@ LDLIBS  = -lm -ldl
 hashes = \
     candidates/camel-cdr.so \
     candidates/kensler.so \
-    candidates/kensler-splittable64.so \
-    candidates/stub.so
+    candidates/kensler-splittable64.so
 
 compile: bench evalpow2 rng-shuffle $(hashes)
 
@@ -23,7 +22,6 @@ rng-shuffle: rng-shuffle.c
 candidates/camel-cdr.so: candidates/camel-cdr.c
 candidates/kensler.so: candidates/kensler.c
 candidates/kensler-splittable64.so: candidates/kensler-splittable64.c
-candidates/stub.so: candidates/stub.c
 
 clean:
 	rm -f bench evalpow2 rng-shuffle $(hashes)

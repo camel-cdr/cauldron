@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 
-#define BUFSIZE (1llu << 30)
+#define BUFSIZE (1uLL << 30)
 
 PRNG64RomuQuad *prngs;
 
@@ -65,7 +65,7 @@ main(int argc, char **argv)
 		void *handle;
 		int c = atoi(argv[1]);
 		if (c < 1 || c > 63)
-			die("%s: N out of range, expected 8 to 63, got '%d'\n",
+			die("%s: N out of range, expected 1 to 63, got '%d'\n",
 			    argv[0], c);
 		count = UINT64_C(1) << c;
 
