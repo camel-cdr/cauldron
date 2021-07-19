@@ -25,7 +25,7 @@ A collection of single-file C libraries and tools with the goal to be portable a
 * [RNG benchmark](tools/random/bench.c)
 * RNG cli tools: [rng](tools/random/rng.c), [dist](tools/random/dist.c)
 * [generate ziggurat constants](tools/random/ziggurat-constants.c)
-* [Improving Andrew Kensler's permute(): A function for stateless, constant-time pseudorandom-order array iteration](tools/random/ziggurat-constants.c)
+* [Improving Andrew Kensler's permute(): A function for stateless, constant-time pseudorandom-order array iteration](tools/random/permute)
 
 ## Similar projects
 * [klib](https://github.com/attractivechaos/klib)
