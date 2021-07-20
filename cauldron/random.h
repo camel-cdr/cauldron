@@ -2451,7 +2451,7 @@ shuf_lcg(ShufLcg *rng)
  *     URL: "https://www.pcg-random.org"
  *
  * <6> Charles Bouillaguet, Florette Martinez, Julia Sauvage (2020):
- *     "Predicting the PCG Pseudo-Random NumberGenerator In Practice."
+ *     "Predicting the PCG Pseudo-Random Number Generator In Practice."
  *     DOI: "https://doi.org/10.13154/tosc.v2020.i3.175-196"
  *
  * <7> Mark A. Overton (2020):
@@ -2482,7 +2482,7 @@ shuf_lcg(ShufLcg *rng)
  *      URL: "https://en.wikipedia.org/wiki/IEEE_754"
  *
  * <13> Frédéric Goualard (2020):
- *      "Generating Random Floating-Point Numbers byDividing Integers:
+ *      "Generating Random Floating-Point Numbers by Dividing Integers:
  *       a Case Study"
  *      DOI: "https://doi.org/10.1007/978-3-030-50417-5_2"
  *
