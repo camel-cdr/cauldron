@@ -1124,7 +1124,7 @@ prng64_xoshiro256_jump(PRNG64Xoshiro256 *rng, uint64_t const jump[4])
  * Where s is a randomly chosen stream, which should have an irregular bit-
  * pattern you can manually create by following three easy rules:
  *      1. The constant must be odd.
- *      2. Every 4-bytes should have unique nibbles.
+ *      2. Every 4-bytes should have unique nibbles within these 4-bytes.
  *      3. No nibble shall equal zero.
  * E.g.: uint32_t s = 0x9F32E1CA; or uint64_t s = 0xB5AD4ECEDA1CE2A9;
  *
