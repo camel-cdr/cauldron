@@ -2509,7 +2509,7 @@ shuf_lcg(ShufLcg *rng)
  *
  * <19> Joseph L. Leva (1991):
  *      "A Fast Normal Random Number Generator"
- *      DOI: 10.1.1.544.5806
+ *      DOI: https://doi.org/10.1145/138351.138364
  *
  * <20> Marsaglia, George (1964):
  *      "Generating a variable for the trail of the normal distribution"
