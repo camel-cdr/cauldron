@@ -1930,7 +1930,7 @@ dist_uniform_dense(
  *
  * If we apply this to the normal distribution f(x) = \exp(-(v^2)/2)
  * then u <= \sqrt{\exp(-((v/u)^2)/2)} = \exp(-(v^2)/(4u^2))
- * and v_{1,2} <= +/- 2u\sqrt{-\log(u)} or in a more easily computable format
+ * and v_{1,2} <= +/- 2u\sqrt{-\ln(u)} or in a more easily computable format
  * v^2 <= -4u^2\ln(u).
  *
  * To obtain (u,v) uniformaly over C_f, we'll use a acception-rejection method,
