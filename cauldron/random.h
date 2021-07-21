@@ -1464,9 +1464,7 @@ dist_uniform(uint64_t x)
  * exponent 'x'.
  * This can be achieved programmatically by generating random bits and
  * decrementing the maximal exponent until one of the generated bits is set,
- * thus halving the probability of the next decrement every time,
- * or the exponent is smaller than the minimum exponent,
- * in which case this step is repeated.
+ * thus halving the probability of the next decrement every time.
  * Finally, we need to reject all values that are outside of the desired range.
  *
  * Before we go into the implementation, let's compare the quality of generated
