@@ -1940,7 +1940,7 @@ dist_uniform_dense(
  *
  * As computing the natural log is rather expensive, Leva <19> proposed a set of
  * quadratic bounding curves that drastically decrease the calls to \ln:
- *             r_2 < Q(u,v) = (U-S)^2 - b(u-s)(v-t) + a(u-t)^2 < r_1
+ *             r_2 < Q(u,v) = (u-s)^2 - b(u-s)(v-t) + a(u-t)^2 < r_1
  *                      s=0.449871  a=0.19600   t=-0.386595
  *                      b=0.25472 r_1=0.27597 r_2=0.27846
  */
@@ -1952,7 +1952,7 @@ extern double dist_normal(uint64_t (*rand64)(void*), void *rng);
 float
 dist_normalf(uint32_t (*rand32)(void*), void *rng)
 {
-	static float const s = 0.449871f, t =-0.386595f, a = 0.19600f;
+	static float const s = 0.449871f, t = 0.386595f, a = 0.19600f;
 	static float const b = 0.25472f, r1 = 0.27597f, r2 = 0.27846f;
 	static float const m = 1.715527769921414f; /* 2*\sqrt{2/\e} */
 	float u, v, x, y, Q;
@@ -1967,7 +1967,7 @@ dist_normalf(uint32_t (*rand32)(void*), void *rng)
 
 		/* Evaluate quadratic bounding curves */
 		x = u - s;
-		y = fabsf(v) - t;
+		y = fabsf(v) + t;
 		Q = x*x + y*(a*y - b*x);
 
 		/* log is only evaluated 0.012 times per function call */
@@ -1979,7 +1979,7 @@ dist_normalf(uint32_t (*rand32)(void*), void *rng)
 double
 dist_normal(uint64_t (*rand64)(void*), void *rng)
 {
-	static double const s = 0.449871, t =-0.386595, a = 0.19600;
+	static double const s = 0.449871, t = 0.386595, a = 0.19600;
 	static double const b = 0.25472, r1 = 0.27597, r2 = 0.27846;
 	static double const m = 1.715527769921414; /* 2*\sqrt{2/\e} */
 	double u, v, x, y, Q;
@@ -1994,7 +1994,7 @@ dist_normal(uint64_t (*rand64)(void*), void *rng)
 
 		/* Evaluate quadratic bounding curves */
 		x = u - s;
-		y = fabs(v) - t;
+		y = fabs(v) + t;
 		Q = x*x + y*(a*y - b*x);
 
 		/* log is only evaluated 0.012 times per function call */
