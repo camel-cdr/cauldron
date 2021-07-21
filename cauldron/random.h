@@ -1740,7 +1740,7 @@ dist_uniformf_dense(
 			memcpy(&u.f, &u.i, sizeof u.f);
 		#endif
 
-		/* reject if not in range */
+		/* accept if in range */
 		if (u.f >= a && u.f <= b)
 			return u.f;
 	}
@@ -1890,7 +1890,7 @@ dist_uniform_dense(
 			memcpy(&u.f, &u.i, sizeof u.f);
 		#endif
 
-		/* reject if not in range */
+		/* accept if in range */
 		if (u.f >= a && u.f <= b)
 			return u.f;
 	}
