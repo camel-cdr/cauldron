@@ -1928,7 +1928,7 @@ dist_uniform_dense(
  *     C_f = \{(u,v): 0 <= u <= \sqrt{f(v/u)}\}
  * yields a random variable X=(v/u) with the density f. <18>
  *
- * If we apply this to the normal distribution f(x) = \exp(-(v^2)/2})
+ * If we apply this to the normal distribution f(x) = \exp(-(v^2)/2)
  * then u <= \sqrt{\exp(-((v/u)^2)/2)} = \exp(-(v^2)/(4u^2))
  * and v_{1,2} <= +/- 2u\sqrt{-\log(u)} or in a more easily computable format
  * v^2 <= -4u^2\ln(u).
