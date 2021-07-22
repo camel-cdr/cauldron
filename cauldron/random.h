@@ -1399,21 +1399,23 @@ dist_uniform_u64(uint64_t range, /* [0,range) */
  * To recap, here is a quick reminder on how 32-bit floats are laid out in
  * memory:
  *
- *     sign  exponent           mantissa
+ *     sign  exponent           fraction
  *     +/-  bias: -126
  *     [X]  [XXXXXXXX]  [XXXXXXXXXXXXXXXXXXXXXXX]
  *
  * The interpretation of the data is dependant on the value of the exponent:
  *
  *     If 0 < exp < 255:
- *         +/- 1.mantissa * 2^{exponent - 126}
+ *         +/- 1.fraction * 2^{exponent - 126}
  *     If exp = 0 (demormalized):
- *         +/- 0.mantissa * 2^{-126}
+ *         +/- 0.fraction * 2^{-126}
  *     If exp = 255:
- *         If mantissa = 0:
+ *         If fraction = 0:
  *             >+/- inf
- *         If mantissa != 0:
+ *         If fraction != 0:
  *             NaN
+ *
+ * Note that the 1/0.fraction part is also called the mantissa.
  *
  * The varying exponent allows floating-point numbers to represent a huge range
  * of values. What makes random float generation tricky is the fact that the
@@ -1459,7 +1461,7 @@ dist_uniform(uint64_t x)
  *             |    |
  *         s1=10    s2=15
  *
- * This property is obtained by randomizing the mantissa uniformly and
+ * This property is obtained by randomizing the fraction uniformly and
  * randomizing the exponent, with the probability 2^{-x} for every possible
  * exponent 'x'.
  * This can be achieved programmatically by generating random bits and
@@ -1609,12 +1611,9 @@ dist_uniformf_dense(
 	#endif
 	enum { SIGN_POS = 0, SIGN_RAND = 1, SIGN_NEG = 2 };
 	int sign;
-	uint32_t minexp, minmant, maxexp, maxmant;
+	uint32_t minexp, minfrac, maxexp, maxfrac;
 
-	/* Note that there is an implicit bit at the left of the mantissa,
-	 * which means, that FLT_MANT_DIG is the number of bits in the mantissa
-	 * plus one. */
-	#define DIST_UNIFORMF_DENSE_MANT \
+	#define DIST_UNIFORMF_DENSE_FRAC_MASK \
 			((UINT32_C(1) << (FLT_MANT_DIG - 1)) - 1)
 
 	/* make sure a is smaller than b */
@@ -1628,28 +1627,28 @@ dist_uniformf_dense(
 		case SIGN_RAND: min = 0; max = (b > -a) ? b : a; break;
 		case SIGN_NEG: min = b; max = a; break;
 		}
-		/* extract the minimum and maximum exponent and mantissa */
+		/* extract the minimum and maximum exponent and fraction */
 		#ifdef __cplusplus
 			memcpy(&u.i, &min, sizeof u.i);
 		#else
 			u.f = min;
 		#endif
 		minexp = (u.i << 1) >> (FLT_MANT_DIG);
-		minmant = u.i & DIST_UNIFORMF_DENSE_MANT;
+		minfrac = u.i & DIST_UNIFORMF_DENSE_FRAC_MASK;
 		#ifdef __cplusplus
 			memcpy(&u.i, &max, sizeof u.i);
 		#else
 			u.f = max;
 		#endif
 		maxexp = (u.i << 1) >> (FLT_MANT_DIG);
-		maxmant = u.i & DIST_UNIFORMF_DENSE_MANT;
+		maxfrac = u.i & DIST_UNIFORMF_DENSE_FRAC_MASK;
 	}
 
 	/* optimize special case where the exponents are the same */
 	if (minexp == maxexp) {
 		u.i = (minexp << (FLT_MANT_DIG - 1)) |
-		       (dist_uniform_u32(maxmant - minmant + 1, rand32, rng) +
-		       minmant);
+		       (dist_uniform_u32(maxfrac - minfrac + 1, rand32, rng) +
+		       minfrac);
 
 		/* apply signedness */
 		if (sign == SIGN_RAND)
@@ -1666,9 +1665,9 @@ dist_uniformf_dense(
 	/* optimize special case where the exponents offset by one
 	 * (this doesn't work for demormalized numbers) */
 	if (minexp + 1 == maxexp && minexp > 0) {
-		uint32_t const invminmant = DIST_UNIFORMF_DENSE_MANT - minmant;
-		uint32_t const range = invminmant + maxmant + 1;
-		uint32_t mant, exp, x;
+		uint32_t const invminfrac = DIST_UNIFORMF_DENSE_FRAC_MASK - minfrac;
+		uint32_t const range = invminfrac + maxfrac + 1;
+		uint32_t frac, exp, x;
 		size_t i = 0;
 
 		while (1) {
@@ -1684,15 +1683,15 @@ dist_uniformf_dense(
 			if (x & 1) {
 				i -= 1, x >>= 1;
 				exp = maxexp;
-				mant = dist_uniform_u32(range, rand32, rng);
-				if (mant <= maxmant)
+				frac = dist_uniform_u32(range, rand32, rng);
+				if (frac <= maxfrac)
 					break;
 			} else if (x & 2) {
 				i -= 2, x >>= 2;
 				exp = minexp;
-				mant = dist_uniform_u32(range, rand32, rng);
-				if (mant <= invminmant) {
-					mant = DIST_UNIFORMF_DENSE_MANT - mant;
+				frac = dist_uniform_u32(range, rand32, rng);
+				if (frac <= invminfrac) {
+					frac = DIST_UNIFORMF_DENSE_FRAC_MASK - frac;
 					break;
 				}
 			} else {
@@ -1700,8 +1699,8 @@ dist_uniformf_dense(
 			}
 		}
 
-		/* combine exp with a mantissa */
-		u.i = (exp << (FLT_MANT_DIG - 1)) | mant;
+		/* combine exp with a fraction */
+		u.i = (exp << (FLT_MANT_DIG - 1)) | frac;
 
 		/* apply signedness */
 		if (sign == SIGN_RAND)
@@ -1726,7 +1725,7 @@ dist_uniformf_dense(
 		/* decrement exp by the number of trailing zeros */
 		DIST_UNIFORMF_DENSE_DEC_CTZ(exp, x);
 
-		/* combine exp with a random mantissa */
+		/* combine exp with a random fraction */
 		x = rand32(rng);
 		u.i = (exp << (FLT_MANT_DIG - 1)) | (x >> (33 - FLT_MANT_DIG));
 
@@ -1744,7 +1743,7 @@ dist_uniformf_dense(
 		if (u.f >= a && u.f <= b)
 			return u.f;
 	}
-	#undef DIST_UNIFORMF_DENSE_MANT
+	#undef DIST_UNIFORMF_DENSE_FRAC_MASK
 }
 
 double
@@ -1759,12 +1758,9 @@ dist_uniform_dense(
 	#endif
 	enum { SIGN_POS = 0, SIGN_RAND = 1, SIGN_NEG = 2 };
 	int sign;
-	uint64_t minexp, minmant, maxexp, maxmant;
+	uint64_t minexp, minfrac, maxexp, maxfrac;
 
-	/* Note that there is an implicit bit at the left of the mantissa,
-	 * which means, that DBL_MANT_DIG is the number of bits in the mantissa
-	 * plus one. */
-	#define DIST_UNIFORMF_DENSE_MANT \
+	#define DIST_UNIFORM_DENSE_FRAC_MASK \
 			((UINT64_C(1) << (DBL_MANT_DIG - 1)) - 1)
 
 	/* make sure a is smaller than b */
@@ -1778,28 +1774,28 @@ dist_uniform_dense(
 		case SIGN_RAND: min = 0; max = (b > -a) ? b : -a; break;
 		case SIGN_NEG: min = b; max = a; break;
 		}
-		/* extract the minimum and maximum exponent and mantissa */
+		/* extract the minimum and maximum exponent and fraction */
 		#ifdef __cplusplus
 			memcpy(&u.i, &min, sizeof u.i);
 		#else
 			u.f = min;
 		#endif
 		minexp = (u.i << 1) >> (DBL_MANT_DIG);
-		minmant = u.i & DIST_UNIFORMF_DENSE_MANT;
+		minfrac = u.i & DIST_UNIFORM_DENSE_FRAC_MASK;
 		#ifdef __cplusplus
 			memcpy(&u.i, &max, sizeof u.i);
 		#else
 			u.f = max;
 		#endif
 		maxexp = (u.i << 1) >> (DBL_MANT_DIG);
-		maxmant = u.i & DIST_UNIFORMF_DENSE_MANT;
+		maxfrac = u.i & DIST_UNIFORM_DENSE_FRAC_MASK;
 	}
 
 	/* optimize special case where the exponents are the same */
 	if (minexp == maxexp) {
 		u.i = (minexp << (DBL_MANT_DIG - 1)) |
-		       (dist_uniform_u64(maxmant - minmant + 1, rand64, rng) +
-		       minmant);
+		       (dist_uniform_u64(maxfrac - minfrac + 1, rand64, rng) +
+		       minfrac);
 
 		/* apply signedness */
 		if (sign == SIGN_RAND)
@@ -1816,9 +1812,9 @@ dist_uniform_dense(
 	/* optimize special case where the exponents offset by one
 	 * (this doesn't work for demormalized numbers) */
 	if (minexp + 1 == maxexp && minexp > 0) {
-		uint64_t const invminmant = DIST_UNIFORMF_DENSE_MANT - minmant;
-		uint64_t const range = invminmant + maxmant + 1;
-		uint64_t mant, exp, x;
+		uint64_t const invminfrac = DIST_UNIFORM_DENSE_FRAC_MASK - minfrac;
+		uint64_t const range = invminfrac + maxfrac + 1;
+		uint64_t frac, exp, x;
 		size_t i = 0;
 
 		while (1) {
@@ -1834,15 +1830,15 @@ dist_uniform_dense(
 			if (x & 1) {
 				i -= 1, x >>= 1;
 				exp = maxexp;
-				mant = dist_uniform_u64(range, rand64, rng);
-				if (mant <= maxmant)
+				frac = dist_uniform_u64(range, rand64, rng);
+				if (frac <= maxfrac)
 					break;
 			} else if (x & 2) {
 				i -= 2, x >>= 2;
 				exp = minexp;
-				mant = dist_uniform_u64(range, rand64, rng);
-				if (mant <= invminmant) {
-					mant = DIST_UNIFORMF_DENSE_MANT - mant;
+				frac = dist_uniform_u64(range, rand64, rng);
+				if (frac <= invminfrac) {
+					frac = DIST_UNIFORM_DENSE_FRAC_MASK - frac;
 					break;
 				}
 			} else {
@@ -1850,8 +1846,8 @@ dist_uniform_dense(
 			}
 		}
 
-		/* combine exp with a mantissa */
-		u.i = (exp << (DBL_MANT_DIG - 1)) | mant;
+		/* combine exp with a fraction */
+		u.i = (exp << (DBL_MANT_DIG - 1)) | frac;
 
 		/* apply signedness */
 		if (sign == SIGN_RAND)
@@ -1876,7 +1872,7 @@ dist_uniform_dense(
 		/* decrement exp by the number of trailing zeros */
 		DIST_UNIFORM_DENSE_DEC_CTZ(exp, x);
 
-		/* combine exp with a random mantissa */
+		/* combine exp with a random fraction */
 		x = rand64(rng);
 		u.i = (exp << (DBL_MANT_DIG - 1)) | (x >> (65 - DBL_MANT_DIG));
 
@@ -1894,7 +1890,7 @@ dist_uniform_dense(
 		if (u.f >= a && u.f <= b)
 			return u.f;
 	}
-	#undef DIST_UNIFORMF_DENSE_MANT
+	#undef DIST_UNIFORM_DENSE_FRAC_MASK
 }
 
 # undef DIST_UNIFORMF_DENSE_DEC_CTZ
@@ -1935,13 +1931,13 @@ dist_uniform_dense(
  *
  * To obtain (u,v) uniformaly over C_f, we'll use a acception-rejection method,
  * similar to the one used in dist_UNIFORM_INT. We generate (u,v) uniformly in
- * the bounding box B = \{ 0 < u < 1; -\sqrt(2/\e) < v < \sqrt(2/\e) \} of C_f
+ * the bounding box B = \{ 0 < u < 1; -\sqrt(2/e) < v < \sqrt(2/e) \} of C_f
  * and reject everything that isn't inside of C_f (if v^2 > -4u^2\ln u).
  *
  * As computing the natural log is rather expensive, Leva <19> proposed a set of
  * quadratic bounding curves that drastically decrease the calls to \ln:
- *             r_2 < Q(u,v) = (u-s)^2 - b(u-s)(v-t) + a(u-t)^2 < r_1
- *                      s=0.449871  a=0.19600   t=-0.386595
+ *             r_2 < Q(u,v) = (u-s)^2 - b(u-s)(v+t) + a(u-t)^2 < r_1
+ *                      s=0.449871  a=0.19600   t=0.386595
  *                      b=0.25472 r_1=0.27597 r_2=0.27846
  */
 extern float dist_normalf(uint32_t (*rand32)(void*), void *rng);
@@ -1954,7 +1950,7 @@ dist_normalf(uint32_t (*rand32)(void*), void *rng)
 {
 	static float const s = 0.449871f, t = 0.386595f, a = 0.19600f;
 	static float const b = 0.25472f, r1 = 0.27597f, r2 = 0.27846f;
-	static float const m = 1.715527769921414f; /* 2*\sqrt{2/\e} */
+	static float const m = 1.715527769921414f; /* 2*\sqrt{2/e} */
 	float u, v, x, y, Q;
 
 	do {
@@ -1981,7 +1977,7 @@ dist_normal(uint64_t (*rand64)(void*), void *rng)
 {
 	static double const s = 0.449871, t = 0.386595, a = 0.19600;
 	static double const b = 0.25472, r1 = 0.27597, r2 = 0.27846;
-	static double const m = 1.715527769921414; /* 2*\sqrt{2/\e} */
+	static double const m = 1.715527769921414; /* 2*\sqrt{2/e} */
 	double u, v, x, y, Q;
 
 	do {
