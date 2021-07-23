@@ -1310,12 +1310,12 @@ csprng32_chacha(void *rng)
  * all of the biased states. This is achieved by calculating the number of
  * overrepesented digits and skipping any generated numbers that are smaller
  * than the count of those digits.
- *     uint32_t r, t = (-range) % range; // equivalent to '2^{32} \mod range'
- *     while ((r = rng()) < t);
+ *     uint32_t x, r = (-range) % range; // equivalent to '2^{32} \mod range'
+ *     do x = rng(); while (x < r);
  *     return r % range;
  *
  * By removing the top part of the engine's range one can improve the algorithm
- * further, so that the expensive modulo operation is called less: */
+ * further, so that the expensive modulo operation is called less often: */
 
 #define dist_UNIFORM_INT(type, rng, range, result) /* [0,range) */ \
 	do { \
@@ -1343,17 +1343,16 @@ static inline uint32_t
 dist_uniform_u32(uint32_t range, /* [0,range) */
                  uint32_t (*rand32)(void*), void *rng)
 {
-	uint32_t x = rand32(rng);
-	uint64_t m = (uint64_t)x * (uint64_t)range;
+	uint64_t m = (uint64_t)rand32(rng) * (uint64_t)range;
 	uint32_t l = m;
 
 	if (l < range) {
-		while (l < (-range) % range) {
-			x = rand32(rng);
-			m = (uint64_t)x * (uint64_t)range;
-			l = m;
+		uint32_t r = (-range) % range;
+		while (l < r) {
+			l = m = (uint64_t)rand32(rng) * (uint64_t)range;
 		}
 	}
+
 	return m >> 32;
 }
 
@@ -1362,17 +1361,16 @@ dist_uniform_u64(uint64_t range, /* [0,range) */
                  uint64_t (*rand64)(void*), void *rng)
 {
 #if __SIZEOF_INT128__
-	uint64_t x = rand64(rng);
-	__uint128_t m = (__uint128_t)x * (__uint128_t)range;
+	__uint128_t m = (__uint128_t)rand64(rng) * (__uint128_t)range;
 	uint64_t l = m;
 
 	if (l < range) {
-		while (l < (-range) % range) {
-			x = rand64(rng);
-			m = (__uint128_t)x * (__uint128_t)range;
-			l = m;
+		uint64_t r = (-range) % range;
+		while (l < r) {
+			l = m = (__uint128_t)rand64(rng) * (__uint128_t)range;
 		}
 	}
+
 	return m >> 64;
 #else /* fallback algorithm */
 	uint64_t x, r;
