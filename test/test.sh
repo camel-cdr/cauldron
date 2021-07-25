@@ -25,7 +25,10 @@ CFLAGS=$CFLAGS$CVER
 clang $CFLAGS -fsanitize=address,undefined,leak -ftrapv $in -o $out && $out
 
 # Test with valgrind
-clang $CFLAGS $in -o $out && valgrind -q $out
+if which valgrind >/dev/null
+then
+	clang $CFLAGS $in -o $out && valgrind -q $out
+fi
 
 # Test on big endian mips if available
 if which mips-linux-gnu-gcc qemu-mips >/dev/null
