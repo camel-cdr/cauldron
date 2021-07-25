@@ -5,7 +5,7 @@
 #define RANDOM_H_IMPLEMENTATION
 #include <cauldron/random.h>
 
-#include "msws.h"
+#include "extra.h"
 
 /*
  * Example:
@@ -17,6 +17,8 @@
 void *buffer;
 void *bufferend;
 
+#define RANDOM_X16(type, func, rand) \
+	MAKE_RNG(func, type, rand, 16)
 #define RANDOM_X32(type, func, rand) \
 	MAKE_RNG(func, type, rand, 32)
 #define RANDOM_X64(type, func, rand) \
@@ -37,27 +39,7 @@ void *bufferend;
 	}
 
 #include <cauldron/random-xmacros.h>
-
-#undef MAKE_RNG
-
-#define MAKE_RNG(func, type, n) \
-	static void \
-	run_##func(void) \
-	{ \
-		type rng; \
-		trng_write(&rng, sizeof rng); \
-		while (1) { \
-			uint##n##_t *p = buffer; \
-			while ((void*)p < bufferend) \
-				*p++ = func(&rng); \
-			fwrite(buffer, 1, BUFSIZE, stdout); \
-		} \
-	}
-
-MAKE_RNG(msws32_64bit, MsWs32_64bit, 32);
-MAKE_RNG(msws64_128bit, MsWs64_128bit, 64);
-MAKE_RNG(msws64_2x64bit, MsWs64_2x64bit, 64);
-
+#include "extra-xmacros.h"
 #undef MAKE_RNG
 
 
@@ -70,19 +52,34 @@ run_trng_write(void)
 	}
 }
 
-
 static struct {
 	char *name;
 	void (*rng)(void);
 } rngs[] = {
-#define MAKE_RNG(func, type, rand, n) \
-	{ #func, run_##func },
+#undef RANDOM_X16
+#undef RANDOM_X32
+#undef RANDOM_X64
+#define RANDOM_X16(type, func, rand) { #func, run_##func },
+#define RANDOM_X32(type, func, rand)
+#define RANDOM_X64(type, func, rand)
 #include <cauldron/random-xmacros.h>
-#undef MAKE_RNG
-	{ "msws32_64bit", run_msws32_64bit },
-	{ "msws64_128bit", run_msws64_128bit },
-	{ "msws64_2x64bit", run_msws64_2x64bit },
-	{ "trng_write", run_trng_write },
+#include "extra-xmacros.h"
+#undef RANDOM_X16
+#undef RANDOM_X32
+#undef RANDOM_X64
+#define RANDOM_X16(type, func, rand)
+#define RANDOM_X32(type, func, rand) { #func, run_##func },
+#define RANDOM_X64(type, func, rand)
+#include <cauldron/random-xmacros.h>
+#include "extra-xmacros.h"
+#undef RANDOM_X16
+#undef RANDOM_X32
+#undef RANDOM_X64
+#define RANDOM_X16(type, func, rand)
+#define RANDOM_X32(type, func, rand)
+#define RANDOM_X64(type, func, rand) { #func, run_##func },
+#include <cauldron/random-xmacros.h>
+#include "extra-xmacros.h"
 };
 
 static void list(void)

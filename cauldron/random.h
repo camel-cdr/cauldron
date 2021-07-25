@@ -674,9 +674,8 @@ prng64_pcg_jump(PRNG64Pcg *rng, uint64_t const by[2])
  *     p <= 2^{6.5+l-s}(s-l+1)(n-1)n.
  *
  * Recommendations:
- *     - duo_jr/duo for all-out speed
- *     - trio as the default
- *     - quad for large scale parallel applications
+ *     - duo_jr for all-out speed
+ *     - quad as the default
  */
 
 #define PRNG_ROMU_ROTL(x,k) (((x) << (k)) | ((x) >> (8 * sizeof(x) - (k))))

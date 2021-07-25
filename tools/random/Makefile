@@ -25,10 +25,10 @@ PractRand:
 dist: dist.c
 	$(CC) $(CFLAGS) -Ofast -o $@ -lm dist.c
 
-rng: rng.c msws.h
+rng: rng.c extra.h
 	$(CC) $(CFLAGS) -march=native -Ofast -o $@ -lm rng.c
 
-bench: bench.c msws.h
+bench: bench.c extra.h
 	gcc $(CFLAGS) -march=native -Ofast -o $@ -lm bench.c
 
 clean:
