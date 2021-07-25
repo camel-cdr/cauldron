@@ -7,8 +7,13 @@
 #include <cauldron/random.h>
 #include <cauldron/test.h>
 
+/*
+ * Make sure that you don't use -ffast-math or -Ofast when compiling this,
+ * because that might disable denormals, which this test for.
+ */
+
 #define NRANGES 8
-#define MAX_TESTS (1024*1024)
+#define MAX_TESTS (1024*1024*2)
 #define ALPHA 100.0
 
 #define ARRLEN(a) (sizeof (a) / sizeof *(a))

@@ -1722,6 +1722,10 @@ dist_uniformf_dense(
 		/* decrement exp by the number of trailing zeros */
 		DIST_UNIFORMF_DENSE_DEC_CTZ(exp, x);
 
+		/* clamp exp to 0 */
+		if ((exp < minexp) || (exp > maxexp))
+			exp = 0;
+
 		/* combine exp with a random fraction */
 		x = rand32(rng);
 		u.i = (exp << (FLT_MANT_DIG - 1)) | (x >> (33 - FLT_MANT_DIG));
@@ -1868,6 +1872,10 @@ dist_uniform_dense(
 
 		/* decrement exp by the number of trailing zeros */
 		DIST_UNIFORM_DENSE_DEC_CTZ(exp, x);
+
+		/* clamp exp to 0 */
+		if ((exp < minexp) || (exp > maxexp))
+			exp = 0;
 
 		/* combine exp with a random fraction */
 		x = rand64(rng);
