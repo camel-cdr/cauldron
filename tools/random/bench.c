@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include <wmmintrin.h>
 
 #include "extra.h"
 
