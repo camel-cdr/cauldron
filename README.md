@@ -7,14 +7,14 @@ A collection of single-file C libraries and tools with the goal to be portable a
 
 ## Libraries
 
- library                                             | description                                             | language
-:-------                                             |:-----------                                             |:--------:
- **[arena-allocator.h](cauldron/arena-allocator.h)** | drop in arena allocator                                 | C
- **[arg.h](cauldron/arg.h)**                         | POSIX compliant argument parser based on plan9's arg(3) | C/C++
- **[bench.h](cauldron/bench.h)**                     | micro benchmarking framework                            | C/C++
- **[random.h](cauldron/random.h)**                   | literate random number library and tutorial             | C/C++
- **[stretchy-buffer.h](cauldron/stretchy-buffer.h)** | generic dynamic array                                   | C
- **[test.h](cauldron/test.h)**                       | minimal unit testing                                    | C/C++
+ library                                             | description                                                                                | language
+:-------                                             | :-----------                                                                               | :--------:
+ **[arena-allocator.h](cauldron/arena-allocator.h)** | drop in arena allocator                                                                    | C
+ **[arg.h](cauldron/arg.h)**                         | POSIX compliant argument parser based on plan9's arg(3)                                    | C/C++
+ **[bench.h](cauldron/bench.h)**                     | micro benchmarking framework                                                               | C/C++
+ **[random.h](cauldron/random.h)**                   | literate random number library and tutorial [(related talk)](https://youtu.be/VHJUlRiRDCY) | C/C++
+ **[stretchy-buffer.h](cauldron/stretchy-buffer.h)** | generic dynamic array                                                                      | C
+ **[test.h](cauldron/test.h)**                       | minimal unit testing                                                                       | C/C++
 
 ## Tools
 
