@@ -72,11 +72,7 @@ static Bench benchInternal;
 static inline uintmax_t
 bench_gettime(void)
 {
-#if defined(CLOCK_PERF)
-	struct timespec t;
-	clock_gettime(CLOCK_PERF, &t);
-	return (uintmax_t)t.tv_nsec + t.tv_sec * 1000000000;
-#elif defined(CLOCK_PROCESS_CPUTIME_ID)
+#if defined(CLOCK_PROCESS_CPUTIME_ID)
 	struct timespec t;
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t);
 	return (uintmax_t)t.tv_nsec + t.tv_sec * 1000000000;
