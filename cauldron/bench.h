@@ -57,7 +57,7 @@ typedef struct {
 	BenchRecord *records;
 	/* temporaries */
 	size_t i;
-	clock_t t;
+	uintmax_t ns;
 } Bench;
 
 static Bench benchInternal;
@@ -65,9 +65,29 @@ static Bench benchInternal;
 #define BENCH(title, warmup, samples) \
 	for (bench_append(title), \
 	     benchInternal.i = (warmup) + (samples); \
-	     (benchInternal.t = clock()), benchInternal.i--; \
+	     (benchInternal.ns = bench_gettime()), benchInternal.i--; \
 	     benchInternal.i < (samples) ? \
-	     bench_update((clock()-benchInternal.t)*1./CLOCKS_PER_SEC),0 : 0)
+	     bench_update((bench_gettime()-benchInternal.ns)*1000000000.0),0 : 0)
+
+static inline uintmax_t
+bench_gettime(void)
+{
+#if defined(CLOCK_PERF)
+	struct timespec t;
+	clock_gettime(CLOCK_PERF, &t);
+	return (uintmax_t)t.tv_nsec + t.tv_sec * 1000000000;
+#elif defined(CLOCK_PROCESS_CPUTIME_ID)
+	struct timespec t;
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t);
+	return (uintmax_t)t.tv_nsec + t.tv_sec * 1000000000;
+#elif defined(CLOCK_MONOTONIC_RAW)
+	struct timespec t;
+	clock_gettime(CLOCK_MONOTONIC_RAW, &t);
+	return (uintmax_t)t.tv_nsec + t.tv_sec * 1000000000;
+#else
+	return (uintmax_t)(clock() * 1000000000) / CLOCKS_PER_SEC;
+#endif
+}
 
 static inline void
 bench_append(char const *title)
