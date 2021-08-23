@@ -142,12 +142,25 @@ FUNC(void)
 
 	sb_cpy(a, b);
 	sb_rm_unstable(b, 3);
+	TEST_ASSERT(sb_len(a) == 5);
 	TEST_ASSERT(sb_len(b) == 4);
 	TEST_ASSERT(EQ(a.at[0], b.at[0]));
 	TEST_ASSERT(EQ(a.at[1], b.at[1]));
 	TEST_ASSERT(EQ(a.at[2], b.at[2]));
 	TEST_ASSERT(EQ(a.at[4], b.at[3]));
-	TEST_ASSERT(EQ(a.at[5], b.at[4]));
+
+	{
+		T arr[3];
+		arr[0] = RAND(x);
+		arr[1] = RAND(x);
+		arr[2] = RAND(x);
+		sb_cpyarr(a,  arr);
+		TEST_ASSERT(sb_len(a) == 3);
+		TEST_ASSERT(EQ(a.at[0], arr[0]));
+		TEST_ASSERT(EQ(a.at[1], arr[1]));
+		TEST_ASSERT(EQ(a.at[2], arr[2]));
+	}
+
 
 	sb_free(a);
 	sb_free(b);

@@ -24,9 +24,13 @@
                          (a).at = malloc((a)._cap * sizeof *(a).at))
 
 #define sb_cpy(dest, src) \
-		((dest)._len = (src)._len, (dest)._cap = (src)._cap, \
-		 (dest).at = malloc((dest)._cap * sizeof *(dest).at), \
-		 memcpy((dest).at, (src).at, (dest)._cap * sizeof *(dest).at))
+		(sb_setlen((dest), (src)._len), \
+		 memcpy((dest).at, (src).at, (dest)._len * sizeof *(dest).at))
+
+#define sb_cpyarr(dest, src) \
+		(sb_setlen((dest), sizeof (src) / sizeof *(src)), \
+		 memcpy((dest).at, (src), sizeof (src)))
+
 
 #define sb_setlen(a,n) ((a)._len = (n), sb_setcap((a), (a)._len))
 #define sb_setcap(a,n) ((a)._cap < (n) ? \
