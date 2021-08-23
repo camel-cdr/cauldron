@@ -154,11 +154,17 @@ FUNC(void)
 		arr[0] = RAND(x);
 		arr[1] = RAND(x);
 		arr[2] = RAND(x);
+
 		sb_cpyarr(a,  arr);
 		TEST_ASSERT(sb_len(a) == 3);
 		TEST_ASSERT(EQ(a.at[0], arr[0]));
 		TEST_ASSERT(EQ(a.at[1], arr[1]));
 		TEST_ASSERT(EQ(a.at[2], arr[2]));
+
+		sb_cpymem(b, arr, 2);
+		TEST_ASSERT(sb_len(b) == 2);
+		TEST_ASSERT(EQ(b.at[0], arr[0]));
+		TEST_ASSERT(EQ(b.at[1], arr[1]));
 	}
 
 

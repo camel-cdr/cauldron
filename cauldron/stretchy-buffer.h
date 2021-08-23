@@ -27,6 +27,11 @@
 		(sb_setlen((dest), (src)._len), \
 		 memcpy((dest).at, (src).at, (dest)._len * sizeof *(dest).at))
 
+#define sb_cpymem(dest, src, n) \
+		(assert(sizeof *(dest).at == sizeof *(src)), \
+		 sb_setlen((dest), (n)), \
+		 memcpy((dest).at, (src), (dest)._len * sizeof *(dest).at))
+
 #define sb_cpyarr(dest, src) \
 		(sb_setlen((dest), sizeof (src) / sizeof *(src)), \
 		 memcpy((dest).at, (src), sizeof (src)))
