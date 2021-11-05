@@ -67,7 +67,7 @@ static Bench benchInternal;
 	     benchInternal.i = (warmup) + (samples); \
 	     (benchInternal.ns = bench_gettime()), benchInternal.i--; \
 	     benchInternal.i < (samples) ? \
-	     bench_update((bench_gettime()-benchInternal.ns)*1000000000.0),0 : 0)
+	     bench_update((bench_gettime()-benchInternal.ns)*1.0/1000000000),0 : 0)
 
 static inline uintmax_t
 bench_gettime(void)
@@ -75,13 +75,13 @@ bench_gettime(void)
 #if defined(CLOCK_PROCESS_CPUTIME_ID)
 	struct timespec t;
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t);
-	return (uintmax_t)t.tv_nsec + t.tv_sec * 1000000000;
+	return t.tv_nsec + (uintmax_t)t.tv_sec * 1000000000;
 #elif defined(CLOCK_MONOTONIC_RAW)
 	struct timespec t;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t);
-	return (uintmax_t)t.tv_nsec + t.tv_sec * 1000000000;
+	return t.tv_nsec + (uintmax_t)t.tv_sec * 1000000000;
 #else
-	return (uintmax_t)(clock() * 1000000000) / CLOCKS_PER_SEC;
+	return ((uintmax_t)clock() * 1000000000) / CLOCKS_PER_SEC;
 #endif
 }
 
