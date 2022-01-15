@@ -9,10 +9,10 @@
 
 #include "extra.h"
 
-#define COUNT (1024*512)
-#define SAMPLES (64)
+#define COUNT (1024*512*2ull)
+#define SAMPLES (64*2)
 
-#define MAKE_RNG(name, type, init, next, ftype, max) \
+#define BENCH_RNG(name, type, init, next, ftype, max) \
 	do { \
 		type rng; \
 		init; \
@@ -31,6 +31,56 @@
 		} \
 	} while (0);
 
+static void
+bench_rng_16(void)
+{
+	puts("16-bit PRNGs:");
+#define RANDOM_X16(type, func, rnd) \
+	BENCH_RNG(#func, type, rnd(&rng), func(&rng), float, UINT16_MAX)
+#define RANDOM_X32(type, func, rnd)
+#define RANDOM_X64(type, func, rnd)
+#include <cauldron/random-xmacros.h>
+#include "extra-xmacros.h"
+#undef RANDOM_X16
+#undef RANDOM_X32
+#undef RANDOM_X64
+	bench_done();
+	putchar('\n');
+}
+
+static void
+bench_rng_32(void)
+{
+	puts("32-bit PRNGs");
+#define RANDOM_X16(type, func, rnd)
+#define RANDOM_X32(type, func, rnd) \
+	BENCH_RNG(#func, type, rnd(&rng), func(&rng), float, UINT32_MAX)
+#define RANDOM_X64(type, func, rnd)
+#include <cauldron/random-xmacros.h>
+#include "extra-xmacros.h"
+#undef RANDOM_X16
+#undef RANDOM_X32
+#undef RANDOM_X64
+	bench_done();
+	putchar('\n');
+}
+
+static void
+bench_rng_64(void)
+{
+	puts("64-bit PRNGs");
+#define RANDOM_X16(type, func, rnd)
+#define RANDOM_X32(type, func, rnd)
+#define RANDOM_X64(type, func, rnd) \
+	BENCH_RNG(#func, type, rnd(&rng), func(&rng), double, UINT64_MAX)
+#include <cauldron/random-xmacros.h>
+#include "extra-xmacros.h"
+#undef RANDOM_X16
+#undef RANDOM_X32
+#undef RANDOM_X64
+	bench_done();
+	putchar('\n');
+}
 
 int
 main(void)
@@ -38,44 +88,9 @@ main(void)
 	size_t i;
 	puts("Note: Execution times between categories aren't comparable!\n");
 
-	puts("16-bit");
-#define RANDOM_X16(type, func, rnd) \
-	MAKE_RNG(#func, type, rnd(&rng), func(&rng), float, UINT16_MAX)
-#define RANDOM_X32(type, func, rnd)
-#define RANDOM_X64(type, func, rnd)
-#include <cauldron/random-xmacros.h>
-#include "extra-xmacros.h"
-#undef RANDOM_X16
-#undef RANDOM_X32
-#undef RANDOM_X64
-	bench_done();
-	putchar('\n');
-
-	puts("32-bit");
-#define RANDOM_X16(type, func, rnd)
-#define RANDOM_X32(type, func, rnd) \
-	MAKE_RNG(#func, type, rnd(&rng), func(&rng), float, UINT32_MAX)
-#define RANDOM_X64(type, func, rnd)
-#include <cauldron/random-xmacros.h>
-#include "extra-xmacros.h"
-#undef RANDOM_X16
-#undef RANDOM_X32
-#undef RANDOM_X64
-	bench_done();
-	putchar('\n');
-
-	puts("64-bit");
-#define RANDOM_X16(type, func, rnd)
-#define RANDOM_X32(type, func, rnd)
-#define RANDOM_X64(type, func, rnd) \
-	MAKE_RNG(#func, type, rnd(&rng), func(&rng), double, UINT64_MAX)
-#include <cauldron/random-xmacros.h>
-#include "extra-xmacros.h"
-#undef RANDOM_X16
-#undef RANDOM_X32
-#undef RANDOM_X64
-	bench_done();
-	putchar('\n');
+	bench_rng_16();
+	bench_rng_32();
+	bench_rng_64();
 
 	bench_free();
 	return 0;

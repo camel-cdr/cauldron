@@ -8,9 +8,11 @@
 
 static unsigned test__nasserts, test__nfailures;
 
-#define TEST_BEGIN(name) \
+#define TEST_BEGIN(msg) \
 	test__nasserts = test__nfailures = 0; \
-	printf("Testing %s ... ", name);
+	fputs("Testing ", stdout); \
+	printf msg; \
+	fputs(" ...", stdout);
 
 #define TEST_END() \
 	if (test__nfailures == 0) { \
@@ -49,7 +51,9 @@ static unsigned test__nasserts, test__nfailures;
 int
 main(void)
 {
-	TEST_BEGIN("Testing a");
+	int i;
+
+	TEST_BEGIN(("Testing a"));
 	TEST_ASSERT(4 == 4);
 #if 0
 	TEST_ASSERT(3.141592 == 2.718281828);
@@ -58,9 +62,11 @@ main(void)
 	TEST_ASSERT(3 == 1+2);
 	TEST_END();
 
-	TEST_BEGIN("Testing b");
-	TEST_ASSERT("test"[3] == 't');
-	TEST_END();
+	for (i = 0; i < 4; ++i) {
+		TEST_BEGIN(("Testing b%d", i));
+		TEST_ASSERT("test"[i] != 'a');
+		TEST_END();
+	}
 
 	return 0;
 }

@@ -27,7 +27,7 @@ main(void)
 	PRNG64RomuQuad prng64;
 	prng64_romu_quad_randomize(&prng64);
 
-	TEST_BEGIN("prng64_pcg_jump");
+	TEST_BEGIN(("prng64_pcg_jump"));
 	for (i = 0; i < 25; ++i) {
 		size_t n = prng64_romu_quad(&prng64) & MASK;
 		TEST(PRNG32Pcg, prng32_pcg_randomize, prng32_pcg,
@@ -36,7 +36,7 @@ main(void)
 	TEST_END();
 
 	#if PRNG64_PCG_AVAILABLE
-		TEST_BEGIN("prng64_pcg_jump");
+		TEST_BEGIN(("prng64_pcg_jump"));
 		for (i = 0; i < 25; ++i) {
 			uint64_t by[2] = { 0 };
 			by[1] = prng64_romu_quad(&prng64) & MASK;
@@ -46,7 +46,7 @@ main(void)
 		TEST_END();
 	#endif
 
-	TEST_BEGIN("prng64_xoroshiro128_jump");
+	TEST_BEGIN(("prng64_xoroshiro128_jump"));
 	for (i = 7; i <= 20; ++i) {
 		TEST(PRNG64Xoroshiro128, prng64_xoroshiro128_randomize,
 			prng64_xoroshiro128ss, prng64_xoroshiro128_jump,

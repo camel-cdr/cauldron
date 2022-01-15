@@ -14,3 +14,5 @@ RANDOM_X64(PRNG64Sfc, prng64_sfc, prng64_sfc_randomize)
 RANDOM_X64(PRNG64Tylo, prng64_tylo, prng64_tylo_randomize)
 RANDOM_X64(PRNG64Jfs, prng64_jfs, prng64_jfs_randomize)
 RANDOM_X64(PRNG64Xorshift128p, prng64_xorshift128p, prng64_xorshift128p_randomize)
+RANDOM_X64(PRNG64Xorshift64, prng64_xorshift64, prng64_xorshift64_randomize)
+

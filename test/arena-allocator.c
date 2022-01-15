@@ -10,7 +10,7 @@ main(void)
 	int i;
 	aa_Arena a = { 0 };
 
-	TEST_BEGIN("arena-allocator");
+	TEST_BEGIN(("arena-allocator"));
 
 #define TEST_X(T, v) \
 	do { \

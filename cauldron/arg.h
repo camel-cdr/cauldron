@@ -10,7 +10,7 @@
 #include <stdio.h>
 
 static int
-ARG_LONG_func(char **argv0, const char *name)
+ARG_LONG_func(char **argv0, char const *name)
 {
 	char *argIt = *argv0;
 	while (*argIt == *name && *argIt)

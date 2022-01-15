@@ -10,7 +10,7 @@
 #define RUN_TIME_OUT (1024*1024*8)
 
 #define TEST_FULL_RANGE(name, T, init, next, inc) \
-	TEST_BEGIN(name " full range"); \
+	TEST_BEGIN((name " full range")); \
 	for (i = 0; i < NUM_RUNS; ++i) { \
 		T beg, cur, end; \
 		init; \

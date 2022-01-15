@@ -57,7 +57,7 @@ main(void)
 	dist_normal_zig_init(&zig);
 
 #define TEST_NORM(norm) \
-	TEST_BEGIN(#norm); test_norm(norm); TEST_END()
+	TEST_BEGIN((#norm)); test_norm(norm); TEST_END()
 
 	TEST_NORM(f_dist_normalf);
 	TEST_NORM(f_dist_normal);

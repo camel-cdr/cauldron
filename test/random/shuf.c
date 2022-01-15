@@ -48,7 +48,7 @@ main(void)
 	for (i = 0; i < MAX_SIZE; ++i)
 		sorted[i] = arr[i] = i;
 
-	TEST_BEGIN("shuf32_arr");
+	TEST_BEGIN(("shuf32_arr"));
 	for (cnt = i = 0; i < COUNT; ++i) {
 		size = dist_uniform_u32(MAX_SIZE-2, prng32_romu_quad, &prng32)+2;
 		shuf32_arr(arr, size, sizeof *arr, prng32_romu_quad, &prng32);
@@ -57,7 +57,7 @@ main(void)
 	TEST_ASSERT((float)cnt / COUNT - 1.0 < ALPHA);
 	TEST_END();
 
-	TEST_BEGIN("shuf64_arr");
+	TEST_BEGIN(("shuf64_arr"));
 	for (cnt = i = 0; i < COUNT; ++i) {
 		size = dist_uniform_u64(MAX_SIZE-2, prng64_romu_quad, &prng64)+2;
 		shuf64_arr(arr, size, sizeof *arr, prng64_romu_quad, &prng64);
@@ -66,7 +66,7 @@ main(void)
 	TEST_ASSERT((float)cnt / COUNT - 1.0 < ALPHA);
 	TEST_END();
 
-	TEST_BEGIN("shuf_weyl")
+	TEST_BEGIN(("shuf_weyl"))
 	for (cnt = i = 0; i < COUNT; ++i) {
 		ShufWeyl weyl;
 		size = dist_uniform_u64(MAX_SIZE-2, prng64_romu_quad, &prng64)+2;
@@ -83,7 +83,7 @@ main(void)
 	TEST_ASSERT((float)cnt / COUNT - 1.0 < ALPHA);
 	TEST_END();
 
-	TEST_BEGIN("shuf_lcg")
+	TEST_BEGIN(("shuf_lcg"))
 	for (cnt = i = 0; i < COUNT; ++i) {
 		ShufLcg lcg;
 		size = dist_uniform_u64(MAX_SIZE-2, prng64_romu_quad, &prng64)+2;

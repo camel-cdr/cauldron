@@ -4,7 +4,7 @@
  * Note: These PRNGs vary in quality, don't just blindly start using them!
  */
 
-#ifndef MSWS_H_INCLUDED
+#ifndef EXTRA_H_INCLUDED
 
 /* Middle Square Weyl Sequence RNG: Bernard Widynski
  * https://arxiv.org/abs/1704.00358 */
@@ -178,6 +178,19 @@ prng64_xorshift128p(void *rng)
 	return (r->s[1] = (s1 ^ s0 ^ (s1 >> 17) ^ (s0 >> 26))) + s0;
 }
 
+typedef struct { uint64_t s[1]; } PRNG64Xorshift64;
+CAULDRON_MAKE_PRNG_NOTALLZERO_RANDOMIZE(PRNG64Xorshift64, prng64_xorshift64)
+static inline uint64_t
+prng64_xorshift64(void *rng)
+{
+	PRNG64Xorshift64 *r = rng;
+	r->s[0] ^= r->s[0] << 13;
+	r->s[0] ^= r->s[0] >> 7;
+	r->s[0] ^= r->s[0] << 17;
+	return r->s[0];
+}
+
+
 
 /* https://github.com/openjdk/jdk/blob/master/src/
  * java.base/share/classes/java/util/Random.java */
@@ -193,5 +206,7 @@ prng32_java_util_random(void *rng)
 }
 
 
-#define MSWS_H_INCLUDED
+
+#define EXTRA_H_INCLUDED
 #endif
+

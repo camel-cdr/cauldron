@@ -19,6 +19,9 @@ do
 	[ "$var" = "c99" ] && CVER="-std=c99 "
 done
 
+
+clang $CFLAGS $in -o $out && $out
+
 CFLAGS=$CFLAGS$CVER
 
 # Test with sanitizers

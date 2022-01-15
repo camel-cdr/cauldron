@@ -1,5 +1,5 @@
 
-static const uint64_t prng64_xoroshiro128Jump2Pow[128][2] = {
+static uint64_t const prng64_xoroshiro128Jump2Pow[128][2] = {
 	{ 0, 0 }, /* 0 -- 24-16-37 */
 	{ 0, 0 }, /* 1 -- 24-16-37 */
 	{ 0, 0 }, /* 2 -- 24-16-37 */

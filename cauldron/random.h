@@ -43,7 +43,7 @@
  *       If you have trouble reading them just try using online tex engines
  *       like http://atomurl.net/math/.
  *     - The code from each chapter should be independent and could be
- *       copy-pasted into any other project.
+ *       easily copy-pasted into any other project.
  *     - We use the stb style for header only libraries, that is we only supply
  *       the implementation of non inline functions if RANDOM_H_IMPLEMENTATION
  *       is defined. This means that you must define RANDOM_H_IMPLEMENTATION
@@ -322,8 +322,8 @@ trng_write_notallzero(void *ptr, size_t n)
 {
 	unsigned char *p;
 	size_t i;
-	/* Stop after 100 tries. */
-	for (i = 0; i < 100; ++i) {
+	/* Stop after 128 tries. */
+	for (i = 0; i < 128; ++i) {
 		if (!trng_write(ptr, n))
 			return 0;
 		/* Return if any bit is set. */
@@ -1334,8 +1334,11 @@ csprng32_chacha(void *rng)
  *     - result is expected to be a pointer, to indicate it being modified.
  *
  * Lemire <11> proposed an almost division less algorithm, that exploits the
- * fact that modern processors can efficiently compute the full rest of a
- * multiplication:
+ * fact that modern processors can efficiently compute the upper part of a
+ * multiplication. This can be used to reduces the bigger to the range of the
+ * smaller factor, in a similar facion to modulo reduction:
+ * E.g. uint64_t x = ((uint128_t)a * b) >> 64; reduces a to the range b in a
+ * similar facion to a % b, although the mapping order is different<12>.
  */
 
 static inline uint32_t
@@ -1381,6 +1384,7 @@ dist_uniform_u64(uint64_t range, /* [0,range) */
 #endif
 }
 
+
 /*
  * 5.2 Uniform real distribution -----------------------------------------------
  *
@@ -1391,7 +1395,7 @@ dist_uniform_u64(uint64_t range, /* [0,range) */
  * Though as before this straightforward approach is biased.
  *
  * For the next part, I assume you are already acquainted with the IEEE 754
- * floating-point standard <12>, we will not cover other formats.
+ * floating-point standard <13>, we will not cover other formats.
  *
  * To recap, here is a quick reminder on how 32-bit floats are laid out in
  * memory:
@@ -1418,7 +1422,7 @@ dist_uniform_u64(uint64_t range, /* [0,range) */
  * of values. What makes random float generation tricky is the fact that the
  * amount of numbers less than 1 and greater than 1 is the same. This means that
  * we can't just divide a random integer among these values without getting
- * duplicates and omissions <13>:
+ * duplicates and omissions <14>:
  *
  *    Integer: |----|----|----|----|----|----|----|----|----|----|----|----|
  *             |    |    /    |   /    /    /    /      \ __/    \ __/     |
@@ -1449,7 +1453,7 @@ dist_uniform(uint64_t x)
 
 /*
  * Another solution is to generate every representable floating-point number
- * with a probability proportional to the covered real number range. <14>
+ * with a probability proportional to the covered real number range. <15>
  * So obtaining a number in a floating-point subrange [s1,s2] of the output
  * range [r1,r2] has the probability of (s2-s1)/(r2-r1).
  *
@@ -1550,7 +1554,7 @@ dist_uniform_dense(
 # endif
 
 /* Otherwise, we'll use a lookup table and a De Bruijn sequence to calculate
- * the number of trailing zeros. <15>
+ * the number of trailing zeros. <16>
  *
  * Given an initial random number 'n', we calculate m = n & -n,
  * this will only set the last set bit in 'n' inside 'm'.
@@ -1907,10 +1911,10 @@ dist_uniform_dense(
  * 5.3 Normal real distribution ------------------------------------------------
  *
  * One of the fastest algorithms for generating normally distributed random
- * numbers is the ziggurat method <16><17>. It uses a lookup table and thus
+ * numbers is the ziggurat method <17><18>. It uses a lookup table and thus
  * requires a somewhat large amount of memory.
  * As this might not meet everybodie's needs we also implement the ratio method
- * <18><19>, which doesn't require any internal state and is a bit slower.
+ * <19><20>, which doesn't require any internal state and is a bit slower.
  *
  * The more popular polar method might be faster than the ratio method (though
  * not the ziggurat method), but generates two values at a time.
@@ -1927,7 +1931,7 @@ dist_uniform_dense(
  * The ration method uses the fact that the ratio of a pair of random variables
  * (u,v) uniformaly distributed over
  *     C_f = \{(u,v): 0 <= u <= \sqrt{f(v/u)}\}
- * yields a random variable X=(v/u) with the density f. <18>
+ * yields a random variable X=(v/u) with the density f. <19>
  *
  * If we apply this to the normal distribution f(x) = \exp(-(v^2)/2)
  * then u <= \sqrt{\exp(-((v/u)^2)/2)} = \exp(-(v^2)/(4u^2))
@@ -1939,7 +1943,7 @@ dist_uniform_dense(
  * the bounding box B = \{ 0 < u < 1; -\sqrt(2/e) < v < \sqrt(2/e) \} of C_f
  * and reject everything that isn't inside of C_f (if v^2 > -4u^2\ln u).
  *
- * As computing the natural log is rather expensive, Leva <19> proposed a set of
+ * As computing the natural log is rather expensive, Leva <20> proposed a set of
  * quadratic bounding curves that drastically decrease the calls to \ln:
  *             r_2 < Q(u,v) = (u-s)^2 - b(u-s)(v+t) + a(u-t)^2 < r_1
  *                      s=0.449871  a=0.19600   t=0.386595
@@ -2012,7 +2016,7 @@ dist_normal(uint64_t (*rand64)(void*), void *rng)
  * The ziggurat method works by partitioning the normal distribution density
  *                          f(x) = \exp(-(x^2)/2)
  * into horizontal blocks of equal area, where all boxes are rectangular
- * shaped, except for the bottom one, which is trailing of to infinity. <16>
+ * shaped, except for the bottom one, which is trailing of to infinity. <17>
  *
  *                    +-------------------------------------+
  *                    |              \exp(-(x^2)/2) ******  |
@@ -2039,7 +2043,7 @@ dist_normal(uint64_t (*rand64)(void*), void *rng)
  * above for x_N=0, which can be done by arithmetically narrowing down on value
  * for R (code under tools/random/ziggurat-constants.c).
  *
- * The exact algorithm is based on Doorki's implementation <17>,
+ * The exact algorithm is based on Doorki's implementation <18>,
  * but we don't use a lookup for the initial bound check,
  *     if (u * x[idx] < x[idx + 1])
  * because the multiplication this saves is calculated at return regardless.
@@ -2137,7 +2141,7 @@ dist_normalf_zig(DistNormalfZig const *zig, uint32_t (*rand32)(void*),
 
 		/* If our random box is at the bottom, we can't use the lookup
 		 * table and need to generate a variable for the trail of the
-		 * normal distribution, as described in <20>: */
+		 * normal distribution, as described in <21>: */
 		if (idx == 0) {
 			do {
 				x = logf(1-DIST_NORMALF_ZIG_2FLT(rand32(rng))) *
@@ -2226,7 +2230,7 @@ dist_normal_zig(DistNormalZig const *zig, uint64_t (*rand64)(void*), void *rng)
 
 		/* If our random box is at the bottom, we can't use the lookup
 		 * table and need to generate a variable for the trail of the
-		 * normal distribution, as described in <20>: */
+		 * normal distribution, as described in <21>: */
 		if (idx == 0) {
 			do {
 				x = log(1 - DIST_NORMAL_ZIG_2DBL(rand64(rng))) *
@@ -2332,7 +2336,7 @@ shuf64_arr(void *base, uint64_t nel, uint64_t size,
  * rather low. Furthermore, it must be considered that this can only generate a
  * small subset
  *     6/(\pi^2) * m \approx 0.6 * m
- * of all m! possible permutations. <21>
+ * of all m! possible permutations. <22>
  * Still some applications might be willing to take this tradeoff for
  * performance. */
 
@@ -2477,46 +2481,51 @@ shuf_lcg(ShufLcg *rng)
  *      "Fast Random Integer Generation in an Interval"
  *      URL: "https://arxiv.org/abs/1805.10941"
  *
- * <12> Wikipedia (January 2021): "IEEE 754"
+ * <12> Daniel Lemire (2018):
+ *      "A fast alternative to the modulo reduction"
+ *      URL: "https://lemire.me/blog/2016/06/27/
+ *            a-fast-alternative-to-the-modulo-reduction/"
+ *
+ * <13> Wikipedia (January 2021): "IEEE 754"
  *      URL: "https://en.wikipedia.org/wiki/IEEE_754"
  *
- * <13> Frédéric Goualard (2020):
+ * <14> Frédéric Goualard (2020):
  *      "Generating Random Floating-Point Numbers by Dividing Integers:
  *       a Case Study"
  *      DOI: "https://doi.org/10.1007/978-3-030-50417-5_2"
  *
- * <14> AllenB. Downey (2007):
+ * <15> AllenB. Downey (2007):
  *      "Generating Pseudo-random Floating-Point Values"
  *      URL: http://allendowney.com/research/rand/downey07randfloat.pdf
  *
- * <15> Charles E. Leiserson, Harald Prokop, Keith H. Randall (1998):
+ * <16> Charles E. Leiserson, Harald Prokop, Keith H. Randall (1998):
  *      "Usign de Bruijn Sequences to Index a 1 in a Computer Word"
  *      URL: http://supertech.csail.mit.edu/papers/debruijn.pdf
  *
- * <16> Marsaglia, George, and Wai Wan Tsang (2000):
+ * <17> Marsaglia, George, and Wai Wan Tsang (2000):
  *      "The ziggurat method for generating random variables."
  *      Journal of statistical software 5.8: 1-7.
  *
- * <17> Doornik, Jurgen A (2005):
+ * <18> Doornik, Jurgen A (2005):
  *      "An improved ziggurat method to generate normal random samples."
  *      University of Oxford: 77.
  *
- * <18> A. J. Kindermann, J. F. Monahan (1976):
+ * <19> A. J. Kindermann, J. F. Monahan (1976):
  *      "Computer Generation of Random Variables Using the Ratio of Uniform
  *       Deviates"
  *      DOI: https://doi.org/10.1145/355744.355750
  *
- * <19> Joseph L. Leva (1991):
+ * <20> Joseph L. Leva (1991):
  *      "A Fast Normal Random Number Generator"
  *      DOI: https://doi.org/10.1145/138351.138364
  *
- * <20> Marsaglia, George (1964):
+ * <21> Marsaglia, George (1964):
  *      "Generating a variable for the trail of the normal distribution"
  *      Technometrics, 6, 101-102
  *
- * <21> Wikipedia (January 2021): "Coprime integers"
+ * <22> Wikipedia (January 2021): "Coprime integers"
  *      URL: https://en.wikipedia.org/wiki/Coprime_integers
-*            #Generating_all_coprime_pairs
+ *           #Generating_all_coprime_pairs
  *
  * Other resources:
  *     - https://espadrine.github.io/blog/posts/a-primer-on-randomness.html

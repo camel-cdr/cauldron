@@ -37,7 +37,7 @@ static double double_tests[][4] = {
 };
 
 #define MAKE_TEST(name, type, next) \
-	TEST_BEGIN(name); \
+	TEST_BEGIN((name)); \
 	for (i = 0; i < NRANGES + ARRLEN(float_tests); ++i) { \
 		double expected, ntests, stddev; \
 		type tmp, r[4]; /* f1, s1, s2, f2 */ \

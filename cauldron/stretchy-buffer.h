@@ -18,6 +18,10 @@
 #define sb_len(a) ((size_t const)(a)._len)
 #define sb_cap(a) ((size_t const)(a)._cap)
 
+#define sb_begin(a) (&(a).at[0])
+#define sb_last(a) (&(a).at[(a)._len-1])
+#define sb_end(a) (&(a).at[(a)._len])
+
 #define sb_initcap(a,n) ((a)._len = 0, (a)._cap = (n), \
                          (a).at = malloc((a)._cap * sizeof *(a).at))
 #define sb_initlen(a,n) ((a)._len = (a)._cap = (n), \
