@@ -23,7 +23,7 @@ ARG_LONG_func(char **argv0, char const *name)
 }
 
 #define ARG_BEGIN do { \
-	for (--argc, ++argv; \
+	for (argv[0] && (--argc, ++argv); \
 	     argv[0] && argv[0][0] == '-'; \
 	     argv[0] && (--argc, ++argv)) { \
 		int isFlag = 1; \
