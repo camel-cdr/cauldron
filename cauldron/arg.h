@@ -81,8 +81,8 @@ main(int argc, char **argv)
 			puts("Example usage of arg.h\n");
 			puts("Options:");
 			puts("  -a,                set a to true");
-			puts("  -b,                set a to true");
-			puts("  -c,                set a to true");
+			puts("  -b,                set b to true");
+			puts("  -c,                set c to true");
 			puts("  -r, --reverse      set reverse to true");
 			puts("  -i, --input=STR    set input string to STR");
 			puts("  -o, --output=STR   set output string to STR");
