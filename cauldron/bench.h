@@ -57,7 +57,7 @@ typedef struct {
 	BenchRecord *records;
 	/* temporaries */
 	size_t i;
-	uintmax_t ns;
+	double ns;
 } Bench;
 
 static Bench benchInternal;
@@ -67,21 +67,21 @@ static Bench benchInternal;
 	     benchInternal.i = (warmup) + (samples); \
 	     (benchInternal.ns = bench_gettime()), benchInternal.i--; \
 	     benchInternal.i < (samples) ? \
-	     bench_update((bench_gettime()-benchInternal.ns)*1.0/1000000000),0 : 0)
+	     bench_update(bench_gettime()-benchInternal.ns),0 : 0)
 
-static inline uintmax_t
+static inline double
 bench_gettime(void)
 {
 #if defined(CLOCK_PROCESS_CPUTIME_ID)
 	struct timespec t;
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t);
-	return t.tv_nsec + (uintmax_t)t.tv_sec * 1000000000;
+	return t.tv_nsec * 1.0/1000000000 + t.tv_sec;
 #elif defined(CLOCK_MONOTONIC_RAW)
 	struct timespec t;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t);
-	return t.tv_nsec + (uintmax_t)t.tv_sec * 1000000000;
+	return t.tv_nsec * 1.0/1000000000 + t.tv_sec;
 #else
-	return ((uintmax_t)clock() * 1000000000) / CLOCKS_PER_SEC;
+	return clock() * 1.0 / CLOCKS_PER_SEC;
 #endif
 }
 
@@ -205,7 +205,7 @@ main(void)
 #endif /* BENCH_EXAMPLE */
 
 /*
- * Copyright (c) 2021 Olaf Berstein
+ * Copyright (c) 2022 Olaf Berstein
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights

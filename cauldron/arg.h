@@ -25,7 +25,7 @@ ARG_LONG_func(char **argv0, char const *name)
 #define ARG_BEGIN do { \
 	for (--argc, ++argv; \
 	     argv[0] && argv[0][0] == '-'; \
-	     --argc, ++argv) { \
+	     argv[0] && (--argc, ++argv)) { \
 		int isFlag = 1; \
 		if (argv[0][1] == '-' && argv[0][2] == 0 && (++argv, 1)) \
 			break; \
@@ -36,7 +36,7 @@ ARG_LONG_func(char **argv0, char const *name)
 			if (argv[0][-1] == '-') \
 				++argv[0];
 
-#define ARG_LONG(name) ARG_LONG_func(&(argv[0]), name)
+#define ARG_LONG(name) ARG_LONG_func(&(argv[0]), (name))
 
 #define ARG_VAL() \
 		(isFlag ? (argv[0][1] ? ++argv[0] : *(--argc, ++argv)) : \
@@ -83,7 +83,7 @@ main(int argc, char **argv)
 			puts("  -a,                set a to true");
 			puts("  -b,                set a to true");
 			puts("  -c,                set a to true");
-			puts("  -r, --reserve      set reserve to true");
+			puts("  -r, --reverse      set reverse to true");
 			puts("  -i, --input=STR    set input string to STR");
 			puts("  -o, --output=STR   set output string to STR");
 			puts("  -h, --help         display this help and exit");

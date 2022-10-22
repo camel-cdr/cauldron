@@ -74,7 +74,7 @@ main(void)
 #endif /* TEST_EXAMPLE */
 
 /*
- * Copyright (c) 2021 Olaf Berstein
+ * Copyright (c) 2022 Olaf Berstein
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights

@@ -3,8 +3,8 @@
 cpp=0
 
 
-CFLAGS="-I../ -lm -Wall -Wextra -Werror=vla -Wno-unused -pedantic -ggdb "
-CXXFLAGS="-I../ -lm -Wall -Wextra -Werror=vla -Wno-unused -pedantic -xc++ -ggdb3"
+CFLAGS="-I../ -lm -Wall -Wextra -Werror=vla -Wno-unused -pedantic -ggdb3 "
+CXXFLAGS="-I../ -lm -Wall -Wextra -Werror=vla -Wno-unused -pedantic -xc++ -ggdb3 "
 
 out=$(mktemp)
 trap '{ rm -f -- "$out"; }' EXIT
@@ -17,20 +17,21 @@ do
 	[ "$var" = "c++" ] && cpp=1
 	[ "$var" = "c89" ] && CVER="-Dinline=  -std=c89 "
 	[ "$var" = "c99" ] && CVER="-std=c99 "
+	[ "$var" = "c11" ] && CVER="-std=c11 "
 done
 
 
-clang $CFLAGS $in -o $out && $out
+gcc $CFLAGS $in -o $out && $out
 
 CFLAGS=$CFLAGS$CVER
 
 # Test with sanitizers
-clang $CFLAGS -fsanitize=address,undefined,leak -ftrapv $in -o $out && $out
+gcc $CFLAGS -fsanitize=address,undefined,leak -ftrapv $in -o $out && $out
 
 # Test with valgrind
 if which valgrind >/dev/null
 then
-	clang $CFLAGS $in -o $out && valgrind -q $out
+	gcc $CFLAGS $in -o $out && valgrind -q $out
 fi
 
 # Test on big endian mips if available
@@ -40,7 +41,7 @@ then
 fi
 
 # Test C++
-[ $cpp -eq 1 ] && clang++ $CXXFLAGS -xc++ $in -o $out && $out
+[ $cpp -eq 1 ] && g++ $CXXFLAGS -xc++ $in -o $out && $out
 
 
 exit 0

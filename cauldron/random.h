@@ -368,7 +368,7 @@ trng_write_notallzero(void *ptr, size_t n)
  * can trivially compute using mental arithmetics <1>:
  *     1. Select an initial random number (seed) between 1 and 58.
  *        (This is accomplished by mentally collecting entropy from the
- *         environment, e.g. counting a group of objects)
+ *         environment, e.g. counting a group of objects of unknown quantity)
  *     2. Multiply the least significant digit by 6, add the most significant
  *        digit and use the result as the next seed/state.
  *     3. The second digit of the state is your generated pseudorandom number.
@@ -2535,7 +2535,7 @@ shuf_lcg(ShufLcg *rng)
 /*
  * Licensing ===================================================================
  *
- * Copyright (c) 2021 Olaf Berstein
+ * Copyright (c) 2022 Olaf Berstein
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights

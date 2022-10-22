@@ -1,6 +1,6 @@
 .POSIX:
 CC = c99
-CFLAGS+=-I../../
+CFLAGS=-I../../
 
 BIN = dist rng bench ziggurat-constants
 

@@ -37,6 +37,7 @@ extern void aa_free(aa_Arena *arena);
 
 struct aa_Block {
 	struct aa_Block *next;
+	unsigned char *first;
 	unsigned char *ptr;
 	unsigned char *end;
 };
@@ -79,8 +80,7 @@ aa_alloc(aa_Arena *arena, size_t size)
 		it->ptr += size;
 	} else {
 		/* needs to be allocated */
-		size_t hdrsize = sizeof(struct aa_Block);
-		size_t n = hdrsize + size + aa_BLOCK_SIZE;
+		size_t n = sizeof *it + size + aa_BLOCK_SIZE;
 		size_t an = aa_ALIGN_UP(n, aa_MAX_ALIGN);
 		it = malloc(an);
 		if (arena->current)
@@ -88,7 +88,8 @@ aa_alloc(aa_Arena *arena, size_t size)
 		else
 			arena->current = arena->blocks = it;
 		it->next = 0;
-		it->ptr = (unsigned char *)it + hdrsize + size + (an - n);
+		it->first = (unsigned char *)it + sizeof *it + (an - n);
+		it->ptr = it->first + size;
 		it->end = (unsigned char*)it + an;
 	}
 
@@ -104,7 +105,7 @@ aa_dealloc(aa_Arena *arena)
 
 	/* reset block->ptr to the beginning of the block */
 	while (it) {
-		it->ptr = (unsigned char *)((struct aa_Block *)it + 1);
+		it->ptr = it->first;
 		it = it->next;
 	}
 
@@ -130,7 +131,7 @@ aa_free(aa_Arena *arena)
 #endif
 
 /*
- * Copyright (c) 2021 Olaf Berstein
+ * Copyright (c) 2022 Olaf Berstein
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
