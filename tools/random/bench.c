@@ -145,9 +145,9 @@ main(void)
 	size_t i;
 	puts("Note: Execution times between categories aren't comparable!\n");
 
-	//bench_rng_16();
-	//bench_rng_32();
-	//bench_rng_64();
+	bench_rng_16();
+	bench_rng_32();
+	bench_rng_64();
 	bench_normal();
 	bench_normalf();
 
