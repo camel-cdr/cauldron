@@ -23,6 +23,7 @@
  *     5.3 Normal real distribution
  *         5.3.1 Ratio method
  *         5.3.2 Ziggurat method
+ *         5.3.3 Approximation using popcount
  * 6. Shuffling
  * References
  * Licensing
@@ -140,7 +141,7 @@
  *
  *     // random sample from the standard normal distribution
  *     float dist_normalf(uint32_t (*)(void*), void *);
- *     double dist_normal(uint32_t (*)(void*), void *);
+ *     double dist_normal(uint64_t (*)(void*), void *);
  *
  *     // a faster dist_normal(f) implementation using a lookup table
  *     void dist_normalf_zig_init(DistNormalfZig *);
@@ -1540,16 +1541,16 @@ dist_uniform_dense(
      (__GNUC__ == 3 && __GNUC_MINOR__ >= 4) || \
      (__clang_major__ == 1 && __clang_minor__ >= 5)
 #  if UINT_MAX >= UINT32_MAX
-#   define DIST_UNIFORMF_DENSE_DEC_CTZ(exp, x) ((exp) -= __builtin_ctz(x))
+#   define DIST_UNIFORMF_DENSE_DEC_CTZ(exp, x) ((exp) -= (uint32_t)__builtin_ctz(x))
 #  elif ULONG_MAX >= UINT32_MAX
-#   define DIST_UNIFORMF_DENSE_DEC_CTZ(exp, x) ((exp) -= __builtin_ctzl(x))
+#   define DIST_UNIFORMF_DENSE_DEC_CTZ(exp, x) ((exp) -= (uint32_t)__builtin_ctzl(x))
 #  endif
 #  if UINT_MAX >= UINT64_MAX
-#   define DIST_UNIFORM_DENSE_DEC_CTZ(exp, x) ((exp) -= __builtin_ctz(x))
+#   define DIST_UNIFORM_DENSE_DEC_CTZ(exp, x) ((exp) -= (uint64_t)__builtin_ctz(x))
 #  elif ULONG_MAX >= UINT64_MAX
-#   define DIST_UNIFORM_DENSE_DEC_CTZ(exp, x) ((exp) -= __builtin_ctzl(x))
+#   define DIST_UNIFORM_DENSE_DEC_CTZ(exp, x) ((exp) -= (uint64_t)__builtin_ctzl(x))
 #  elif ULLONG_MAX >= UINT64_MAX
-#   define DIST_UNIFORM_DENSE_DEC_CTZ(exp, x) ((exp) -= __builtin_ctzll(x))
+#   define DIST_UNIFORM_DENSE_DEC_CTZ(exp, x) ((exp) -= (uint64_t)__builtin_ctzll(x))
 #  endif
 # endif
 
@@ -1925,6 +1926,8 @@ dist_uniform_dense(
  *     <https://github.com/ampl/gsl/blob/master/randist/gauss.c>
  */
 
+
+
 /*
  * 5.3.1 Ratio method ..........................................................
  *
@@ -2266,6 +2269,58 @@ dist_normal_zig(DistNormalZig const *zig, uint64_t (*rand64)(void*), void *rng)
 
 #endif /* RANDOM_H_IMPLEMENTATION */
 
+
+/*
+ * 5.3.3 Approximation using a binomially distribution .........................
+ *
+ *
+ * We can approximate a normal distribution using a binomial distribute <22>:
+ * Just generate a random power-of-2 integer, and count the number of set bits.
+ * This gives us a normal distributed step function, now we just need to add a
+ * bit of randomness into the step, and nudge the normal distribution into the
+ * correct range.
+ */
+
+# if __GNUC__ >= 4 || __clang_major__ >= 2 || \
+     (__GNUC__ == 3 && __GNUC_MINOR__ >= 4) || \
+     (__clang_major__ == 1 && __clang_minor__ >= 5)
+#  if UINT_MAX >= UINT64_MAX
+#   define DIST_NORMALF_POPCOUNT64 __builtin_popcount
+#  elif ULONG_MAX >= UINT64_MAX
+#   define DIST_NORMALF_POPCOUNT64 __builtin_popcountl
+#  elif ULLONG_MAX >= UINT64_MAX
+#   define DIST_NORMALF_POPCOUNT64 __builtin_popcountll
+#  else
+#   define DIST_NORMALF_POPCOUNT64 dist_normalf_popcount64
+#  endif
+# endif
+
+/* TODO: explain */
+static inline int
+dist_normalf_popcount64(uint64_t x)
+{
+	/* 2-bit sums */
+	x -= (x >> 1) & (-(uint64_t)1/3);
+	/* 4-bit sums */
+	x = (x & (-(uint64_t)1/15*3)) + ((x >> 2) & (-(uint64_t)1/15*3));
+	/* 8-bit sums */
+	x = (x + (x >> 4)) & (-(uint64_t)1/255*15);
+	/* sum 8-bit sums */
+	return (x * (-(uint64_t)1/255)) >> (sizeof(uint64_t) - 1) * CHAR_BIT;
+}
+
+static inline double
+dist_normalf_fast(uint64_t u)
+{
+	/* since we are approximating anyway, we might as well scramble u
+	 * multiple times to get a better resolution */
+	float x = DIST_NORMALF_POPCOUNT64(u*0x2c1b3c6dU) +
+	          DIST_NORMALF_POPCOUNT64(u*0x297a2d39U) - 64;
+	x += (int64_t)u * (1 / 9223372036854775808.0f);
+	x *= 0.1765469659009499f; /* sqrt(1/(32 + 4/12)) */
+	return x;
+}
+
 /*
  * 6. Shuffling ================================================================
  *
@@ -2336,7 +2391,7 @@ shuf64_arr(void *base, uint64_t nel, uint64_t size,
  * rather low. Furthermore, it must be considered that this can only generate a
  * small subset
  *     6/(\pi^2) * m \approx 0.6 * m
- * of all m! possible permutations. <22>
+ * of all m! possible permutations. <23>
  * Still some applications might be willing to take this tradeoff for
  * performance. */
 
@@ -2523,9 +2578,15 @@ shuf_lcg(ShufLcg *rng)
  *      "Generating a variable for the trail of the normal distribution"
  *      Technometrics, 6, 101-102
  *
- * <22> Wikipedia (January 2021): "Coprime integers"
+ * <22> Reddit post (December 2022):
+ *      "Fast Approximate Gaussian Generator" by u/Dusty_Coder
+ *      URL: https://old.reddit.com/r/algorithms/comments/
+ *           yyz59u/fast_approximate_gaussian_generator/
+ *
+ * <23> Wikipedia (January 2021): "Coprime integers"
  *      URL: https://en.wikipedia.org/wiki/Coprime_integers
  *           #Generating_all_coprime_pairs
+ *
  *
  * Other resources:
  *     - https://espadrine.github.io/blog/posts/a-primer-on-randomness.html

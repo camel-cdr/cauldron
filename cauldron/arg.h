@@ -6,9 +6,6 @@
 
 #ifndef ARG_H_INCLUDED
 
-#include <stdlib.h>
-#include <stdio.h>
-
 static int
 ARG_LONG_func(char **argv0, char const *name)
 {
@@ -49,11 +46,22 @@ ARG_LONG_func(char **argv0, char const *name)
 #define ARG_H_INCLUDED
 #endif
 
+
 /*
  * Example:
  */
 
-#ifdef ARG_EXAMPLE
+#if defined(ARG_EXAMPLE) || defined(ARG_FUZZ)
+
+#include <stdlib.h>
+#include <stdio.h>
+
+#ifdef ARG_FUZZ
+#define main argMain
+#undef stderr
+#define stderr stdout
+#endif
+
 
 int
 main(int argc, char **argv)
@@ -113,6 +121,43 @@ main(int argc, char **argv)
 }
 
 #endif /* ARG_EXAMPLE */
+
+/*
+ * Fuzzing:
+ */
+
+#ifdef ARG_FUZZ
+
+#include <stdint.h>
+#include <string.h>
+#define MAX_ARGC 50000
+
+int
+LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
+{
+	if (size < 2)
+		return -1;
+
+	char *buf = malloc(size+2);
+	memcpy(buf, data, size);
+	buf[size] = buf[size+1] = 0;
+
+	static char *argv[MAX_ARGC+1];
+	size_t argc = 0;
+	for (char *ptr = buf; *ptr && argc < MAX_ARGC;) {
+		argv[argc++] = ptr;
+		while (*ptr++);
+	}
+	argv[argc] = 0;
+
+	main(argc, argv);
+	free(buf);
+
+	return 0;
+}
+
+#endif
+
 
 /*
  * Copyright (c) 2021 Olaf Berstein

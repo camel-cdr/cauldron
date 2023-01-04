@@ -58,6 +58,8 @@ usage(void)
 	puts("                 using the ziggurat method");
 	puts("  n64z           normal distributed 64-bit floating point");
 	puts("                 using the ziggurat method");
+	puts("  n32f           normal distributed 64-bit floating point");
+	puts("                 approximated using");
 }
 
 int
@@ -144,6 +146,9 @@ main(int argc, char **argv)
 			dist_normal_zig_init(&zig);
 			while (count--)
 				printf("%.*g\n", precision, dist_normal_zig(&zig, rand64, 0));
+		} else if (strcmp(*argv, "n32f") == 0) {
+			while (count--)
+				printf("%.*g\n", precision, dist_normalf_fast(rand64(0)));
 		} else {
 			fprintf(stderr, "%s: invalid distribution -- '%s'\n", argv0, *argv);
 			fprintf(stderr, "Try '%s --help' for more information.\n", argv0);
