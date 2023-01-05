@@ -3,8 +3,8 @@
 cpp=0
 
 
-CFLAGS="-I../ -lm -Wall -Wextra -Werror=vla -Wno-unused -pedantic -ggdb3 "
-CXXFLAGS="-I../ -lm -Wall -Wextra -Werror=vla -Wno-unused -pedantic -xc++ -ggdb3 "
+CFLAGS="-I../ -lm -Wall -Wextra -Wsign-conversion -Werror=vla -Wno-type-limits -Wno-unused -pedantic -ggdb3 "
+CXXFLAGS="-I../ -lm -Wall -Wextra -Wsign-conversion -Werror=vla -Wno-type-limits -Wno-unused -pedantic -xc++ -ggdb3 "
 
 out=$(mktemp)
 trap '{ rm -f -- "$out"; }' EXIT

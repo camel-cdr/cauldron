@@ -43,6 +43,8 @@ static double f_dist_normalf_zig(void)
 { return dist_normalf_zig(&zigf, prng32_romu_quad, &prng32); }
 static double f_dist_normal_zig(void)
 { return dist_normal_zig(&zig, prng64_romu_quad, &prng64); }
+static double f_dist_normalf_fast(void)
+{ return dist_normalf_fast(prng64_romu_quad(&prng64)); }
 
 static void
 test_norm(double (*norm)(void));
@@ -63,6 +65,7 @@ main(void)
 	TEST_NORM(f_dist_normal);
 	TEST_NORM(f_dist_normalf_zig);
 	TEST_NORM(f_dist_normal_zig);
+	TEST_NORM(f_dist_normalf_fast);
 
 	return 0;
 }

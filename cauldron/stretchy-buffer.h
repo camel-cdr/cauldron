@@ -12,6 +12,31 @@
 
 #ifndef STRETCHY_BUFFER_H_INCLUDED
 
+
+/* by default: exit on allocation failure */
+
+#if !(defined sb_malloc) || !(defined sb_realloc)
+#include <stdlib.h>
+#include <stdio.h>
+
+static inline void *
+sb__realloc(void *ptr, size_t num_bytes)
+{
+	if (!(ptr = realloc(ptr, num_bytes)))
+		perror("realloc failed"), exit(EXIT_FAILURE);
+	return ptr;
+}
+#endif
+
+#ifndef sb_malloc
+#define sb_malloc(s) sb__realloc((void*)0, s)
+#endif
+#ifndef sb_realloc
+#define sb_realloc(p,s) sb__realloc(p, s)
+#endif
+
+
+
 /* can be zero initialized */
 #define Sb(T) struct { T *at; size_t _len, _cap; }
 
@@ -23,9 +48,9 @@
 #define sb_end(a) ((a).at + (a)._len)
 
 #define sb_initcap(a,n) ((a)->_len = 0, (a)->_cap = (n), \
-                         (a)->at = malloc((a)->_cap * sizeof *(a)->at))
+                         (a)->at = sb_malloc((a)->_cap * sizeof *(a)->at))
 #define sb_initlen(a,n) ((a)->_len = (a)->_cap = (n), \
-                         (a)->at = malloc((a)->_cap * sizeof *(a)->at))
+                         (a)->at = sb_malloc((a)->_cap * sizeof *(a)->at))
 
 #define sb_cpy(dest, src) \
 		(sb_setlen((dest), (src)._len), \
@@ -44,7 +69,7 @@
 #define sb_setlen(a,n) ((a)->_len = (n), sb_setcap((a), (a)->_len))
 #define sb_setcap(a,n) ((a)->_cap < (n) ? \
 		((a)->_cap = ((a)->_cap * 3 >> 1) | (n), \
-		 (a)->at = realloc((a)->at, (a)->_cap * sizeof *(a)->at)) : 0)
+		 (a)->at = sb_realloc((a)->at, (a)->_cap * sizeof *(a)->at)) : 0)
 #define sb_reserve(a,n) sb_setcap((a), (a)->_cap + (n))
 
 #define sb_push(a,v) (sb_setlen((a), (a)->_len + 1), (a)->at[(a)->_len - 1] = (v))
