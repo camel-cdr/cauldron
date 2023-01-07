@@ -24,22 +24,23 @@ ARG_LONG_func(char **argv0, char const *name)
 	     argv[0] && argv[0][0] == '-'; \
 	     argv[0] && (--argc, ++argv)) { \
 		int isFlag = 1; \
-		if (argv[0][1] == '-' && argv[0][2] == 0 && (++argv, 1)) \
+		char *arg = argv[0]; \
+		if (arg[1] == '-' && arg[2] == 0 && (--argc, ++argv, 1)) \
 			break; \
 		ARG_BEGIN_REP: \
-		switch ((++argv[0])[0]) { \
+		switch ((++arg)[0]) { \
 		case '-': \
 			isFlag = 0; \
-			if (argv[0][-1] == '-') \
-				++argv[0];
+			if (arg[-1] == '-') \
+				++arg;
 
-#define ARG_LONG(name) ARG_LONG_func(&(argv[0]), (name))
+#define ARG_LONG(name) ARG_LONG_func(&(arg), (name))
 
 #define ARG_VAL() \
-		(isFlag ? (argv[0][1] ? ++argv[0] : *(--argc, ++argv)) : \
-		          (argv[0][0] == '=' ? ++argv[0] : *(--argc, ++argv)))
+		(isFlag ? (arg[1] ? ++arg : *(--argc, ++argv)) : \
+		          (arg[0] == '=' ? ++arg : *(--argc, ++argv)))
 
-#define ARG_FLAG() if (isFlag && argv[0][1]) goto ARG_BEGIN_REP
+#define ARG_FLAG() if (isFlag && arg[1]) goto ARG_BEGIN_REP
 
 #define ARG_END } } } while(0)
 
@@ -113,6 +114,7 @@ main(int argc, char **argv)
 	printf("input = %s\n", input);
 	printf("output = %s\n", output);
 
+	printf("\nargc: %d", argc);
 	puts("\nargv:");
 	while (*argv)
 		printf("  %s\n", *argv++);
