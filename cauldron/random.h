@@ -27,7 +27,7 @@
  * 6. Shuffling
  * References
  * Licensing
- *     Alternative A - MIT License
+ *     MIT License
  *
  * 1. Introduction =============================================================
  *
@@ -68,6 +68,7 @@
 # endif
 #endif
 
+#include <limits.h>
 #include <float.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -1453,6 +1454,13 @@ dist_uniform(uint64_t x)
 }
 
 /*
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * WARNING: this code does currently not work correctly for subnormals.
+ * The probability of subnormals isn't quite correct, and there needs to be
+ * a new special case for subnormals when both a and b are subnormals.
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ *
+ *
  * Another solution is to generate every representable floating-point number
  * with a probability proportional to the covered real number range. <15>
  * So obtaining a number in a floating-point subrange [s1,s2] of the output

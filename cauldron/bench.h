@@ -1,4 +1,4 @@
-/* arg.h -- A POSIX compliant argument parser based on plan9's arg(3)
+/* bench.h -- A minimal benchmarking library
  * Olaf Bernstein <camel-cdr@protonmail.com>
  * Distributed under the MIT license, see license at the end of the file.
  * New versions available at https://github.com/camel-cdr/cauldron
@@ -57,7 +57,7 @@ typedef struct {
 	BenchRecord *records;
 	/* temporaries */
 	size_t i;
-	double ns;
+	double secs;
 } Bench;
 
 static Bench benchInternal;
@@ -65,9 +65,9 @@ static Bench benchInternal;
 #define BENCH(title, warmup, samples) \
 	for (bench_append(title), \
 	     benchInternal.i = (warmup) + (samples); \
-	     (benchInternal.ns = bench_gettime()), benchInternal.i--; \
+	     (benchInternal.secs = bench_gettime()), benchInternal.i--; \
 	     benchInternal.i < (samples) ? \
-	     bench_update(bench_gettime()-benchInternal.ns),0 : 0)
+	     bench_update(bench_gettime()-benchInternal.secs),0 : 0)
 
 static inline double
 bench_gettime(void)
@@ -143,8 +143,13 @@ bench_done(void)
 			putchar(' ');
 
 		printf("mean: %.9e,   stddev: %.2e,   min: %.9e \n",
+#ifdef BENCH_DONT_NORMALIZE
+		       b->records[i].mean,
+		       sqrt(b->records[i].M2 / b->records[i].count),
+#else
 		       b->records[i].mean / minmean,
 		       sqrt(b->records[i].M2 / b->records[i].count) / minmean,
+#endif
 		       b->records[i].min);
 	}
 	b->count = 0;

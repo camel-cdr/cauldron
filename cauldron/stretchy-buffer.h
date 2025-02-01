@@ -40,8 +40,8 @@ sb__realloc(void *ptr, size_t num_bytes)
 /* can be zero initialized */
 #define Sb(T) struct { T *at; size_t _len, _cap; }
 
-#define sb_len(a) ((size_t const)(a)._len)
-#define sb_cap(a) ((size_t const)(a)._cap)
+#define sb_len(a) (+(a)._len)
+#define sb_cap(a) (+(a)._cap)
 
 #define sb_begin(a) ((a).at)
 #define sb_last(a) ((a).at + (a)._len - 1)
